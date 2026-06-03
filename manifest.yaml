@@ -1,0 +1,10 @@
+schema_version: "1.0"
+repo:
+  name: Glee-fullyTools-FoundRy
+  display_name: Glee-fullyTools FoundRy
+  type: foundry-relay
+  lifecycle_status: active
+  visibility: private
+brand_domain: gleefully
+parent_foundry: null
+author: Jamie Hill

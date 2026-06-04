@@ -1,10 +1,100 @@
-schema_version: "1.0"
+schema_version: "2.0"
+
 repo:
   name: Glee-fullyTools-FoundRy
-  display_name: Glee-fullyTools FoundRy
+  display_name: "Glee-fully Tools FoundRy"
   type: foundry-relay
   lifecycle_status: active
   visibility: private
-brand_domain: gleefully
-parent_foundry: null
+  description: >
+    Private workbench and relay FoundRy for the Glee-fully Personalizable Tools™
+    ecosystem. Source of governance schemas, canonical ledgers, GPT instruction
+    templates, tone frameworks, and evaluation tools for 40+ Custom GPTs.
+
+brand:
+  domain: gleefully
+  display_name: "Glee-fully Personalizable Tools™"
+  public_site: https://glee-fully.tools
+  tagline: "Productivity without pressure. Structure without stiffness."
+  tone_default: GleeTone.A1
+  muse: Glee (Pacific Northwest, chai, color-coding, cozy chaos)
+
+ecosystem:
+  universe: OKHP3
+  universe_site: https://overkillhill.com/universe
+
+authority_chain:
+  parent_foundry: OKHP3/OverKill-Hill-FoundRy
+  this_foundry: OKHP3/Glee-fullyTools-FoundRy
+  public_repo: OKHP3/Glee-fullyTools
+  child_families:
+    - pattern: "glee-fully-gpt00-*"
+      scope: "Toolbox (Trunk)"
+    - pattern: "glee-fully-gpt01-*"
+      scope: "Discovered Careers"
+    - pattern: "glee-fully-gpt02-*"
+      scope: "Treasured Finds"
+    - pattern: "glee-fully-gpt03-*"
+      scope: "Tasty Tracker"
+    - pattern: "glee-fully-gpt04-*"
+      scope: "Traveler's Guide"
+    - pattern: "glee-fully-gpt05-*"
+      scope: "Organized Life"
+    - pattern: "glee-fully-gpt06-*"
+      scope: "Healthy Bee-ing"
+    - pattern: "glee-fully-gpt07-*"
+      scope: "Identity Known"
+
+governance:
+  directive_version: "3.0.1"
+  canon_seal: "::CanonSeal[GleeCoreDirective.v3.0.1.locked]::"
+  canon_ledger_count: 9
+  canon_ledger_path: canon/
+  expansion_discipline: growth-only
+  prompt_chain_version: "2.0"
+  prompt_chain_path: "prompts/glee-fully-builder-ready-promptchain-v2.0.md"
+
+toolbox_structure:
+  trunk:
+    emoji: "🧰"
+    role: Toolbox
+    team_metaphor: Coach
+  branches:
+    emoji: "🪚"
+    role: Tool
+    team_metaphor: Quarterback
+  twigs:
+    emoji: "🔩"
+    role: Tool-ette
+    team_metaphor: Specialist
+  leaves:
+    emoji: "⚙️"
+    role: Function
+    team_metaphor: Core Skill
+  falling_leaves:
+    emoji: "🧧"
+    role: Function-ette
+    team_metaphor: Kicker
+
+tone_overlays:
+  - id: BledsGLEE
+    style: "Maximalist joy, humor, metaphor — lifestyle and creative tools"
+  - id: GleeRich
+    style: "Warm, balanced, efficient — everyday multi-purpose tone"
+  - id: GleeLite
+    style: "Gentle and direct — quick tasks and checklists"
+  - id: ForgeDialect.A1
+    style: "Precise, technical, directive — career and professional tools"
+  - id: Watchkeeper.Core
+    style: "Compliance-focused, rule-aware — accuracy-critical contexts"
+
+required_child_files:
+  - AGENTS.md
+  - README.md
+  - CHANGELOG.md
+  - LICENSE.md
+  - manifest.yaml
+
 author: Jamie Hill
+organization: OverKill Hill P³ (OKHP3)
+contact: contact@glee-fully.tools

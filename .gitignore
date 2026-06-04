@@ -1,0 +1,52 @@
+# OS artifacts
+desktop.ini
+.DS_Store
+Thumbs.db
+*.lnk
+
+# Replit environment internals
+.cache/
+.local/
+.config/
+.upm/
+replit.nix
+.replit
+
+# Python runtime
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+pip-*.json
+.venv/
+venv/
+env/
+
+# Binary / compiled assets (tracked as source only if intentional)
+# Uncomment to exclude office docs from git tracking:
+# *.docx
+# *.pdf
+
+# Node / package managers (if ever used)
+node_modules/
+.npm
+.pnpm-store/
+.yarn/
+
+# Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Secrets / env
+.env
+.env.*
+*.secret

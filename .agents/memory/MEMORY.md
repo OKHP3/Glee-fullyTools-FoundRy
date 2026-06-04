@@ -1,0 +1,1 @@
+- [Glee-fully FoundRy structure](gleefully-foundry-structure.md) — Private workbench repo: no web server, no deployment; all content in canon/, governance/, docs/, prompts/, etc.

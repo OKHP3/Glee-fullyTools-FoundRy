@@ -24,15 +24,15 @@
 
 | Ledger File                   | Purpose Summary                                                  |
 | ----------------------------- | ---------------------------------------------------------------- |
-| `dataLedger_narrative_v3.md`  | Final essays, storyworlds, documentation-grade narrative clauses |
-| `dataLedger_archive_v3.md`    | Retired logic, sunset entities, drifted overlays                 |
-| `dataLedger_ideation_v3.md`   | Idea seeds, raw stubs, tonal fragments                           |
-| `dataLedger_processing_v3.md` | 🔻 *Deprioritized*: legacy mid-run trails only                   |
-| `dataLedger_registry_v3.md`   | Project-registered entities and version-tagged declarations      |
-| `dataLedger_persona_v3.md`    | Voice archetypes, tone drift logs, overlay enforcements          |
-| `dataLedger_parameters_v3.md` | Runtime flags, execution toggles, suffix modes                   |
-| `dataLedger_system_v3.md`     | PME/CME schemas, suffix compliance, lifecycle control            |
-| `dataLedger_hydration_v3.md`  | Runtime snapshots, rehydration schemas, thread exports           |
+| `dataledger_narrative_v3.md`  | Final essays, storyworlds, documentation-grade narrative clauses |
+| `dataledger_archive_v3.md`    | Retired logic, sunset entities, drifted overlays                 |
+| `dataledger_ideation_v3.md`   | Idea seeds, raw stubs, tonal fragments                           |
+| `dataledger_processing_v3.md` | 🔻 *Deprioritized*: legacy mid-run trails only                   |
+| `dataledger_registry_v3.md`   | Project-registered entities and version-tagged declarations      |
+| `dataledger_persona_v3.md`    | Voice archetypes, tone drift logs, overlay enforcements          |
+| `dataledger_parameters_v3.md` | Runtime flags, execution toggles, suffix modes                   |
+| `dataledger_system_v3.md`     | PME/CME schemas, suffix compliance, lifecycle control            |
+| `dataledger_hydration_v3.md`  | Runtime snapshots, rehydration schemas, thread exports           |
 
 > 🔐 Projects must never simulate runtime memory. All continuity flows through `hydration_v3.md`.
 
@@ -123,7 +123,7 @@ Definition: All behavior toggles must reside in `parameters_v3.md`.
 
 ## 💾 RUNTIME PRESERVATION – Hydration Only
 
-Projects must delegate all runtime continuity to `dataLedger_hydration_v3.md`.
+Projects must delegate all runtime continuity to `dataledger_hydration_v3.md`.
 
 - Thread context snapshots
 - Continuity scaffolds
@@ -139,7 +139,7 @@ Projects must delegate all runtime continuity to `dataLedger_hydration_v3.md`.
 All new Projects must:
 
 1. Declare a canonical `PhaseScope` (e.g. Ideation, Processing, Gleam)
-2. Route outputs via `dataLedger_*_v3.md` schema
+2. Route outputs via `dataledger_*_v3.md` schema
 3. Declare overlay/persona if deviating from `GleeTone.A1`
 4. Register all project-generated logic in `registry_v3.md`
 5. Use `hydration_v3.md` for runtime continuity
@@ -174,7 +174,7 @@ CanonicalStatus: ::CanonSeal[GleeCoreDirective.v3.0.1.locked]::
 📎 **Project Enforcement Summary**
 
 - 🛠️ Mode: Project-Level Execution Compliance
-- 📘 Schema: All clauses routed to `dataLedger_*_v3.md`
+- 📘 Schema: All clauses routed to `dataledger_*_v3.md`
 - 📦 Memory: `hydration_v3.md` governs all runtime preservation
 - 🔖 Canon Status: `::CanonSeal[GleeCoreDirective.v3.0.1.locked]::`
 

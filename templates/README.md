@@ -10,21 +10,21 @@ the iteration. Letter-based suffixes are sequential development stages, not rand
 
 | File | Notes |
 |------|-------|
-| `_a.md` | Original base template |
-| `_ab.md` | A/B hybrid variant |
-| `_ae.md` | Advanced/extended variant (most complete branch-twig hybrid) |
-| `_c.md` | Alternate structure exploration |
-| `_c_enhanced_hybrid.md` | Enhanced hybrid build |
-| `_c_enhanced_hybrid_branch_twig.md` | Branch-twig specific enhanced hybrid |
-| `_e`, `_g`, `_h`, `_i`, `_j` | Sequential iteration refinements |
-| `_k`, `_m`, `_n`, `_o` | Continued refinement series |
-| `_q`, `_r`, `_s`, `_t` | Structural experiments |
-| `_u`, `_v`, `_y` | Late-stage refinements |
+| `glee-fully_frankentemplate_a.md` | Original base template |
+| `glee-fully_frankentemplate_ab.md` | A/B hybrid variant |
+| `glee-fully_frankentemplate_ae.md` | Advanced/extended variant (most complete branch-twig hybrid) |
+| `glee-fully_frankentemplate_c.md` | Alternate structure exploration |
+| `glee_fully_franken_template_c_enhanced_hybrid.md` | Enhanced hybrid build |
+| `glee_fully_franken_template_c_enhanced_hybrid_branch_twig.md` | Branch-twig specific enhanced hybrid |
+| `glee-fully_frankentemplate_e.md` through `_j.md` | Sequential iteration refinements |
+| `glee-fully_frankentemplate_k.md` through `_o.md` | Continued refinement series |
+| `glee-fully_frankentemplate_q.md` through `_t.md` | Structural experiments |
+| `glee-fully_frankentemplate_u.md` through `_y.md` | Late-stage refinements |
 
 ## Usage
 
 When forging a new Tool-ette, start with the latest iteration (`_ae` or `_y`) as
-the structural base. Feed it into the PromptChain (`prompts/glee-fully-builder-ready-promptchain-v2.0.md`)
+the structural base. Feed it into the PromptChain (`prompts/glee-fully-builder-ready-promptchain-v2-0.md`)
 at PROMPT01 as the payload scaffold.
 
 ## Governance

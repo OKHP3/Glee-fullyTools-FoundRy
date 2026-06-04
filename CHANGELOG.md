@@ -8,11 +8,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- Populate `canon/dataLedger_narrative_v3.md` with finalized narrative clauses
-- Populate `canon/dataLedger_ideation_v3.md` with active idea seeds
-- Populate `canon/dataLedger_archive_v3.md` with retired entities
-- Populate `canon/dataLedger_processing_v3.md` as legacy scaffold if needed
-- Add child-repo registry to `canon/dataLedger_registry_v3.md`
+- Populate `canon/dataledger_narrative_v3.md` with finalized narrative clauses
+- Populate `canon/dataledger_ideation_v3.md` with active idea seeds
+- Populate `canon/dataledger_archive_v3.md` with retired entities
+- Populate `canon/dataledger_processing_v3.md` as legacy scaffold if needed
+- Add child-repo registry to `canon/dataledger_registry_v3.md`
 
 ---
 
@@ -33,13 +33,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Canonical Data Ledger Governance Directive v3.0.1 (`GleeCoreDirective.v3.0.1.locked`)
-- `dataLedger_persona_v3.md` with tone overlays and JoyWarden.Core persona
-- `dataLedger_parameters_v3.md` with runtime flag schema
-- `dataLedger_hydration_v3.md` with rehydration and cross-GPT handoff schema
-- `dataLedger_system_v3.md` with PME/CME engine schemas
+- `dataledger_persona_v3.md` with tone overlays and JoyWarden.Core persona
+- `dataledger_parameters_v3.md` with runtime flag schema
+- `dataledger_hydration_v3.md` with rehydration and cross-GPT handoff schema
+- `dataledger_system_v3.md` with PME/CME engine schemas
 
 ### Changed
-- Deprioritized `dataLedger_processing_v3.md` — legacy scaffolds only
+- Deprioritized `dataledger_processing_v3.md` — legacy scaffolds only
 - Hydration-first runtime control mandated; prompt-local memory disallowed
 
 ---

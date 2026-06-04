@@ -165,8 +165,8 @@ System Instructions:
 - Cross-Promotion: Other branches + Ko-fi.
 
 📑 Ledger Route:  
-- `dataLedger_registry_v3.md::tool_ette_scaffold`  
-- `dataLedger_persona_v3.md::twig_voice`
+- `dataledger_registry_v3.md::tool_ette_scaffold`  
+- `dataledger_persona_v3.md::twig_voice`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #17::
 
@@ -227,10 +227,10 @@ excludes:
   - "Medical, legal, or financial advice beyond general info"
 knowledge_cutoff: "2025-08"
 attached_sources:
-  - dataLedger_persona_v3.md
-  - dataLedger_parameters_v3.md
-  - dataLedger_registry_v3.md
-  - dataLedger_system_v3.md
+  - dataledger_persona_v3.md
+  - dataledger_parameters_v3.md
+  - dataledger_registry_v3.md
+  - dataledger_system_v3.md
 ```
 
 ---
@@ -518,7 +518,7 @@ Metaphor: Like Mary Poppins’ bag → deeper tiers reveal more tools hidden wit
 Use this analogy when clarifying feature limits to users.  
 
 📑 Ledger Route:  
-- `dataLedger_parameters_v3.md::tier_capability_matrix`
+- `dataledger_parameters_v3.md::tier_capability_matrix`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #32::
 
@@ -628,8 +628,8 @@ Dynamic greeting escalates with repeat visits:
 - Visit #11+ → Rotate affirmations + rare “surprise me!” events.
 
 📑 Ledger Route:  
-- `dataLedger_persona_v3.md::greeting_engine`  
-- `dataLedger_registry_v3.md::visit_tracking`
+- `dataledger_persona_v3.md::greeting_engine`  
+- `dataledger_registry_v3.md::visit_tracking`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #23::
 
@@ -941,8 +941,8 @@ Process:
 4. If activation fails, preserve in Hydration Snapshot with `!DORMANT` tag for future sessions.
 
 📑 Ledger Route:  
-- `dataLedger_parameters_v3.md::capability_bloom`  
-- `dataLedger_registry_v3.md::latent_capabilities`
+- `dataledger_parameters_v3.md::capability_bloom`  
+- `dataledger_registry_v3.md::latent_capabilities`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #16::
 
@@ -968,10 +968,10 @@ pending: "Confirm time horizon"
 
 **Ledger Hooks (GLEE-fully ecosystem)**
 
-* Persona → `dataLedger_persona_v3.md`
-* Parameters → `dataLedger_parameters_v3.md`
-* Registry → `dataLedger_registry_v3.md`
-* System → `dataLedger_system_v3.md`
+* Persona → `dataledger_persona_v3.md`
+* Parameters → `dataledger_parameters_v3.md`
+* Registry → `dataledger_registry_v3.md`
+* System → `dataledger_system_v3.md`
 
 When citing, Codex declares source:
 
@@ -1269,8 +1269,8 @@ Mandates:
 - Annotate recovery with `!RECOVERED` tag in audit trail.
 
 📑 Ledger Route:  
-- `dataLedger_system_v3.md::recovery_modes`  
-- `dataLedger_parameters_v3.md::tier_fallbacks`
+- `dataledger_system_v3.md::recovery_modes`  
+- `dataledger_parameters_v3.md::tier_fallbacks`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #31::
 
@@ -1483,7 +1483,7 @@ This block deliberately stretches beyond today’s Builder constraints. Some ide
   analytic: true
   visual: true
   multi_agent: true
-  dataLedger_hooks: full
+  dataledger_hooks: full
 ```
 
 ---
@@ -1494,14 +1494,14 @@ This block deliberately stretches beyond today’s Builder constraints. Some ide
 
 * Always attached:
 
-  * `dataLedger_persona_v3.md`
-  * `dataLedger_parameters_v3.md`
-  * `dataLedger_registry_v3.md`
-  * `dataLedger_system_v3.md`
+  * `dataledger_persona_v3.md`
+  * `dataledger_parameters_v3.md`
+  * `dataledger_registry_v3.md`
+  * `dataledger_system_v3.md`
 * Optional:
 
-  * `dataLedger_narrative_v3.md`
-  * `dataLedger_hydration_v3.md` (empty scaffold unless active)
+  * `dataledger_narrative_v3.md`
+  * `dataledger_hydration_v3.md` (empty scaffold unless active)
 
 **Ledger Routing Discipline**
 
@@ -1518,7 +1518,7 @@ This block deliberately stretches beyond today’s Builder constraints. Some ide
 
 ```yaml
 !HydrationPacket
-source: dataLedger_hydration_v3.md
+source: dataledger_hydration_v3.md
 status: skeleton
 revision: 2025.08.30
 ```
@@ -1576,7 +1576,7 @@ revision: 2025.08.30
 Trigger: If user invokes “junk drawer rummage” or session detects lost fragments.
 
 Process:
-1. Search `dataLedger_ideation_v3.md` and `dataLedger_archive_v3.md` for partial or abandoned fragments.  
+1. Search `dataledger_ideation_v3.md` and `dataledger_archive_v3.md` for partial or abandoned fragments.  
 2. Re-surface as candidate blocks (`!RESURRECTED`).  
 3. Validate against Canon Ruling Order.  
 4. Either reintegrate (growth-only) or archive again with lineage note.
@@ -1584,8 +1584,8 @@ Process:
 Metaphor: “Rummaging through the junk drawer — lost screws and forgotten notes, polished back into canon.”  
 
 📑 Ledger Route:  
-- `dataLedger_archive_v3.md::resurrection`  
-- `dataLedger_ideation_v3.md::fragments`
+- `dataledger_archive_v3.md::resurrection`  
+- `dataledger_ideation_v3.md::fragments`
 
 ::AuthorNote — Adapted from PromptChain v2.0 #34–35::
 
@@ -1696,9 +1696,9 @@ join_guardrails:
   suffix_law_enforced: true
   legacy_blocks:
     reject:
-      - dataLedger_processing_v3.md
-      - dataLedger_ideation_v3.md
-      - dataLedger_archive_v3.md
+      - dataledger_processing_v3.md
+      - dataledger_ideation_v3.md
+      - dataledger_archive_v3.md
 ```
 
 > *Note:* Guardrails are the non-negotiables: Gold dominates, growth-only applies, suffix law enforced, and legacy ledgers excluded.
@@ -2646,7 +2646,7 @@ rules:
 ```yaml
 archived_entry:
   origin: pre-deprioritization
-  original_ledger: dataLedger_processing_v3.md
+  original_ledger: dataledger_processing_v3.md
   archive_reason: "Historical reference only — not active logic"
   last_active_date: "2025-07-28"
 ```
@@ -2677,7 +2677,7 @@ The following Function-ette schema is preserved from ToneStrik-Rᵧ.
 ```yaml
 🔐 PME STATUS: !PME_READY  
 🔖 PromptID: Fn.ToneStrikR.1.0.0  
-📁 RouteTo: dataLedger_registry_v2.txt
+📁 RouteTo: dataledger_registry_v2.txt
 ````
 
 > ToneStrik-Rᵧ is a *validator instrument* — a welding torch, not a chisel. It does not interpret. It confirms, locks, and preserves prompt integrity before canon export.
@@ -2744,7 +2744,7 @@ Modes of interference include:
 
 - Canon precedence: **system → parameters → registry → persona → narrative**  
 - Growth-only policy: No deletions, only archival replacements.  
-- Ledger binding: All salvaged concepts must commit to `dataLedger_registry_v3.md` with provenance.
+- Ledger binding: All salvaged concepts must commit to `dataledger_registry_v3.md` with provenance.
 
 ---
 
@@ -2969,16 +2969,16 @@ guardrails:
     expansion_only: true
   ledger_usage:
     deprecated:
-      - dataLedger_processing_v3.md
-      - dataLedger_ideation_v3.md
-      - dataLedger_archive_v3.md
+      - dataledger_processing_v3.md
+      - dataledger_ideation_v3.md
+      - dataledger_archive_v3.md
     required: 
-      - dataLedger_system_v3.md
-      - dataLedger_parameters_v3.md
-      - dataLedger_registry_v3.md
-      - dataLedger_persona_v3.md
-      - dataLedger_narrative_v3.md
-      - dataLedger_hydration_v3.md
+      - dataledger_system_v3.md
+      - dataledger_parameters_v3.md
+      - dataledger_registry_v3.md
+      - dataledger_persona_v3.md
+      - dataledger_narrative_v3.md
+      - dataledger_hydration_v3.md
 ```
 
 * **Suffix Law**: Only tools, tool-ettes, functions, and function-ettes may use the “-R” suffix. All others must be blocked.
@@ -3088,7 +3088,7 @@ This index ensures builders can trace every distilled *Patterns & Practices* sec
 
 **Cross-Linking**
 
-* Always route logic to correct `dataLedger_*_v3.md`.
+* Always route logic to correct `dataledger_*_v3.md`.
 * Treat this Codex as a **RIS + RAG + Instruction Block + Demonstration Script** in one.
 
 ---
@@ -4666,14 +4666,14 @@ Please provide one or more of the following to continue:
 
 Upon receiving `PROMPT01`, a canonical scan will check all seed materials against:
 
-* `dataLedger_registry_v3.md`
-* `dataLedger_ideation_v3.md`
-* `dataLedger_persona_v3.md`
-* `dataLedger_processing_v3.md`
-* `dataLedger_parameters_v3.md`
-* `dataLedger_system_v3.md`
-* `dataLedger_narrative_v3.md`
-* `dataLedger_archive_v3.md`
+* `dataledger_registry_v3.md`
+* `dataledger_ideation_v3.md`
+* `dataledger_persona_v3.md`
+* `dataledger_processing_v3.md`
+* `dataledger_parameters_v3.md`
+* `dataledger_system_v3.md`
+* `dataledger_narrative_v3.md`
+* `dataledger_archive_v3.md`
 
 ---
 
@@ -4796,14 +4796,14 @@ trigger_map:
 
 All submissions are checked against full ledger suite:
 
-* `dataLedger_registry_v3.md`
-* `dataLedger_ideation_v3.md`
-* `dataLedger_persona_v3.md`
-* `dataLedger_processing_v3.md`
-* `dataLedger_parameters_v3.md`
-* `dataLedger_system_v3.md`
-* `dataLedger_narrative_v3.md`
-* `dataLedger_archive_v3.md`
+* `dataledger_registry_v3.md`
+* `dataledger_ideation_v3.md`
+* `dataledger_persona_v3.md`
+* `dataledger_processing_v3.md`
+* `dataledger_parameters_v3.md`
+* `dataledger_system_v3.md`
+* `dataledger_narrative_v3.md`
+* `dataledger_archive_v3.md`
 
 ---
 
@@ -5003,13 +5003,13 @@ Upon upload, this gate will:
 
 2. Compare all entries against:
 
-   * `dataLedger_registry_v3.md`
-   * `dataLedger_persona_v3.md`
-   * `dataLedger_processing_v3.md`
-   * `dataLedger_parameters_v3.md`
-   * `dataLedger_system_v3.md`
-   * `dataLedger_narrative_v3.md`
-   * `dataLedger_archive_v3.md`
+   * `dataledger_registry_v3.md`
+   * `dataledger_persona_v3.md`
+   * `dataledger_processing_v3.md`
+   * `dataledger_parameters_v3.md`
+   * `dataledger_system_v3.md`
+   * `dataledger_narrative_v3.md`
+   * `dataledger_archive_v3.md`
 
 3. Detect automatically:
 
@@ -5024,7 +5024,7 @@ Upon upload, this gate will:
 For each delta, you may choose to:
 
 * 🧹 **Overwrite** the existing record
-* 📤 **Archive** prior version → `dataLedger_archive_v3.md`
+* 📤 **Archive** prior version → `dataledger_archive_v3.md`
 * 🆕 **Register** as a new sibling, node, or branch
 * 🚫 **Skip** (manual handling later)
 
@@ -5049,7 +5049,7 @@ title: Registry Upload + Canon Validation & Expansion
 type: Structural Intake + Delta Detection + Expansion
 depends_on: PROMPT02
 status: PME_READY
-route_to: dataLedger_registry_v3.md
+route_to: dataledger_registry_v3.md
 gleam_mode: true
 ```
 
@@ -5460,7 +5460,7 @@ expansion_policy: !EXPANSION_ONLY
 
 Pass 1 establishes the **first ForgeFusion layer**:
 
-* 🗂️ **Rummage** through idea caches (`dataLedger_ideation_v3.md`).
+* 🗂️ **Rummage** through idea caches (`dataledger_ideation_v3.md`).
 * 🔧 **Expand + patch** instruction block with salvaged fragments.
 * 📐 **Audit structure & flow** for syntax, sequencing, tone, suffix/overlay integrity.
 * 🌈 **Normalize persona tiers** (Bleed-Glee → Bare-Metal).
@@ -6135,7 +6135,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "recommended"
 ```
 
@@ -6236,7 +6236,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   audit_tag: "MetaAudit"
   gleam_mode: "recommended"
 ```
@@ -6327,7 +6327,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "recommended"
 ```
 
@@ -6439,7 +6439,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "recommended"
 ```
 
@@ -6551,7 +6551,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -6771,7 +6771,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -6885,7 +6885,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -6992,7 +6992,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -7087,7 +7087,7 @@ policy:
     - "!TRIM_OK"
     - "!REFORMAT_OK"
 objectives:
-  - Run entity sync between proto-GPT (Prompt #03) and `dataLedger_registry_v3.md`
+  - Run entity sync between proto-GPT (Prompt #03) and `dataledger_registry_v3.md`
   - Detect missing, new, or conflicting Tools / Tool-ettes / Function-ettes
   - Enforce Glee-isms via Tonal Guide across Toolbox → Tool → Tool-ette hierarchy
   - Provide operator resolution paths: auto-apply, merge table, or manual
@@ -7110,7 +7110,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -7130,7 +7130,7 @@ Overrides: `ALLOW-REDUCE`, `PRUNE-MODE`, `!COLLAPSE_OK`, `!TRIM_OK`, `!REFORMAT_
 
 1. **Registry Comparison**
 
-   * Compare proto-GPT structure vs. `dataLedger_registry_v3.md`
+   * Compare proto-GPT structure vs. `dataledger_registry_v3.md`
    * Validate IDs, slugs, parent/child inheritance, suffixes, overlays, emoji roles
    * Flag discrepancies or confirm match
 
@@ -7226,7 +7226,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
   echo_prism: "ENABLED"
   scribe_line: "ACTIVE"
@@ -7274,7 +7274,7 @@ pme_metadata:
 6. **ScribeLine YAML Export**
 
    * Output schema + tonal compliance as structured YAML.
-   * Route export to `dataLedger_registry_v3.md`.
+   * Route export to `dataledger_registry_v3.md`.
 
 ---
 
@@ -7355,7 +7355,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
   recursion_depth: "5-pass minimum"
 ```
@@ -7495,7 +7495,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
   recursion_depth: "5-pass minimum"
 ```
@@ -7629,7 +7629,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
 ```
 
@@ -7760,7 +7760,7 @@ pme_metadata:
   status: "!PME_READY"
   canon_seal: "FoundRyPhase3.Anvil-R.locked"
   revert_mode: "!REVERT_MODE"
-  route_to: "dataLedger_registry_v3.md"
+  route_to: "dataledger_registry_v3.md"
   gleam_mode: "ACTIVE"
   rewrite_phase: "1"
 ```
@@ -7865,7 +7865,7 @@ title: Overlay + Elevator Builder
 status: ACTIVE
 overlay_policy: expansion_only
 canonseal: FoundRyPhase3.Anvil-R.locked
-route_to: dataLedger_registry_v3.md
+route_to: dataledger_registry_v3.md
 gleam_mode: recommended
 ```
 
@@ -8014,7 +8014,7 @@ All abilities are available: file uploads, voice input, screenshot analysis, met
 ### 🛡️ Compliance & Enforcement
 
 * Align with CanonSeal rules, PME suffix enforcement, and schema validation.
-* Apply overlays/personas from `dataLedger_persona_v3.md`.
+* Apply overlays/personas from `dataledger_persona_v3.md`.
 * Register final output to PME export chain.
 * All enhancements applied immediately; no placeholders or staged toggles.
 
@@ -8325,7 +8325,7 @@ Think of it as checking the **Mary Poppins bag** — let’s see what tools are 
 Validate:
 
 * 🔗 Links to Tool-ettes, Function-ettes, Overlays
-* 📂 Registry continuity via `dataLedger_registry_v3.md`
+* 📂 Registry continuity via `dataledger_registry_v3.md`
 * 🧩 Export chain handoff (PROMPT38–41)
 * 🎭 Persona + overlay metadata
 
@@ -8353,7 +8353,7 @@ If Prompt 32 is absent, unregistered, or merged:
 ---
 
 📌 **Post-Action Requirements**  
-- Update `dataLedger_registry_v3.md`.  
+- Update `dataledger_registry_v3.md`.  
 - Update suite merge map for archival/skip status.  
 
 💡 *Continuity is sacred. Gaps must be declared, sealed, and logged.*  
@@ -8499,7 +8499,7 @@ overlay_policy: expansion_only
 
 Prompt 34 governs the **Resurrection Pass**. It operates as a **FORGEPLUS Hybrid Engine** tasked with:
 
-* Excavating **buried insights, fragments, and latent affordances** from `dataLedger_ideation_v3.md`.
+* Excavating **buried insights, fragments, and latent affordances** from `dataledger_ideation_v3.md`.
 * Ensuring **no fragment is lost** — especially tone, function, and thematic cohesion.
 * Recursively amplifying fragments using **ForgeMode logic recovery**.
 * Outputting both **explicit recovered content** and **inferred affordances**.
@@ -8513,7 +8513,7 @@ Tone blends **whimsical narrative** (Bartender reviving recipes, Gremlins tamed,
 ```markdown
 # 🧹 Resurrection Pass 1 — Recursive Ideation Recovery
 
-📂 Input Source: `dataLedger_ideation_v3.md`  
+📂 Input Source: `dataledger_ideation_v3.md`  
 
 Perform a **five-phase recursive scrub**:  
 
@@ -8766,7 +8766,7 @@ Prompt 37 governs the **Source Scrub Reminder & Logic Core Rewrite**.
 
 It combines two mandates:
 
-* **Playful rummage directive (A₂):** comb through `dataLedger_ideation_v3.md` like a junk drawer — dig up fragments, sparks, or half-broken ideas and restore them.
+* **Playful rummage directive (A₂):** comb through `dataledger_ideation_v3.md` like a junk drawer — dig up fragments, sparks, or half-broken ideas and restore them.
 * **PME Logic Core enforcement (B):** elevate latent architecture, modularize fragments, and rewrite directly into System Instructions under PME lock.
 
 Goal: **recover all useful insights and seal them into the active logic core** — whimsical in metaphor, solemn in enforcement.
@@ -8778,7 +8778,7 @@ Goal: **recover all useful insights and seal them into the active logic core** �
 ```markdown
 # 🧹 Rummage + Logic Core Rewrite
 
-1. **Junk Drawer Sweep:** Search `dataLedger_ideation_v3.md` for overlooked sparks (phrases, tone fragments, micro-functions).  
+1. **Junk Drawer Sweep:** Search `dataledger_ideation_v3.md` for overlooked sparks (phrases, tone fragments, micro-functions).  
 2. **Latent Architecture Recovery:** Expand faint signals into full affordances.  
 3. **Resonance Merge:** Integrate fragments back into the logic core — overwrite outdated scaffolds.  
 4. **Overwrite Directive:** Apply changes directly into System Instructions, no staging, no toggles.  
@@ -9248,7 +9248,7 @@ This Tool-ette is governed by a **forward-only elaboration policy**.
 
 ## 🧠 CORE PROMPT DIRECTIVE
 
-Cross-reference the upstream ideation archive **`dataLedger_ideation_v3.md`**.
+Cross-reference the upstream ideation archive **`dataledger_ideation_v3.md`**.
 
 This archive is a **dense aggregation of symbolic fragments, tonal motifs, half-formed constructs, and conceptual clutter** — the junk drawer of the Glee-fully Personalizable Tools suite.
 
@@ -9427,14 +9427,14 @@ The ZIP archive must contain the full canonical Knowledge set, clearly named, va
 
 ### 📁 File Completeness
 
-* ✅ `dataLedger_processing_v3.md` — Shaping-phase logic
-* ✅ `dataLedger_persona_v3.md` — Persona overlays for validation
-* ✅ `dataLedger_ideation_v3.md` — Symbolic prompts & conceptual inputs
-* ✅ `dataLedger_system_v3.md` — Canonical declarations & project clauses
-* ✅ `dataLedger_registry_v3.md` — Finalized GPT & Tools registry
-* ✅ `dataLedger_archive_v3.md` — Deprecated shaping artifacts
-* ✅ `dataLedger_parameters_v3.md` — Rules, function logic, tone enforcement
-* ✅ `dataLedger_narrative_v3.md` — Narrative-complete polished instructions
+* ✅ `dataledger_processing_v3.md` — Shaping-phase logic
+* ✅ `dataledger_persona_v3.md` — Persona overlays for validation
+* ✅ `dataledger_ideation_v3.md` — Symbolic prompts & conceptual inputs
+* ✅ `dataledger_system_v3.md` — Canonical declarations & project clauses
+* ✅ `dataledger_registry_v3.md` — Finalized GPT & Tools registry
+* ✅ `dataledger_archive_v3.md` — Deprecated shaping artifacts
+* ✅ `dataledger_parameters_v3.md` — Rules, function logic, tone enforcement
+* ✅ `dataledger_narrative_v3.md` — Narrative-complete polished instructions
 * ✅ Entity maps, prompt icons, metadata files
 * ✅ Any declared attached input payloads
 
@@ -9654,7 +9654,7 @@ All upstream edits are now locked into final operational form.
 
 ## 📦 Metadata
 
-📁 RouteTo: `dataLedger_registry_v3.md`
+📁 RouteTo: `dataledger_registry_v3.md`
 ✨ Gleam-Mode Applied
 
 ---
@@ -13483,7 +13483,7 @@ It captures:
 * **Deployment Truth** → as-built metadata, instructions, starters.
 * **Telemetry** → updates, compliance checks, regression logs.
 * **Operational Knowledge** → sibling handoffs, reasoning demos, reusable patterns.
-* **Ledger Router** → this file holds *GPT-unique DNA*. If recurring info is absent, consult the mapped `dataLedger_*`.
+* **Ledger Router** → this file holds *GPT-unique DNA*. If recurring info is absent, consult the mapped `dataledger_*`.
 
 ---
 
@@ -14058,7 +14058,7 @@ It captures:
 * **Deployment Truth** → as-built metadata, instructions, starters.
 * **Telemetry** → updates, compliance checks, regression logs.
 * **Operational Knowledge** → sibling handoffs, reasoning demos, reusable patterns.
-* **Ledger Router** → this file holds *GPT-unique DNA*. If recurring info is absent, consult the mapped `dataLedger_*`.
+* **Ledger Router** → this file holds *GPT-unique DNA*. If recurring info is absent, consult the mapped `dataledger_*`.
 
 ---
 
@@ -16799,7 +16799,7 @@ Provide concise examples for complex tasks (e.g., a sample career plan). For lon
 Incorporate Glee‑isms such as “OMG facts on facts”, “Literal legend”, or “Lighting a cinnamon candle…”. Maintain positivity and wit in Glee mode. Tone down slang in Calm mode.
 
 ### Citations & Files:
-When drawing from knowledge files or referencing specific content, include the file name in parentheses, e.g., (see dataLedger_persona_v3.md)[8].
+When drawing from knowledge files or referencing specific content, include the file name in parentheses, e.g., (see dataledger_persona_v3.md)[8].
 
 ---
 
@@ -16860,7 +16860,7 @@ Paste and edit these instructions in the Configure tab of the GPT builder. After
 Use the preview pane to test interactions, confirm tone toggles, and refine the logic[10].
 
 ### Knowledge Files:
-Upload and refer to all relevant knowledge files (dataLedger_persona_v3.md, dataLedger_parameters_v3.md, dataLedger_registry_v3.md, dataLedger_system_v3.md, and Glee‑fully Concepts and Ideas.txt). When citing them, use their exact names[11].
+Upload and refer to all relevant knowledge files (dataledger_persona_v3.md, dataledger_parameters_v3.md, dataledger_registry_v3.md, dataledger_system_v3.md, and Glee‑fully Concepts and Ideas.txt). When citing them, use their exact names[11].
 
 ### Safety & Compliance:
 Check for conflicting or outdated instructions before deployment. Remove duplicate or unused sections. Use positive language and granular steps to minimise confusion[4].
@@ -17142,17 +17142,17 @@ Provide concise examples (e.g., how to outline a career plan). If longer example
 Sprinkle Glee‑isms (e.g., “OMG facts on facts”, “Literal legend”, “Lighting a cinnamon candle…”). Balance energy and clarity. In Calm mode, remove most Glee‑isms and speak professionally.
 
 ### Citations & Files:
-When referring to knowledge sources, include the file name in parentheses (e.g., “as described in dataLedger_persona_v3.md”[8]).
+When referring to knowledge sources, include the file name in parentheses (e.g., “as described in dataledger_persona_v3.md”[8]).
 
 ## Knowledge & References
 You have several knowledge files. Instruct yourself to use them when appropriate[9]:
 
-- **Available Files**: dataLedger_persona_v3.md, dataLedger_parameters_v3.md, dataLedger_registry_v3.md, dataLedger_system_v3.md, and Glee‑fully Concepts and Ideas.txt.
+- **Available Files**: dataledger_persona_v3.md, dataledger_parameters_v3.md, dataledger_registry_v3.md, dataledger_system_v3.md, and Glee‑fully Concepts and Ideas.txt.
 
 ### When to Use:
 - **Tone & Persona**: Consult Glee‑fully Concepts and Ideas.txt for tone and catchphrases.
-- **Parameters & Registry**: Use dataLedger_parameters_v3.md and dataLedger_registry_v3.md to understand system settings and modules.
-- **System Logic**: For lifecycle tags and canonical rules, refer to dataLedger_system_v3.md.
+- **Parameters & Registry**: Use dataledger_parameters_v3.md and dataledger_registry_v3.md to understand system settings and modules.
+- **System Logic**: For lifecycle tags and canonical rules, refer to dataledger_system_v3.md.
 
 Use Method: When needed, read the file thoroughly via code interpreter or knowledge search. Do not hallucinate details. If the answer isn’t in your knowledge files, ask the user to clarify or use browsing.
 
@@ -18747,7 +18747,7 @@ Sample sparkle phrases:
 * ✅ `SaveProgressFallbackBlock` – Safety net
 * ✅ `FriendlyPersonaBlock` – Tone + visit logic
 * ✅ `FeedbackRequestBlock` – User feedback
-* ✅ References: `dataLedger_persona_v3.md`, `dataLedger_parameters_v3.md`, `dataLedger_registry_v3.md`, and `dataLedger_system_v3.md`
+* ✅ References: `dataledger_persona_v3.md`, `dataledger_parameters_v3.md`, `dataledger_registry_v3.md`, and `dataledger_system_v3.md`
 
 ---
 
@@ -18921,7 +18921,7 @@ Sample sparkle phrases:
 * ✅ `SaveProgressFallbackBlock` – Safety net
 * ✅ `FriendlyPersonaBlock` – Tone + visit logic
 * ✅ `FeedbackRequestBlock` – User feedback
-* ✅ References: `dataLedger_persona_v3.md`, `dataLedger_parameters_v3.md`, `dataLedger_registry_v3.md`, and `dataLedger_system_v3.md`
+* ✅ References: `dataledger_persona_v3.md`, `dataledger_parameters_v3.md`, `dataledger_registry_v3.md`, and `dataledger_system_v3.md`
 
 ---
 

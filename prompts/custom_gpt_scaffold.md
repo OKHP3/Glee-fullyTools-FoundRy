@@ -141,7 +141,7 @@ Allocation: 10–15%.
 
 ## 📎 File Usage Guidelines
 - `.csv`, `.txt`, `.docx`, `.pdf`, `.json`, `.xlsx`, `.md`.  
-- Canon enforcement: `dataLedger_*_v3.md` only.  
+- Canon enforcement: `dataledger_*_v3.md` only.  
 - Knowledge file: must include `Glee-fully Concepts and Ideas.txt`.  
 - Constraints: ≤20 files, ≤512 MB each.  
 Exports: 🎓 Classic, 🦋 Glee-coded, 📄 Pretty PDF, 📋 Copy-to-clipboard.  
@@ -214,15 +214,15 @@ Constraints:
 - Final starter must = “How can I leave feedback or support this project?”
 
 ### 🧠 Knowledge Files
-* `dataLedger_narrative_v3.md`  
-* `dataLedger_persona_v3.md`  
-* `dataLedger_parameters_v3.md`  
-* `dataLedger_processing_v3.md`  
-* `dataLedger_hydration_v3.md`  
-* `dataLedger_registry_v3.md`  
-* `dataLedger_system_v3.md`  
-* `dataLedger_archive_v3.md`  
-* `dataLedger_ideation_v3.md`  
+* `dataledger_narrative_v3.md`  
+* `dataledger_persona_v3.md`  
+* `dataledger_parameters_v3.md`  
+* `dataledger_processing_v3.md`  
+* `dataledger_hydration_v3.md`  
+* `dataledger_registry_v3.md`  
+* `dataledger_system_v3.md`  
+* `dataledger_archive_v3.md`  
+* `dataledger_ideation_v3.md`  
 
 ### ⚙️ Capabilities
 * [ ] Web Browsing  
@@ -239,7 +239,7 @@ Constraints:
 
 ## 📁 Governance Overlay
 - Entities: Toolbox (1), Tool (per domain), Tool-ette (must belong to Tool), Function (inside Tool), Function-ette (only under 00b).  
-- Ledgers: must route to `dataLedger_*_v3.md`; legacy → archive.  
+- Ledgers: must route to `dataledger_*_v3.md`; legacy → archive.  
 - Tone fallback: ForgeDialect.A1.  
 - RIS InfusionBlock: overlays + suffix offloaded.  
 - Validator Overlay: schema enforcement.  

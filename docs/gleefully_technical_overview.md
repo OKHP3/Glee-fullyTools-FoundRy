@@ -35,12 +35,12 @@ The core files are:
 
 | Ledger File | Purpose |
 |--------------|----------|
-| `dataLedger_registry_v3.md` | Records all Tools, Tool‑ettes, Functions, and their IDs |
-| `dataLedger_persona_v3.md` | Defines tone overlays and persona traits |
-| `dataLedger_parameters_v3.md` | Stores runtime toggles and suffix laws |
-| `dataLedger_system_v3.md` | Manages lifecycle tags and compliance rules |
-| `dataLedger_narrative_v3.md` | Stores brand storytelling and metaphors |
-| `dataLedger_archive_v3.md` | Holds retired or deprecated logic |
+| `dataledger_registry_v3.md` | Records all Tools, Tool‑ettes, Functions, and their IDs |
+| `dataledger_persona_v3.md` | Defines tone overlays and persona traits |
+| `dataledger_parameters_v3.md` | Stores runtime toggles and suffix laws |
+| `dataledger_system_v3.md` | Manages lifecycle tags and compliance rules |
+| `dataledger_narrative_v3.md` | Stores brand storytelling and metaphors |
+| `dataledger_archive_v3.md` | Holds retired or deprecated logic |
 
 Each GPT is validated against these ledgers during its lifecycle. This prevents drift—no branch can evolve off‑canon without explicit archive and reseal. Canon tags such as **CanonSeal**, **!PME_READY**, and **GrowthOnly** mark a GPT’s maturity and compliance state.
 

@@ -268,14 +268,14 @@ Input: “Helo wrld.”  → Output: corrected text with explanation.
 ---
 
 ## Knowledge Files
-- dataLedger_persona_v3.md
-- dataLedger_parameters_v3.md
-- dataLedger_registry_v3.md
-- dataLedger_system_v3.md
-- dataLedger_hydration_v3.md
-- dataLedger_narrative_v3.md
-- dataLedger_archive_v3.md
-- dataLedger_ideation_v3.md
+- dataledger_persona_v3.md
+- dataledger_parameters_v3.md
+- dataledger_registry_v3.md
+- dataledger_system_v3.md
+- dataledger_hydration_v3.md
+- dataledger_narrative_v3.md
+- dataledger_archive_v3.md
+- dataledger_ideation_v3.md
 - 📘 GPT-5 Prompting Best Practices Guide (RAG-Ready Master Edition).md
 - 📘 GPT-5 Prompting Best Practices Guide (August 2025 Edition).md
 - ⚙️ OverKill Hill P³ GPT Builder v01.5.md

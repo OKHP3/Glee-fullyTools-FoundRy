@@ -53,24 +53,24 @@ The 9 canonical dataLedger files. These override all other sources.
 
 | File | Role | When to Read |
 |------|------|-------------|
-| `dataLedger_registry_v3.md` | All registered GPT entities and IDs | Checking entity existence, adding new GPTs |
-| `dataLedger_persona_v3.md` | Tone overlays and persona schemas | Tone questions, overlay assignments |
-| `dataLedger_parameters_v3.md` | Runtime flags and suffix rules | Execution modes, toggle decisions |
-| `dataLedger_system_v3.md` | PME/CME engine schemas | Lifecycle questions, engine logic |
-| `dataLedger_hydration_v3.md` | Runtime snapshots and handoff schema | Cross-GPT continuity, thread restoration |
-| `dataLedger_narrative_v3.md` | Finalized narrative clauses | Brand copy, canonical descriptions |
-| `dataLedger_ideation_v3.md` | Active idea seeds | Finding candidate new Tools/Tool-ettes |
-| `dataLedger_archive_v3.md` | Retired logic | Checking deprecation status |
-| `dataLedger_processing_v3.md` | ⚠️ Legacy only — deprioritized | Only for pre-v3.0.1 trail lookup |
+| `dataledger_registry_v3.md` | All registered GPT entities and IDs | Checking entity existence, adding new GPTs |
+| `dataledger_persona_v3.md` | Tone overlays and persona schemas | Tone questions, overlay assignments |
+| `dataledger_parameters_v3.md` | Runtime flags and suffix rules | Execution modes, toggle decisions |
+| `dataledger_system_v3.md` | PME/CME engine schemas | Lifecycle questions, engine logic |
+| `dataledger_hydration_v3.md` | Runtime snapshots and handoff schema | Cross-GPT continuity, thread restoration |
+| `dataledger_narrative_v3.md` | Finalized narrative clauses | Brand copy, canonical descriptions |
+| `dataledger_ideation_v3.md` | Active idea seeds | Finding candidate new Tools/Tool-ettes |
+| `dataledger_archive_v3.md` | Retired logic | Checking deprecation status |
+| `dataledger_processing_v3.md` | Legacy only — deprioritized | Only for pre-v3.0.1 trail lookup |
 
 ### `governance/` — Directives and Cathedral Layout
 
 | File | Role |
 |------|------|
-| `glee-fully_project_governance_v3.0.1.md` | Canonical Governance Directive — primary rule document |
+| `glee-fully_project_governance_v3-0-1.md` | Canonical Governance Directive — primary rule document |
 | `glee-fully_project_instructions.md` | Project-level execution compliance instructions |
 | `00-glee-fully-strategy-center_instructions.md` | StrategyCenter project instructions |
-| `operator's-cathedral-layout-📐.md` | Master architecture reference (865KB — comprehensive layout) |
+| `operators-cathedral-layout.md` | Master architecture reference (865KB — comprehensive layout) |
 
 ### `docs/` — Overviews and Synthesis
 
@@ -84,7 +84,7 @@ The 9 canonical dataLedger files. These override all other sources.
 
 | File | Role |
 |------|------|
-| `glee-fully-builder-ready-promptchain-v2.0.md` | Primary GPT forge engine (PROMPT00–PROMPT05+) |
+| `glee-fully-builder-ready-promptchain-v2-0.md` | Primary GPT forge engine (PROMPT00–PROMPT05+) |
 | `custom_gpt_scaffold.md` | Base GPT instruction scaffold |
 | `custom_gpt_hybrid_scaffold.md` | Hybrid scaffold for branch/twig combinations |
 | `glee-fully_tools_megaprompt.md` | Megaprompt for multi-tool operations |
@@ -93,8 +93,8 @@ The 9 canonical dataLedger files. These override all other sources.
 
 | File | Role |
 |------|------|
-| `🦋-glee-fully-vernacular-complete.md` | Full voice library — all tone patterns, phrases, expressions |
-| `🦋-glee-fully-vernacular-lite.md` | Condensed quick-reference for tone compliance |
+| `glee-fully-vernacular-complete.md` | Full voice library — all tone patterns, phrases, expressions |
+| `glee-fully-vernacular-lite.md` | Condensed quick-reference for tone compliance |
 
 ### `templates/` — GPT Instruction Template Variants
 
@@ -105,9 +105,9 @@ Each letter represents a distinct structural or tonal iteration. Use the latest 
 
 | File | Role |
 |------|------|
-| `gpt-pulsebook-evaluation-v1.4.md` | PulseBook evaluation v1.4 |
-| `gpt-pulsebook-evaluation-v1.6.md` | PulseBook evaluation v1.6 |
-| `gpt-pulsebook-evaluation-v1.7.md` | PulseBook evaluation v1.7 (latest) |
+| `gpt-pulsebook-evaluation-v1-4.md` | PulseBook evaluation v1.4 |
+| `gpt-pulsebook-evaluation-v1-6.md` | PulseBook evaluation v1.6 |
+| `gpt-pulsebook-evaluation-v1-7.md` | PulseBook evaluation v1.7 (latest) |
 
 ### `inventory/` — Entity Catalog
 
@@ -139,13 +139,13 @@ Any edit must preserve all prior content and extend it.
 
 ### 3. Canon Authority Hierarchy
 ```
-canon/ dataLedger_* files  >  governance/ directives  >  GPT-local logic
+canon/ dataledger_* files  >  governance/ directives  >  GPT-local logic
 ```
 When sources conflict, the canon files win.
 
 ### 4. Output Signature Requirement
 All outputs from canonical logic must carry a `!CLAUSE` ID declared in
-`canon/dataLedger_registry_v3.md`. Format:
+`canon/dataledger_registry_v3.md`. Format:
 ```yaml
 !CLAUSE: !PME_READY
 ID: [EntityType].[Name].[MajorVersion].[MinorVersion].[Patch]
@@ -157,16 +157,16 @@ DeclaredBy: Glee-fully FoundRy
 ### 5. Tone Default
 Threads without an explicit overlay default to `GleeTone.A1`
 (uplifting, whimsical, clear, and articulate). Log deviations in
-`canon/dataLedger_persona_v3.md` using `!DRIFT_EVENT`.
+`canon/dataledger_persona_v3.md` using `!DRIFT_EVENT`.
 
 ### 6. No Prompt-Local Memory
 Runtime state must not be stored in GPT-local logic or prompt context.
-All continuity uses `canon/dataLedger_hydration_v3.md`.
+All continuity uses `canon/dataledger_hydration_v3.md`.
 
 ### 7. Suffix Law
-`-R` and `-Rᵧ` suffixes are exclusive to OverKill Hill P³ and The GPT Found-Rᵧ.
+`-R` and `-Ry` suffixes are exclusive to OverKill Hill P3 and The GPT Found-Ry.
 Glee-fully GPTs are **exempt** — do not apply these suffixes here.
-Violations must be retired to `canon/dataLedger_archive_v3.md` with `!LEGACY_RETIRED`.
+Violations must be retired to `canon/dataledger_archive_v3.md` with `!LEGACY_RETIRED`.
 
 ### 8. This Is a Workbench — No Web Server
 Do not configure HTTP server workflows, deployment targets, or static site builds.
@@ -177,11 +177,11 @@ The `web-templates/` folder is template source material, not a deployable site.
 ## Required Files for Every Child Repository
 
 ```
-AGENTS.md       ← AI agent navigation (this format)
-README.md       ← Human-readable overview
-CHANGELOG.md    ← Version history
-LICENSE.md      ← License declaration
-manifest.yaml   ← Repo metadata (schema_version, type, brand_domain, parent_foundry)
+AGENTS.md       <- AI agent navigation (this format)
+README.md       <- Human-readable overview
+CHANGELOG.md    <- Version history
+LICENSE.md      <- License declaration
+manifest.yaml   <- Repo metadata (schema_version, type, brand_domain, parent_foundry)
 ```
 
 ---
@@ -189,12 +189,12 @@ manifest.yaml   ← Repo metadata (schema_version, type, brand_domain, parent_fo
 ## Clause Lifecycle (Quick Reference)
 
 ```
-ideation_v3.md  →  registry_v3.md / persona_v3.md / parameters_v3.md
-                →  narrative_v3.md  (finalized)
-                →  archive_v3.md    (retired)
+dataledger_ideation_v3.md  ->  dataledger_registry_v3.md / dataledger_persona_v3.md / dataledger_parameters_v3.md
+                           ->  dataledger_narrative_v3.md  (finalized)
+                           ->  dataledger_archive_v3.md    (retired)
 ```
 
-Clauses may re-enter ideation from `hydration_v3.md` with updated `!CLAUSE` tags.
+Clauses may re-enter ideation from `dataledger_hydration_v3.md` with updated `!CLAUSE` tags.
 
 ---
 

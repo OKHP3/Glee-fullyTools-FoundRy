@@ -63,21 +63,21 @@ Glee-fullyTools-FoundRy/
 │
 ├── canon/                 ← THE 9 CANONICAL DATALEDGER FILES (authoritative)
 │   ├── README.md          ← Ledger index and governance rules
-│   ├── dataLedger_registry_v3.md      ← All registered GPT entities
-│   ├── dataLedger_persona_v3.md       ← Tone overlays and persona schema
-│   ├── dataLedger_parameters_v3.md    ← Runtime flags and toggles
-│   ├── dataLedger_system_v3.md        ← PME/CME engine schemas
-│   ├── dataLedger_hydration_v3.md     ← Runtime snapshots and handoff
-│   ├── dataLedger_narrative_v3.md     ← Finalized narrative clauses
-│   ├── dataLedger_ideation_v3.md      ← Idea seeds and stubs
-│   ├── dataLedger_archive_v3.md       ← Retired / deprecated logic
-│   └── dataLedger_processing_v3.md    ← ⚠️ Legacy only (deprioritized)
+│   ├── dataledger_registry_v3.md      ← All registered GPT entities
+│   ├── dataledger_persona_v3.md       ← Tone overlays and persona schema
+│   ├── dataledger_parameters_v3.md    ← Runtime flags and toggles
+│   ├── dataledger_system_v3.md        ← PME/CME engine schemas
+│   ├── dataledger_hydration_v3.md     ← Runtime snapshots and handoff
+│   ├── dataledger_narrative_v3.md     ← Finalized narrative clauses
+│   ├── dataledger_ideation_v3.md      ← Idea seeds and stubs
+│   ├── dataledger_archive_v3.md       ← Retired / deprecated logic
+│   └── dataledger_processing_v3.md    ← Legacy only (deprioritized)
 │
 ├── governance/            ← Project directives and cathedral layout
-│   ├── glee-fully_project_governance_v3.0.1.md
+│   ├── glee-fully_project_governance_v3-0-1.md
 │   ├── glee-fully_project_instructions.md
 │   ├── 00-glee-fully-strategy-center_instructions.md
-│   └── operator's-cathedral-layout-📐.md   ← Master architecture reference
+│   └── operators-cathedral-layout.md   ← Master architecture reference
 │
 ├── docs/                  ← Human-readable overviews and synthesis
 │   ├── gleefully_narrative_overview.md
@@ -85,22 +85,22 @@ Glee-fullyTools-FoundRy/
 │   └── structure-and-ordering-for-custom-gpt-instruction-blocks.md
 │
 ├── prompts/               ← Builder PromptChain and GPT scaffolds
-│   ├── glee-fully-builder-ready-promptchain-v2.0.md   ← Primary build engine
+│   ├── glee-fully-builder-ready-promptchain-v2-0.md   ← Primary build engine
 │   ├── custom_gpt_scaffold.md
 │   ├── custom_gpt_hybrid_scaffold.md
 │   └── glee-fully_tools_megaprompt.md
 │
 ├── vernacular/            ← Voice and tone reference library
-│   ├── 🦋-glee-fully-vernacular-complete.md
-│   └── 🦋-glee-fully-vernacular-lite.md
+│   ├── glee-fully-vernacular-complete.md
+│   └── glee-fully-vernacular-lite.md
 │
 ├── templates/             ← FrankenTemplate GPT instruction variants (a–y)
-│   └── [22 iteration files — see folder for index]
+│   └── [23 iteration files — see folder for index]
 │
 ├── evaluation/            ← GPT PulseBook quality evaluation rubrics
-│   ├── gpt-pulsebook-evaluation-v1.4.md
-│   ├── gpt-pulsebook-evaluation-v1.6.md
-│   └── gpt-pulsebook-evaluation-v1.7.md
+│   ├── gpt-pulsebook-evaluation-v1-4.md
+│   ├── gpt-pulsebook-evaluation-v1-6.md
+│   └── gpt-pulsebook-evaluation-v1-7.md
 │
 ├── inventory/             ← Full catalog of all Tools and Tool-ettes
 │   └── inventory_of_toolbox_tools_and_tool-ettes.md
@@ -122,7 +122,7 @@ Glee-fullyTools-FoundRy/
 | **Expansion-Only Discipline** | Never simplify or remove — only elaborate and expand |
 | **Growth-Only Mutation** | All edits add detail; existing content is never deleted |
 | **Canon Authority** | `canon/` files override GPT-local logic and legacy schema |
-| **Hydration-First Runtime** | All continuity flows through `dataLedger_hydration_v3.md` |
+| **Hydration-First Runtime** | All continuity flows through `dataledger_hydration_v3.md` |
 | **CanonSeal Integrity** | `::CanonSeal[...]::` tags must not be removed or altered |
 | **Suffix Law** | `-R` / `-Rᵧ` suffixes are exclusive to OverKill Hill P³ and Found-Rᵧ |
 | **Tone Default** | Untagged threads default to `GleeTone.A1` (uplifting, whimsical, clear) |

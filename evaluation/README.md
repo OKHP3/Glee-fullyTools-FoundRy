@@ -8,9 +8,9 @@ and after canonization.
 
 | File | Version | Notes |
 |------|---------|-------|
-| `gpt-pulsebook-evaluation-v1.4.md` | v1.4 | Early rubric |
-| `gpt-pulsebook-evaluation-v1.6.md` | v1.6 | Expanded criteria |
-| `gpt-pulsebook-evaluation-v1.7.md` | v1.7 | **Latest** — use this for all current evaluations |
+| `gpt-pulsebook-evaluation-v1-4.md` | v1.4 | Early rubric |
+| `gpt-pulsebook-evaluation-v1-6.md` | v1.6 | Expanded criteria |
+| `gpt-pulsebook-evaluation-v1-7.md` | v1.7 | **Latest** — use this for all current evaluations |
 
 ## When to Use
 
@@ -22,6 +22,6 @@ Run a PulseBook evaluation:
 
 ## Governance
 
-Evaluation results should be logged in `canon/dataLedger_registry_v3.md`
+Evaluation results should be logged in `canon/dataledger_registry_v3.md`
 against the entity's record, and any tone violations logged in
-`canon/dataLedger_persona_v3.md` via `!DRIFT_EVENT`.
+`canon/dataledger_persona_v3.md` via `!DRIFT_EVENT`.

@@ -1,0 +1,3 @@
+- [Glee-fully FoundRy structure](gleefully-foundry-structure.md) — Private workbench repo: no web server, no deployment; all content in canon/, governance/, docs/, prompts/, etc.
+- [Filename normalization rules](filename-normalization.md) — lowercase-kebab-case ASCII only; run scripts/normalize_filenames.py --recursive --ascii-only --include-dirs; never touch ::CanonSeal[...]:: tags
+- [Folder catalog and READMEs](folder-readmes.md) — All 11 folders have PRD-style READMEs; root README has full catalog with links; web-templates/ .docx files moved to docs/

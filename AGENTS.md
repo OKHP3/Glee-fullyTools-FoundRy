@@ -120,6 +120,11 @@ Each letter represents a distinct structural or tonal iteration. Use the latest 
 Static HTML/CSS templates for Glee-fully child repo public-facing pages.
 **These are template assets only. Do not serve from this workbench.**
 
+### `scripts/` — Governance Utility Scripts
+
+Python 3 utility scripts for filename normalization, manifest validation, registry
+auditing, and foundry sync posture reporting. No third-party dependencies.
+
 ### `snapshots/` — Historical State Captures
 
 Point-in-time ledger and template snapshots. Latest is `2025-09-14/`.
@@ -174,6 +179,19 @@ The `web-templates/` folder is template source material, not a deployable site.
 
 ---
 
+## Brand Rules (Apply to All Generated Content)
+
+These rules apply to any content generated in or for this ecosystem:
+
+| Rule | Detail |
+|------|--------|
+| **No em dashes** | Do not use em dashes in any generated content |
+| **Preserve punchy lines** | Standalone short lines must not be consolidated into paragraphs |
+| **ROY principle** | Understanding produced / explanation invested — verbosity must earn its space |
+| **AutoCAD version** | R10 — locked, not negotiable |
+
+---
+
 ## Required Files for Every Child Repository
 
 ```
@@ -202,9 +220,21 @@ Clauses may re-enter ideation from `dataledger_hydration_v3.md` with updated `!C
 
 | Resource | URL |
 |----------|-----|
+| GitHub — This Repo | https://github.com/OKHP3/Glee-fullyTools-FoundRy |
+| GitHub — Public Site Repo | https://github.com/OKHP3/Glee-fullyTools |
 | Public Tools Site | https://glee-fully.tools |
 | OKHP3 Universe | https://overkillhill.com/universe |
+| Notion Anchor | https://app.notion.com/p/1a7571754c0d446f8c44e532d2ebad03 |
 | Contact | contact@glee-fully.tools |
+
+---
+
+## Local Development Paths
+
+| Environment | Path |
+|-------------|------|
+| Windows | `C:\Users\jamie\OKH-Local\Projects\glee-fullytools-foundry` |
+| Mac | `/Volumes/OKH-Local/04_GitHub_Mirrors/Glee-fullyTools-FoundRy` |
 
 ---
 

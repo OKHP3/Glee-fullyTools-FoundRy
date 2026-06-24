@@ -249,5 +249,138 @@ These require answers before consolidation architecture is finalized:
 
 ---
 
+## Repository Structure — The Parallel Question
+
+### The 50 Repos Were Also a Workaround
+
+The 50 child repositories (`glee-fully-gpt00-*` through `glee-fully-gpt07-*`) were created
+to mirror the 50-GPT structure — one repo per GPT for compartmentalization and separation.
+This made sense when each GPT was a discrete, deployable product unit. But the same
+Phase 5 insight applies: **the 50-repo structure was also an artifact of the 50-GPT
+constraint, not an inherent requirement of the domain.**
+
+Since Phase 5 collapses 50 GPTs to 7-10 Agent Skills, the 50-repo structure becomes
+legacy scaffolding that should be retired at the same event, not as a separate project.
+
+### Recommended Path: Stage the Consolidation
+
+**Do not consolidate repos now.** The reasons:
+
+1. Migration work (moving content from 50 repos into folders) does not advance v1.0
+   completion on any GPT — it is pure overhead with no functional payoff.
+2. The 50 repos are already scaffolded and the `glee-fully-repo-standardizer` skill
+   works against them. That infrastructure is actively useful through Phase 4.
+3. Moving content during active development creates source-of-truth confusion.
+4. The natural consolidation event is Phase 5 itself — each domain Agent Skill is
+   built, and its source child repos are archived at the same time.
+
+**The staged path:**
+
+```
+Phase 1–4  →  50 repos stay as-is
+               v1.0 completion in each child repo using the standardizer
+               No migration, no reorganization
+
+Phase 5    →  Domain Agent Skills built here in FoundRy (or a new gleefully-skills repo)
+               Each child repo archived (read-only, not deleted) as its Agent Skill goes live
+               Archive is one-domain-at-a-time, not a bulk migration
+
+Post-Phase 5  →  50 child repos are read-only archives
+                  7-10 Agent Skill packages are the live ecosystem
+```
+
+### Where Agent Skills Live
+
+Agent Skills can be built and hosted inside this FoundRy workbench (under `.agents/skills/`)
+or in a dedicated `gleefully-skills` repo. The decision should be made at Phase 5 start
+based on whether the Agent Skills are purely internal FoundRy tools or intended for
+broader distribution. Either way, they are NOT 50 separate repos.
+
+---
+
+## Phase 6 Opportunity: Custom Web Application
+
+### The Question
+
+> If Agent Skills = scripts + data + assets, have I done most of the work
+> to build a custom Glee-fully web application?
+
+### The Honest Assessment
+
+**Domain logic is the hardest part, and Agent Skills capture it.** The parameterized
+Python scripts (collection, export pipeline, profile intake, opportunity matching,
+routing) are the business logic layer. That is genuinely the most intellectually
+dense part of building an application. With that foundation, the engineering path
+to a web application is tractable.
+
+**Realistic completion estimate: ~60–70%, not 90%.** The remaining work:
+
+| Gap | Effort |
+|-----|--------|
+| API layer | Expose Python scripts as HTTP endpoints (FastAPI or similar). Significant but mechanical — one endpoint per script function. |
+| User authentication | Identity, sessions, and multi-user data isolation. Non-trivial but well-understood patterns exist. |
+| Data persistence | Agent Skill scripts are likely stateless. A real app needs a database for user-owned collections, journals, resumes, etc. |
+| Vite/TypeScript SPA | 6-8 domain tab UI, component library, state management, routing. Real front-end engineering. |
+| Hosting | This Replit repo *could* become the application host (Python backend + Vite SPA is a supported stack here). GitHub Pages works for the static front-end only. |
+
+### The Application Architecture (If Built)
+
+```
+gleefully-app/
+  backend/           ← FastAPI Python server
+    routes/          ← One route module per domain (careers, food, travel, etc.)
+    scripts/         ← The Agent Skill scripts, imported as library modules
+    data/            ← Templates, schemas, routing tables, brand JSON
+    models/          ← SQLAlchemy/Pydantic models for user data persistence
+  frontend/          ← Vite + TypeScript SPA
+    src/
+      tabs/          ← Careers | Collections | Food | Travel | Organize | Wellness | Identity
+      components/    ← Shared UI components
+      api/           ← API client layer (calls the FastAPI backend)
+  gleefully-brand.json
+```
+
+The domain tab count (7) maps directly to the 7 domain Agent Skills.
+The scripts written for Agent Skills become importable Python modules in the backend.
+The data assets written for Agent Skills become the backend's reference data.
+**The Agent Skills work is not wasted — it becomes the backend.**
+
+### Planning Decision
+
+This is a Phase 6 opportunity, not a Phase 4-5 constraint. The Agent Skills are built
+the same way regardless of whether a SPA is added later. The decision to build the SPA
+happens after Phase 5 Agent Skills are functional and tested.
+
+**What changes if the SPA path is chosen:**
+- `replit.md` scope would expand to include application development
+- This FoundRy workbench could remain the workbench while a new `gleefully-app` repo
+  holds the deployable application, OR this repo transitions from workbench to app
+- The `glee-fully.tools` storefront (currently the public site) could become the SPA host
+
+**What does not change:**
+- Phase 1-5 work proceeds identically whether or not Phase 6 happens
+- The Agent Skill scripts are written to be modular and importable — they are usable
+  as a library by a web backend without modification
+- No architecture decision today should close off the SPA path
+
+### Summary: Recommended Sequence
+
+```
+Phase 1–4   Complete all 50 GPTs to v1.0
+            (keep 50 child repos, use standardizer skill)
+
+Phase 5     Build 7-10 domain Agent Skills in this FoundRy repo
+            Archive child repos domain-by-domain as each skill goes live
+
+Phase 6     Evaluate: build Vite/TypeScript SPA over the Agent Skill scripts
+            If yes: FastAPI backend + SPA frontend; Agent Skill scripts become library modules
+            If no: Agent Skills remain CLI/AI-invoked tools — equally valid outcome
+```
+
+The SPA path is worth keeping open. The work required to build it does not overlap
+with or detract from Phase 1-5 in any way. Document it, don't commit to it yet.
+
+---
+
 *This document is Expansion-Only. New insights, patterns, and decisions are added forward.*
 *CanonSeal will be applied when Phase 5 architecture is finalized and approved.*

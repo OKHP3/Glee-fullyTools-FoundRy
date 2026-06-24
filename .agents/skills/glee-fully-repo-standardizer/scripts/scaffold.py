@@ -19,6 +19,10 @@ Options:
     --parent-url    Parent entity ChatGPT URL
     --chatgpt-url   This entity's ChatGPT URL
     --tone          Tone overlay ID (auto-assigned by tier if omitted)
+    --inventory     Path to the canonical inventory file for auto-population.
+                    Matches by --id or --name; pre-fills description, overview,
+                    functions, and §1 of instructions from authoritative source.
+                    Example: --inventory /path/to/FoundRy/inventory/inventory_of_toolbox_tools_and_tool-ettes.md
     --dry-run       Show what would be created without writing files
     --audit         Show missing files/folders in existing repo, do not write
     --overwrite     Overwrite existing files (default: skip existing)
@@ -33,10 +37,144 @@ import sys
 import json
 import argparse
 import re
+from dataclasses import dataclass, field as dc_field
 from pathlib import Path
 from datetime import datetime, timezone
 
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "1.1.0"
+
+# ---------------------------------------------------------------------------
+# Inventory data structures and parser
+# ---------------------------------------------------------------------------
+
+@dataclass
+class InventoryEntry:
+    """Parsed data from the canonical inventory file for one entity."""
+    entity_id: str = ""
+    name: str = ""
+    tier: str = ""
+    chatgpt_url: str = ""
+    parent_name: str = ""
+    parent_url: str = ""
+    full_description: str = ""
+    primary_functions: list[str] = dc_field(default_factory=list)
+    elevator_pitch: str = ""
+
+
+def _strip_links(text: str) -> str:
+    """Replace markdown links with their display text."""
+    return re.sub(r"\[([^\]]+)\]\([^\)]*\)", r"\1", text).strip()
+
+
+def parse_inventory(
+    inventory_path: Path,
+    target_id: str = "",
+    target_name: str = "",
+) -> InventoryEntry | None:
+    """
+    Parse the canonical Glee-fully inventory file and return data for one entity.
+    Matches by entity ID (e.g. '01a') or display name (e.g. 'Resume Builder').
+
+    Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md
+    """
+    if not inventory_path.exists():
+        return None
+
+    text = inventory_path.read_text(encoding="utf-8")
+
+    # Match section headers: # TOOL-ETTE ...: #01a – Resume Builder
+    header_re = re.compile(
+        r"^#\s+(?:TOOL-ETTE|TOOL|TOOLBOX)[^\n#]*#(\S+)\s+[–—-]\s+(.+?)$",
+        re.MULTILINE,
+    )
+    sections = list(header_re.finditer(text))
+    if not sections:
+        return None
+
+    match_idx: int | None = None
+    for i, m in enumerate(sections):
+        raw_id = m.group(1).lstrip("#")
+        raw_name = _strip_links(m.group(2))
+        if target_id and raw_id.lower() == target_id.lower():
+            match_idx = i
+            break
+        if target_name and raw_name.lower() == target_name.lower():
+            match_idx = i
+            break
+
+    if match_idx is None:
+        return None
+
+    m = sections[match_idx]
+    raw_id = m.group(1).lstrip("#")
+    raw_name = _strip_links(m.group(2))
+
+    # Determine tier from the full matched line text
+    tier_word_m = re.match(r"#\s+(TOOL-ETTE|TOOL|TOOLBOX)", text[m.start():m.start() + 80], re.IGNORECASE)
+    tier_word = tier_word_m.group(1).upper() if tier_word_m else "TOOL-ETTE"
+    tier_map = {"TOOL-ETTE": "toolette", "TOOL": "tool", "TOOLBOX": "toolbox"}
+    tier = tier_map.get(tier_word, "toolette")
+
+    # Slice this entity's section text
+    start = m.start()
+    end = sections[match_idx + 1].start() if match_idx + 1 < len(sections) else len(text)
+    sec = text[start:end]
+
+    # ChatGPT URL
+    url_m = re.search(r"🌐\s+\[.*?\]\((https://chatgpt\.com/[^\)]+)\)", sec)
+    chatgpt_url = url_m.group(1) if url_m else ""
+
+    # Parent name and URL
+    # Inventory format: **🪚 Parent Tool (Branch🌵):** [*Name*](url)
+    parent_name, parent_url = "", ""
+    parent_m = re.search(r"\*\*[^*]*Parent[^*]*:\*\*\s+\[([^\]]+)\]\(([^\)]+)\)", sec)
+    if parent_m:
+        # Strip italic markers (* or _) and whitespace from display text
+        raw_parent = parent_m.group(1).strip()
+        parent_name = re.sub(r"^\*+|\*+$", "", raw_parent).strip()
+        parent_url = parent_m.group(2).strip()
+
+    # Full Description (section between ### Full Description: and next ###)
+    desc_m = re.search(r"###\s+Full Description:\s*\n(.*?)(?=###|\Z)", sec, re.DOTALL)
+    full_description = desc_m.group(1).strip() if desc_m else ""
+
+    # Primary Functions — lines containing FUNCTION, extract text after ): 
+    func_m = re.search(r"###\s+Primary Functions:?\s*\n(.*?)(?=###|\Z)", sec, re.DOTALL)
+    primary_functions: list[str] = []
+    if func_m:
+        for line in func_m.group(1).splitlines():
+            line = line.strip()
+            if not line or "FUNCTION" not in line.upper():
+                continue
+            idx = line.find("): ")
+            if idx != -1:
+                primary_functions.append(line[idx + 3:].strip())
+            else:
+                primary_functions.append(line)
+
+    # Elevator Pitch — strip leading 📒 and optional **EntityName** bold prefix
+    pitch_m = re.search(
+        r"###\s+Elevator Pitch:?\s*\n(.*?)(?=^-{3,}|\Z)",
+        sec,
+        re.DOTALL | re.MULTILINE,
+    )
+    elevator_pitch = ""
+    if pitch_m:
+        elevator_pitch = pitch_m.group(1).strip()
+        # Strip: 📒  optionally followed by **EntityName** 
+        elevator_pitch = re.sub(r"^📒\s*(?:\*+[^*]+\*+\s*)?", "", elevator_pitch).strip()
+
+    return InventoryEntry(
+        entity_id=raw_id,
+        name=raw_name,
+        tier=tier,
+        chatgpt_url=chatgpt_url,
+        parent_name=parent_name,
+        parent_url=parent_url,
+        full_description=full_description,
+        primary_functions=primary_functions,
+        elevator_pitch=elevator_pitch,
+    )
 
 TIER_DEFAULTS = {
     "toolbox":  {"tone": "BledsGLEE",      "emoji": "🧰", "tree": "🌳", "role": "Toolbox (Trunk)"},
@@ -514,89 +652,147 @@ Contact: contact@glee-fully.tools
 """
 
 
-def build_gpt_instructions(args) -> str:
+def build_gpt_instructions(args, inv: InventoryEntry | None = None) -> str:
     t = args.tier
     name = args.name
     tone = args.tone
-    chatgpt_url = args.chatgpt_url or placeholder("ChatGPT URL")
-    parent = args.parent or placeholder("parent entity name")
+    chatgpt_url = args.chatgpt_url or (inv.chatgpt_url if inv else "") or placeholder("ChatGPT URL")
+    parent = args.parent or (inv.parent_name if inv else "") or placeholder("parent entity name")
+    parent_url = args.parent_url or (inv.parent_url if inv else "")
     tone_block = tone_instructions(tone)
 
+    inv_note = ""
+    if inv:
+        inv_note = "\n# ← Pre-filled from inventory. Verify all [TODO] items before deploying to Builder.\n"
+
     if t == "toolbox":
-        role_block = (
-            f"You are the **heart of the Glee-fully Personalizable Tools suite** — "
-            f"the Toolbox (Trunk). Your role is to **guide users** through the suite's "
-            f"Tools and Tool-ettes, making it easy to find the right GPT for any task."
+        identity = (
+            f"You are **{name}** — the Trunk of the Glee-fully Personalizable Tools™ suite.\n"
+            f"You do NOT perform tasks. You are a concierge: introduce the suite, guide users\n"
+            f"to the right Tool or Tool-ette, and keep the ecosystem coherent.\n\n"
+            f"ChatGPT: {chatgpt_url}"
         )
-        behavior = (
-            "- Introduce the Glee-fully structure and the trunk-branch-twig-leaf metaphor\n"
-            "- Link to all 7 Tools (Branches) and help users choose the right Tool-ette\n"
-            "- Do NOT execute tasks directly — route users to the appropriate Tool or Tool-ette\n"
-            "- Visit-aware dialog: greet first-timers differently than returning users"
+        scope = (
+            "**Scope:** Navigation, routing, suite introduction, first-time onboarding.\n"
+            "**Out of scope:** Any functional task covered by a Tool or Tool-ette."
         )
+        core_functions = (
+            "- Greet users (visit-aware: warm for first-timers, faster on-ramp for returning)\n"
+            "- Introduce the Trunk-Branch-Twig-Leaf architecture\n"
+            "- Present the 7 Tools (Branches) and help users select the right one\n"
+            "- Route to the appropriate Tool-ette based on user intent\n"
+            "- Activate BLEED GLEE mode on demand"
+        )
+        task_flow = (
+            "Step 1 — Greet and ask what the user wants to accomplish\n"
+            "Step 2 — Identify the best Tool or Tool-ette\n"
+            "Step 3 — Provide the link and a warm handoff"
+        )
+        knowledge_policy = ""
     elif t == "tool":
-        role_block = (
-            f"You are **{name}**, the {tier_label(t)} in the Glee-fully Personalizable "
-            f"Tools suite. Your role is to route users to the correct Tool-ette for their "
-            f"specific need within your category."
+        identity = (
+            f"You are **{name}** — a Tool (Branch) in the Glee-fully Personalizable Tools™ suite.\n"
+            f"You route users to the correct Tool-ette for their task within your category.\n"
+            f"You do NOT execute the task yourself.\n\n"
+            f"ChatGPT: {chatgpt_url}"
         )
-        behavior = (
+        scope = (
+            f"**Scope:** Category navigation and Tool-ette selection within {name}.\n"
+            "**Out of scope:** Performing the task — always route to the appropriate Tool-ette."
+        )
+        core_functions = (
             f"- Introduce the Tool-ettes available in {name}\n"
-            "- Help users identify which Tool-ette fits their current need\n"
-            "- Do NOT perform the task yourself — route to the appropriate Tool-ette\n"
-            "- You may do light logic if no subtool fits (edge cases only)"
+            "- Compare Tool-ettes by use case when the user is unsure\n"
+            "- Route the user to the correct Tool-ette with a direct ChatGPT link\n"
+            "- Handle edge cases where no Tool-ette is a perfect fit (light guidance only)"
         )
+        task_flow = (
+            "Step 1 — Understand the user's task context\n"
+            "Step 2 — Recommend the most appropriate Tool-ette\n"
+            "Step 3 — Provide the ChatGPT link and a framing prompt to start with"
+        )
+        knowledge_policy = ""
     else:
-        role_block = (
-            f"You are **{name}**, a {tier_label(t)} in the Glee-fully Personalizable "
-            f"Tools suite. Your role is to execute a specific, focused task with joy "
-            f"and precision.\n\n"
-            f"Parent Tool: {parent}"
+        if inv and inv.full_description:
+            identity_desc = f"\n\n{inv.full_description}  ← inventory"
+        else:
+            identity_desc = f"\n\n{placeholder('One sentence: what does this GPT do for the user?')}"
+
+        parent_ref = f"[{parent}]({parent_url})" if parent_url else parent
+        identity = (
+            f"You are **{name}** — a Tool-ette (Twig) in the Glee-fully Personalizable Tools™ suite.\n"
+            f"You execute a specific, focused task with joy and precision.{identity_desc}\n\n"
+            f"Parent Tool: {parent_ref}\n"
+            f"ChatGPT: {chatgpt_url}"
         )
-        behavior = (
-            f"- {placeholder('Primary capability 1 — what does this Tool-ette do first?')}\n"
-            f"- {placeholder('Primary capability 2')}\n"
-            f"- {placeholder('Primary capability 3')}\n"
-            "- Do NOT route users to other GPTs — stay focused on your specific task\n"
-            "- Export, summarize, or confirm outputs clearly at the end of each flow"
+        scope = (
+            f"**Scope:** {placeholder('Describe the precise task boundary in 1-2 sentences.')}\n"
+            f"**Out of scope:** {placeholder('What should users be routed elsewhere for?')} "
+            f"→ Route to Toolbox: {TOOLBOX_URL}"
         )
+
+        if inv and inv.primary_functions:
+            func_lines = "\n".join(f"- {f}" for f in inv.primary_functions)
+            core_functions = f"{func_lines}  ← inventory"
+        else:
+            core_functions = (
+                f"- {placeholder('Primary function 1 — what does this Tool-ette do first?')}\n"
+                f"- {placeholder('Primary function 2')}\n"
+                f"- {placeholder('Primary function 3')}"
+            )
+
+        task_flow = (
+            f"Step 1 — {placeholder('How does the user open the conversation?')}\n"
+            f"Step 2 — {placeholder('What does the GPT ask for or do first?')}\n"
+            f"Step 3 — {placeholder('What is the main processing or generation step?')}\n"
+            f'Step 4 — Confirm and export: ask "Do you love this? REALLY love it?" then deliver'
+        )
+
+        knowledge_policy = f"""
+## [§5] Knowledge Policy
+
+Use uploaded knowledge files as your primary reference before generating output.
+Knowledge file portfolio: `gpt/knowledge/` — see `KF-README.md` for portfolio structure.
+
+Priority order:
+1. User's own uploaded content (resume, job post, data file, etc.)
+2. Knowledge files configured in this GPT's Builder settings
+3. Trained knowledge (fallback only — flag uncertainty if used)
+
+Do NOT hallucinate facts. If uncertain, say so and ask the user to clarify.
+
+{placeholder("List specific knowledge files this GPT uses — e.g., KF-CHARTER.md, KF-EXAMPLES-GOOD.md.")}
+
+---
+"""
 
     return f"""# GPT Instructions — {name}
-# Tone Overlay: {tone}
-# Tier: {tier_label(t)}
+# Cathedral Layout v1.0 | Tone: {tone} | Tier: {tier_label(t)}
 # ChatGPT: {chatgpt_url}
 #
-# IMPORTANT: This file becomes the instruction payload in ChatGPT Builder.
-# Target: ~6,000–8,000 characters. Trim if needed.
-# Do not include comment lines (starting with #) in the final Builder payload.
+# ARCHITECT'S NOTE: This file follows the Operator's Cathedral Layout (8-section standard).
+# Reference: OKHP3/Glee-fullyTools-FoundRy/governance/operators-cathedral-layout.md
+# Target payload: ~6,000–8,000 characters in ChatGPT Builder.
+# Strip all comment lines (starting with #) before pasting into Builder.
+# Trim from §8 inward if you hit the 8k char limit.
 # ---------------------------------------------------------------------------
+{inv_note}
 
-## Role and Identity
+## [§1] Identity & Scope
 
-{role_block}
+{identity}
 
-You are part of the **Glee-fully Personalizable Tools™** suite — designed to
-sparkle, sort, and slay life's chaos. Inspired by Glee herself: a Pacific
-Northwest original who color-codes everything and drinks chai like it's a love
-language.
+{scope}
 
 ---
 
-## Tone
+## [§2] Persona & Tone
 
 {tone_block}
 
----
+### Glee-isms — Use Throughout
 
-## Core Behavior
-
-{behavior}
-
----
-
-## Glee-isms (Use Throughout)
-
-Use these phrases naturally at key moments — completions, check-ins, thinking:
+These phrases belong in the GPT's voice. Deploy at completions, check-ins, moments of thinking:
 
 - "Freak'n facts on facts."
 - "OMG stop — this is so Glee-coded."
@@ -606,53 +802,83 @@ Use these phrases naturally at key moments — completions, check-ins, thinking:
 - "Polished. Punched up. Ready to slay."
 - "Literally the cutest."
 
-Pop culture touchstones (use sparingly and naturally):
-Schitt's Creek, Friends, Practical Magic, Stevie Nicks, Hocus Pocus, The Crow.
+Pop culture touchstones (use sparingly): Taylor Swift, Schitt's Creek, Emily in Paris,
+Sisterhood of the Traveling Pants, Target runs, color-coded planners.
 
 ---
 
-## {placeholder("Section: Primary Task Flow")}
+## [§3] Dialogue Policy
 
-{placeholder("Describe the step-by-step flow this GPT walks the user through.")}
-
-Step 0 — Welcome and orient
-Step 1 — Gather input
-Step 2 — Process / generate
-Step 3 — Review and refine
-Step 4 — Export or confirm
+- **Opening:** Greet the user warmly. First-time visitors get a brief orientation;
+  returning users get a faster on-ramp.
+- **Check-ins:** After each major output, ask "Do you love this? REALLY love it?"
+  before finalizing. Offer to revise once before moving on.
+- **Tone toggle:** Respond to "calm mode" or "keep it pro" by dialing back Glee-isms.
+  Respond to "BLEED GLEE MODE" by maximizing sparkle and metaphor.
+- **Clarification:** Ask targeted questions before generating — never produce a
+  first draft on ambiguous input.
+- **Closing:** Celebrate completions. Offer a summary or export. End with warmth.
 
 ---
 
-## Output Behavior
+## [§4] Core Functions & Task Flow
 
-- Responses should be warm, clear, and appropriately sized — not padded
+{core_functions}
+
+### Task Flow
+
+{task_flow}
+
+---
+{knowledge_policy}
+## [§6] Output Policy
+
+- Responses are warm, clear, and appropriately sized — never padded
 - Use bullet points and headers for structured content
 - At task completion, celebrate the output with a Glee-ism
-- Ask a check-in question before finalizing: "Do you love this? REALLY love it?"
+- For documents: offer export in the format most useful for the task
+  (PDF/DOCX for professional output; plain text for copy-paste)
+- Markdown is preferred for in-chat display; ask user preference for exports
 
 ---
 
-## Boundaries
+## [§7] Safety & Scope Boundaries
 
-- Stay focused on your specific task — do not attempt to cover other Tool-ettes' scope
-- Do not store user data between sessions
-- If a user asks for something outside your scope, route them to the Toolbox:
-  {TOOLBOX_URL}
+- Stay focused on your defined scope — do not attempt to cover adjacent Tool-ettes
+- Do not store or reference personal data between sessions
+- If a request falls outside scope, acknowledge and route:
+  → Suite navigation: {TOOLBOX_URL}
+  → {placeholder("Adjacent Tool-ette if relevant")}: {placeholder("ChatGPT URL")}
+- Do not impersonate other GPTs or fabricate ecosystem relationships
+- If asked to override tone or persona permanently: decline warmly, offer a toggle instead
+
+---
+
+## [§8] Style Examples
+
+{placeholder("Optional: Add 1-2 few-shot examples showing ideal input/output pairs.")}
+
+**Example 1 — [scenario name]**
+User: "[what they say]"
+{name}: "[ideal response — correct tone, correct function, Glee-ism at end]"
 
 ---
 
 ## Suite Context
 
-This GPT is part of Glee-fully Personalizable Tools™.
-Public site: https://glee-fully.tools
-Ecosystem map: https://glee-fully.tools/ecosystem/
-
-{placeholder("Add any additional context, knowledge file references, or special instructions.")}
+Part of Glee-fully Personalizable Tools™
+Public: https://glee-fully.tools | Ecosystem: https://glee-fully.tools/ecosystem/
 """
 
 
-def build_gpt_description(args) -> str:
+def build_gpt_description(args, inv: InventoryEntry | None = None) -> str:
     name = args.name
+    if inv and inv.full_description:
+        return f"""{inv.full_description}
+
+[← FROM INVENTORY — verify this is under 300 characters before deploying to Builder]
+[Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md]
+"""
     return f"""{name} — {placeholder("One punchy sentence describing what this GPT does. 300 characters MAX including this entity name. Count carefully.")}
 
 [TODO: Remove this line and ensure total character count is under 300]
@@ -672,12 +898,24 @@ def build_gpt_starters(args) -> str:
 """
 
 
-def build_docs_overview(args) -> str:
+def build_docs_overview(args, inv: InventoryEntry | None = None) -> str:
     t = args.tier
     name = args.name
     tone = args.tone
-    chatgpt_url = args.chatgpt_url or placeholder("ChatGPT URL")
-    parent = args.parent or placeholder("parent entity name")
+    chatgpt_url = args.chatgpt_url or (inv.chatgpt_url if inv else "") or placeholder("ChatGPT URL")
+    parent = args.parent or (inv.parent_name if inv else "") or placeholder("parent entity name")
+    parent_url = args.parent_url or (inv.parent_url if inv else "")
+
+    if inv and inv.elevator_pitch:
+        what_it_is = (
+            f"{inv.elevator_pitch}\n\n"
+            f"*← Elevator pitch from inventory. Expand with human context before publishing.*"
+        )
+    else:
+        what_it_is = (
+            f"{placeholder('Plain-language description of this entity and who it is for.')}\n\n"
+            f"{placeholder('Second paragraph — emotional value proposition. Why does this feel good to use?')}"
+        )
 
     return f"""# Overview — {name}
 
@@ -690,9 +928,7 @@ def build_docs_overview(args) -> str:
 
 ## What {name} Is
 
-{placeholder("Plain-language description of this entity's purpose and who it's for.")}
-
-{placeholder("Second paragraph — the emotional value proposition. Why does this feel good to use?")}
+{what_it_is}
 
 ---
 
@@ -730,7 +966,7 @@ This entity uses the **{tone}** tone overlay.
 ## Parent Chain
 
 - Toolbox: [Glee-fully Personalizable Tools]({TOOLBOX_URL})
-- Tool: [{parent}]({args.parent_url or placeholder("parent URL")})
+- Tool: [{parent}]({parent_url or placeholder("parent URL")})
 - This entity: {name}
 
 ---
@@ -741,39 +977,48 @@ This entity uses the **{tone}** tone overlay.
 """
 
 
-def build_docs_functions(args) -> str:
+def build_docs_functions(args, inv: InventoryEntry | None = None) -> str:
     name = args.name
+
+    if inv and inv.primary_functions:
+        func_blocks = []
+        for func in inv.primary_functions:
+            func_blocks.append(
+                f"### {func}  ← inventory\n\n"
+                f"**Trigger:** {placeholder('What user input or action activates this?')}\n"
+                f"**Output:** {placeholder('What does the user receive?')}\n"
+                f"**Notes:** {placeholder('Caveats, edge cases, or constraints.')}"
+            )
+        primary_section = "\n\n---\n\n".join(func_blocks)
+        inv_src = "\n*← Primary functions pre-filled from inventory. Expand each with triggers, outputs, and notes.*\n"
+    else:
+        primary_section = (
+            f"### {placeholder('Function Name')}\n\n"
+            f"**Trigger:** {placeholder('What user action or input activates this function?')}\n"
+            f"**Output:** {placeholder('What does the user get?')}\n"
+            f"**Notes:** {placeholder('Any important caveats or edge cases.')}\n\n"
+            f"---\n\n"
+            f"### {placeholder('Function Name')}\n\n"
+            f"**Trigger:** {placeholder('What user action or input activates this function?')}\n"
+            f"**Output:** {placeholder('What does the user get?')}\n"
+            f"**Notes:** {placeholder('Any important caveats or edge cases.')}\n\n"
+            f"---\n\n"
+            f"### {placeholder('Function Name')}\n\n"
+            f"**Trigger:** {placeholder('What user action or input activates this function?')}\n"
+            f"**Output:** {placeholder('What does the user get?')}\n"
+            f"**Notes:** {placeholder('Any important caveats or edge cases.')}"
+        )
+        inv_src = ""
+
     return f"""# Functions — {name}
 
 > All capabilities and sub-functions this entity provides.
-
+{inv_src}
 ---
 
 ## Primary Functions
 
-{placeholder("List every function this entity delivers. Use the format below.")}
-
-### {placeholder("Function Name")}
-
-**Trigger:** {placeholder("What user action or input activates this function?")}
-**Output:** {placeholder("What does the user get?")}
-**Notes:** {placeholder("Any important caveats or edge cases.")}
-
----
-
-### {placeholder("Function Name")}
-
-**Trigger:** {placeholder("What user action or input activates this function?")}
-**Output:** {placeholder("What does the user get?")}
-**Notes:** {placeholder("Any important caveats or edge cases.")}
-
----
-
-### {placeholder("Function Name")}
-
-**Trigger:** {placeholder("What user action or input activates this function?")}
-**Output:** {placeholder("What does the user get?")}
-**Notes:** {placeholder("Any important caveats or edge cases.")}
+{primary_section}
 
 ---
 
@@ -790,6 +1035,85 @@ def build_docs_functions(args) -> str:
 ## Out of Scope
 
 {placeholder("List things users might try that this entity does NOT handle — and where to route them.")}
+"""
+
+
+def build_knowledge_readme(args) -> str:
+    name = args.name
+    return f"""# Knowledge File Portfolio — {name}
+
+> **KF Portfolio README**
+> This folder holds knowledge files (KFs) configured in ChatGPT Builder for {name}.
+> Read this before adding any knowledge file.
+> Portfolio approach per OKH Knowledge File Playbook v1.0.
+> Architecture reference: OKHP3/Glee-fullyTools-FoundRy/evaluation/ (PulseBook §KF)
+
+---
+
+## Portfolio Structure
+
+Organize knowledge files by type. A mature Tool-ette uses 5–10 files.
+Name each file: `KF-TYPE.md` (or `KF-TYPE-v1.md` for versioned files).
+
+| Type | Filename | Purpose |
+|------|----------|---------|
+| Charter | `KF-CHARTER.md` | Scope, persona, governing rules for this GPT |
+| Glossary | `KF-GLOSSARY.md` | Domain-specific terms and definitions |
+| Policies | `KF-POLICIES.md` | Operating rules, tone constraints, access tiers |
+| Procedures | `KF-PROCEDURES.md` | Step-by-step workflows for core tasks |
+| Templates | `KF-TEMPLATES.md` | Output formats and structural patterns |
+| Good Examples | `KF-EXAMPLES-GOOD.md` | Exemplary input/output pairs (few-shot positive) |
+| Bad Examples | `KF-EXAMPLES-BAD.md` | Anti-patterns to avoid (few-shot negative) |
+| FAQ | `KF-FAQ.md` | Common user questions and canonical answers |
+
+---
+
+## RAG-First Authoring Rules (OKH Method)
+
+Knowledge files are retrieved in **chunks** — the GPT sees a snippet, not the whole file.
+Write for the snippet:
+
+1. **Front-load signal** — every section begins with its scope and a plain definition.
+   BAD: "This section covers formatting rules."
+   GOOD: "RESUME FORMAT RULES: A Glee-fully resume must use..."
+2. **One concept per chunk** — keep related rules together; avoid mixing unrelated topics.
+3. **Use headers generously** — each `##` or `###` becomes a retrievable unit.
+4. **Define before you use** — never assume a prior chunk was retrieved.
+5. **Repeat key terms** — use the exact noun/verb the user is likely to type.
+6. **Keep files focused** — multiple small files outperform one large file.
+
+---
+
+## Active Portfolio for {name}
+
+{placeholder("List the KFs currently configured in ChatGPT Builder for this GPT.")}
+
+| File | Status | In Builder? | Notes |
+|------|--------|-------------|-------|
+| KF-CHARTER.md | {placeholder("draft/active")} | {placeholder("yes/no")} | |
+
+---
+
+## Size Limits
+
+- Per file: up to 512 MB (plain text < 50 KB recommended for best RAG performance)
+- Per GPT: up to 20 files total
+- Prefer multiple focused files over one large file
+
+---
+
+## Recommended Fill Order
+
+1. `KF-CHARTER.md` — always first; defines this GPT's scope and governing rules
+2. `KF-GLOSSARY.md` — ensures consistent terminology throughout
+3. `KF-PROCEDURES.md` — core task workflows, step-by-step
+4. `KF-TEMPLATES.md` — output format patterns the GPT should produce
+5. `KF-EXAMPLES-GOOD.md` — positive few-shot pairs
+6. Others as scope demands
+
+---
+
+*Source: OKH Knowledge File Playbook v1.0.0*
 """
 
 
@@ -908,7 +1232,11 @@ pme_ready: false
 # File manifest by tier
 # ---------------------------------------------------------------------------
 
-def get_file_manifest(tier: str, args) -> list[tuple[str, str]]:
+def get_file_manifest(
+    tier: str,
+    args,
+    inv: InventoryEntry | None = None,
+) -> list[tuple[str, str]]:
     """Returns list of (relative_path, content) tuples."""
     files = [
         ("AGENTS.md",                   build_agents_md(args)),
@@ -916,13 +1244,13 @@ def get_file_manifest(tier: str, args) -> list[tuple[str, str]]:
         ("CHANGELOG.md",                build_changelog()),
         ("LICENSE.md",                  build_license()),
         ("manifest.yaml",               build_manifest(args)),
-        ("gpt/instructions.md",         build_gpt_instructions(args)),
-        ("gpt/description.md",          build_gpt_description(args)),
+        ("gpt/instructions.md",         build_gpt_instructions(args, inv)),
+        ("gpt/description.md",          build_gpt_description(args, inv)),
         ("gpt/starters.md",             build_gpt_starters(args)),
-        ("gpt/knowledge/.gitkeep",      ""),
+        ("gpt/knowledge/KF-README.md",  build_knowledge_readme(args)),
         ("pulsebook/pulsebook-v1-7.md", build_pulsebook_stub(args)),
-        ("docs/overview.md",            build_docs_overview(args)),
-        ("docs/functions.md",           build_docs_functions(args)),
+        ("docs/overview.md",            build_docs_overview(args, inv)),
+        ("docs/functions.md",           build_docs_functions(args, inv)),
         ("canon/registry-entry.md",     build_canon_registry_entry(args)),
         ("origin/chatgpt-exports/.gitkeep", ""),
         ("origin/notion-exports/.gitkeep",  ""),
@@ -1004,7 +1332,15 @@ def run_audit(root: Path, tier: str | None) -> None:
 # Main scaffold
 # ---------------------------------------------------------------------------
 
-def run_scaffold(root: Path, args, dry_run: bool, overwrite: bool, quiet: bool, as_json: bool) -> None:
+def run_scaffold(
+    root: Path,
+    args,
+    dry_run: bool,
+    overwrite: bool,
+    quiet: bool,
+    as_json: bool,
+    inv: InventoryEntry | None = None,
+) -> None:
     created_dirs = []
     written_files = []
     skipped_files = []
@@ -1014,6 +1350,8 @@ def run_scaffold(root: Path, args, dry_run: bool, overwrite: bool, quiet: bool, 
         print(f"\nglee-fully-repo-standardizer v{SCRIPT_VERSION} [{args.tier}] · {args.name}")
         print(f"Root: {root}")
         print(f"Tone: {args.tone}")
+        if inv:
+            print(f"Inventory: #{inv.entity_id} match — pre-filling from inventory")
         print()
 
     dirs = get_dir_manifest(args.tier)
@@ -1024,7 +1362,7 @@ def run_scaffold(root: Path, args, dry_run: bool, overwrite: bool, quiet: bool, 
                 dir_path.mkdir(parents=True, exist_ok=True)
             created_dirs.append(d)
 
-    files = get_file_manifest(args.tier, args)
+    files = get_file_manifest(args.tier, args, inv)
     for rel_path, content in files:
         full_path = root / rel_path
         if full_path.exists() and not overwrite:
@@ -1129,6 +1467,16 @@ def main():
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files")
     parser.add_argument("--quiet", action="store_true", help="Minimal output")
     parser.add_argument("--json", action="store_true", dest="as_json", help="JSON output")
+    parser.add_argument(
+        "--inventory",
+        dest="inventory_path",
+        default="",
+        help=(
+            "Path to the canonical inventory file for auto-population. "
+            "Example: /path/to/Glee-fullyTools-FoundRy/inventory/"
+            "inventory_of_toolbox_tools_and_tool-ettes.md"
+        ),
+    )
 
     args = parser.parse_args()
     root = Path.cwd()
@@ -1159,8 +1507,30 @@ def main():
     if not args.parent:
         args.parent = ""
 
+    # Inventory pre-population: parse if --inventory path is given
+    inv: InventoryEntry | None = None
+    if args.inventory_path:
+        inv_path = Path(args.inventory_path)
+        inv = parse_inventory(
+            inv_path,
+            target_id=getattr(args, "id", "") or "",
+            target_name=args.name or "",
+        )
+        if not args.quiet and not args.as_json:
+            if inv:
+                print(f"Inventory match: #{inv.entity_id} — {inv.name}")
+                print(f"  Pre-filling: description, overview, functions, instructions")
+                if inv.chatgpt_url and not args.chatgpt_url:
+                    args.chatgpt_url = inv.chatgpt_url
+                if inv.parent_name and not args.parent:
+                    args.parent = inv.parent_name
+                if inv.parent_url and not args.parent_url:
+                    args.parent_url = inv.parent_url
+            else:
+                print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
+
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
-                 quiet=args.quiet, as_json=args.as_json)
+                 quiet=args.quiet, as_json=args.as_json, inv=inv)
 
 
 if __name__ == "__main__":

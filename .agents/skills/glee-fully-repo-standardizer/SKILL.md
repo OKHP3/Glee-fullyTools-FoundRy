@@ -11,7 +11,7 @@ description: >
   "create the folder structure", "set up the glee-fully structure",
   "run the repo standardizer", "apply the glee-fully template".
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: "OverKill Hill P³"
   category: gleefully
   parent_foundry: OKHP3/Glee-fullyTools-FoundRy

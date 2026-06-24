@@ -37,15 +37,28 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 | `--parent-url` | No | empty |
 | `--chatgpt-url` | No | empty |
 | `--tone` | No | tier default (toolbox=BledsGLEE, tool=GleeRich, toolette=GleeLite) |
+| `--inventory` | No | if given, pre-populates description/overview/functions/instructions from the canonical inventory file |
 | `--dry-run` | — | preview without writing |
 | `--audit` | — | show missing files only, do not write |
 | `--overwrite` | — | overwrite existing files (default: skip) |
 
-## Tier Differences
+## Tier Differences (v1.1.0)
 
-- toolette: 9 dirs, 17 files (includes gpt/knowledge/)
+- toolette: 9 dirs, 17 files (includes gpt/knowledge/ with KF-README.md)
 - tool: 8 dirs, 16 files (no gpt/knowledge/)
 - toolbox: 8 dirs, 16 files (same as tool)
+
+## Inventory Pre-Population (v1.1.0)
+
+Pass `--inventory /path/to/inventory_of_toolbox_tools_and_tool-ettes.md` and the
+script will parse the canonical inventory file and auto-fill:
+- `gpt/description.md` ← Full Description
+- `docs/overview.md` ← Elevator Pitch (in "What It Is" section)
+- `docs/functions.md` ← Primary Functions (each with stub Trigger/Output/Notes)
+- `gpt/instructions.md §1` ← Full Description + parent link + ChatGPT URL
+
+Match is by `--id` first, then `--name`. Uses FoundRy inventory at
+`inventory/inventory_of_toolbox_tools_and_tool-ettes.md`.
 
 ## Design Decisions
 
@@ -60,3 +73,21 @@ so the right tone block is already in place when a developer opens the file.
 
 **Why:** `from __future__ import annotations` required for Python 3.11 type hint
 compatibility (`str | None` syntax).
+
+**Why:** `gpt/instructions.md` follows the Operator's Cathedral Layout 8-section
+standard (§1 Identity, §2 Persona/Tone, §3 Dialogue Policy, §4 Core Functions,
+§5 Knowledge Policy, §6 Output Policy, §7 Safety, §8 Examples). Reference:
+`governance/operators-cathedral-layout.md`.
+
+**Why:** `gpt/knowledge/KF-README.md` (not .gitkeep) added to toolette tier.
+Guides the portfolio approach (8 KF types: Charter, Glossary, Policies,
+Procedures, Templates, Good/Bad Examples, FAQ) per OKH KF Playbook v1.0.
+
+## Inventory Parser Notes
+
+- Inventory format: `**🪚 Parent Tool (Branch🌵):**` uses `:**` (colon before close-bold)
+  → regex must be `:\*\*` not `\*\*:` for parent matching
+- Elevator pitch format: `📒 **EntityName** text...`
+  → strip with `re.sub(r"^📒\s*(?:\*+[^*]+\*+\s*)?", "", pitch)` to get clean text
+- Tool display name in inventory includes "Glee-fully " prefix (e.g., "Glee-fully Discovered Careers")
+  → match by `--id` is more reliable than `--name` for Tool tier entities

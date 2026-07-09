@@ -233,7 +233,7 @@ Clauses may re-enter ideation from `dataledger_hydration_v3.md` with updated `!C
 
 | Environment | Path |
 |-------------|------|
-| Windows | `C:\Users\jamie\OKH-Local\Projects\glee-fullytools-foundry` |
+| Windows | `C:\Users\jamie\OKH-Local\04_GitHub_Mirrors\glee-fullytools-foundry` |
 | Mac | `/Volumes/OKH-Local/04_GitHub_Mirrors/Glee-fullyTools-FoundRy` |
 
 ---

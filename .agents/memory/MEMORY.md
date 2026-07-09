@@ -1,3 +1,6 @@
 - [Glee-fully FoundRy structure](gleefully-foundry-structure.md) — Private workbench repo: no web server, no deployment; all content in canon/, governance/, docs/, prompts/, etc.
 - [Filename normalization rules](filename-normalization.md) — lowercase-kebab-case ASCII only; run scripts/normalize_filenames.py --recursive --ascii-only --include-dirs; never touch ::CanonSeal[...]:: tags
 - [Folder catalog and READMEs](folder-readmes.md) — All 11 folders have PRD-style READMEs; root README has full catalog with links; web-templates/ .docx files moved to docs/
+- [glee-fully-repo-standardizer skill](glee-fully-repo-standardizer.md) — scaffold.py + brand JSON + SKILL.md; run from child repo root with --tier/--name/--id/--parent args; brand JSON auto-copied to assets/
+- [Glee-fully child repo standard](glee-fully-child-repo-standard.md) — 17 files / 9 dirs for toolette, 16/8 for tool; fill order: instructions → description → starters → docs → canon → pulsebook → manifest pme_ready:true
+- [Phase 5 Agent Skill conversion strategy](phase5-agent-skill-conversion.md) — 50 GPTs → 7-10 domain Agent Skills; SKILL.md is discovery layer (lean), scripts carry functional payload; hierarchy was a workaround for 8k GPT limit not a domain requirement

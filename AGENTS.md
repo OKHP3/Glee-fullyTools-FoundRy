@@ -241,3 +241,5 @@ Clauses may re-enter ideation from `dataledger_hydration_v3.md` with updated `!C
 ## Principle
 
 > *The capability is durable. The platform wrapper is temporary.*
+
+## Imported Claude Cowork project instructions

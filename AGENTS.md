@@ -1,156 +1,220 @@
-# AGENTS.md — Glee-fullyTools-FoundRy
+# AGENTS.md - Glee-fullyTools-FoundRy
 
-> **For AI agents, assistants, and LLM tools navigating this repository.**
-> Read this file first. It tells you what this repo is, what it contains,
-> what you are and are not allowed to do here, and where to find everything.
+Read this file before working in this repository. It is the canonical agent guide
+for the repository root. `CLAUDE.md` is a short pointer to this file. No nested
+Git repositories or nested agent guides were found during the July 13, 2026 review.
 
----
+## Project identity
 
-## What This Repository Is
+Confirmed by `manifest.yaml`, `README.md`, and the directory layout:
 
-This is the **private workbench and relay FoundRy** for the Glee-fully Personalizable
-Tools™ ecosystem — a governed network of 40+ Custom GPTs organized as a living tree
-(Toolbox → Tools → Tool-ettes → Functions → Function-ettes).
+- This is the private `foundry-relay` workbench for the Glee-fully Personalizable
+  Tools ecosystem.
+- It is a Git repository with lifecycle status `active` and private visibility.
+- It is a documentation, governance, prompt, template, evaluation, and ledger
+  repository. It is not an application, service, package, or deployable website.
+- The repository contains no package manifest, build system, test suite, or runtime
+  service configuration.
+- The public storefront and child repositories are external consumers of material
+  produced here. `web-templates/` contains source assets only and must not be served
+  from this workbench.
 
-This is NOT a web application. Do not configure web server workflows, deployment
-targets, or live-site infrastructure for this repository.
+Inferred from the repository contents:
 
----
+- Primary users are the owner, GPT builders, and AI agents maintaining a governed
+  family of Custom GPT specifications and related public-page source material.
+- The workbench's practical mission is to preserve canonical rules and provide the
+  source material used to design, evaluate, and relay Glee-fully GPT entities.
 
-## Authority Chain
+Unknown from this checkout:
 
+- The current operational status of the externally hosted GPTs, child repositories,
+  public site, and live ChatGPT links. Local documentation reports 40+ entities, but
+  that external deployment count is not independently verified here.
+
+## Authority and scope
+
+The authority chain is:
+
+```text
+OKHP3/OverKill-Hill-FoundRy
+  -> Glee-fullyTools-FoundRy (this repository)
+       -> glee-fully-gpt00-* through glee-fully-gpt07-* child repositories
 ```
-OKHP3/OverKill-Hill  (root governance — overrides all)
-  └─ OKHP3/Glee-fullyTools-FoundRy  ◀ THIS REPO
-       └─ glee-fully-gpt00-*  through  glee-fully-gpt07-*
+
+Follow parent governance when it is available. Within this repository:
+
+1. `canon/dataledger_*_v3.md` is the data authority.
+2. `governance/` defines the rules applied to the canon and build workflow.
+3. `prompts/`, `templates/`, `evaluation/`, `vernacular/`, `inventory/`, and
+   `docs/` provide governed working material and explanations.
+4. GPT-local or ad hoc instructions do not override canon.
+
+This repository is a workbench and relay. Do not add web servers, deployment
+workflows, hosted-service configuration, or application infrastructure here.
+
+## Repository map
+
+- `canon/`: nine canonical ledgers. The registry, persona, parameters, system,
+  hydration, narrative, ideation, archive, and legacy processing ledgers live here.
+  Preserve existing content and `::CanonSeal[...]::` tags. Canonical changes are
+  growth-only unless higher authority explicitly directs otherwise.
+- `governance/`: the v3.0.1 project directive, project instructions, Strategy Center
+  instructions, and the approximately 20,000-line Operator's Cathedral Layout.
+- `prompts/`: Builder-Ready PromptChain v2.0, GPT scaffolds, and the multi-tool
+  content synthesis prompt.
+- `templates/`: lettered FrankenTemplate variants, including the latest `ae` and `y`
+  variants, plus hybrid templates.
+- `evaluation/`: GPT PulseBook evaluation versions. Use `gpt-pulsebook-evaluation-v1-7.md`
+  as the current local rubric; v1.4 and v1.6 are historical references.
+- `vernacular/`: complete and lite voice and tone references.
+- `inventory/`: human-readable entity catalog that complements the canonical registry.
+- `docs/`: narrative, technical, and instruction-structure documentation, including
+  source-format `.docx` and `.pdf` files.
+- `snapshots/`: dated historical captures. The latest local snapshot is
+  `snapshots/2025-09-14/`. Treat snapshots as read-only lineage evidence.
+- `web-templates/`: HTML/CSS/JavaScript template assets for child repositories.
+  Current files include `index.html`, `theme.css`, `assets/css/theme.css`,
+  `assets/js/app.js`, and the page-content update log. Referenced image assets are
+  not present in this checkout.
+- `scripts/`: small Python 3 maintenance and audit utilities. They are not build or
+  deployment tools.
+- `attached_assets/`: imported research, drafts, and reference files. Treat these as
+  non-canonical source material unless a canonical file explicitly adopts their content.
+- `.agents/`: repository-local skill catalog and agent memory/reference material.
+  It is not the source of truth for canon.
+- `manifest.yaml`, `README.md`, `CHANGELOG.md`, `LICENSE.md`, and `replit.md`: root
+  metadata, human orientation, history, license, and workbench context.
+
+## Core architecture and workflows
+
+The documented entity model is Toolbox, Tool, Tool-ette, Function, and
+Function-ette. Child repository families are named as follows:
+
+| Pattern | Domain |
+|---|---|
+| `glee-fully-gpt00-*` | Toolbox trunk |
+| `glee-fully-gpt01-*` | Discovered Careers |
+| `glee-fully-gpt02-*` | Treasured Finds |
+| `glee-fully-gpt03-*` | Tasty Tracker |
+| `glee-fully-gpt04-*` | Traveler's Guide |
+| `glee-fully-gpt05-*` | Organized Life |
+| `glee-fully-gpt06-*` | Healthy Bee-ing |
+| `glee-fully-gpt07-*` | Identity Known |
+
+The documented clause lifecycle is:
+
+```text
+ideation -> registry / persona / parameters -> narrative -> archive
+                         ^
+                         |
+                 hydration re-entry
 ```
 
-Parent FoundRy governance applies here. When in conflict, defer to the root.
+`processing` is legacy and deprioritized. Runtime continuity belongs in
+`dataledger_hydration_v3.md`, not in prompt-local memory. Canonical outputs must
+carry a `!CLAUSE` identifier declared in `canon/dataledger_registry_v3.md`.
 
----
+The Builder-Ready PromptChain in `prompts/` describes the PROMPT00 through PROMPT05
+creation flow. The PulseBook rubric in `evaluation/` is the local evaluation
+reference before an entity is treated as PME-ready in the documented workflow.
 
-## Governed Child Repository Families
+## Non-negotiable conventions
 
-| Family Pattern | Scope |
-|----------------|-------|
-| `glee-fully-gpt00-*` | Toolbox (Trunk) entities |
-| `glee-fully-gpt01-*` | Discovered Careers branch |
-| `glee-fully-gpt02-*` | Treasured Finds branch |
-| `glee-fully-gpt03-*` | Tasty Tracker branch |
-| `glee-fully-gpt04-*` | Traveler's Guide branch |
-| `glee-fully-gpt05-*` | Organized Life branch |
-| `glee-fully-gpt06-*` | Healthy Bee-ing branch |
-| `glee-fully-gpt07-*` | Identity Known branch |
+- Expansion-only discipline: do not delete, simplify, or collapse existing canonical
+  content. Add detail or retire logic through the documented archive path.
+- Canon authority: when canon, governance, README material, and GPT-local content
+  conflict, canon wins.
+- CanonSeal integrity: never alter or remove a `::CanonSeal[...]::` tag.
+- Tone default: use `GleeTone.A1` for an untagged thread. Log a genuine tone drift
+  through the persona ledger using the repository's `!DRIFT_EVENT` convention.
+- Suffix law: `-R` and `-Ry` are reserved to OverKill Hill P3 and The GPT Found-Ry.
+  Glee-fully GPTs are exempt. Do not introduce those suffixes into Glee-fully names.
+- No prompt-local memory: use the hydration ledger for continuity and handoff state.
+- Brand rules: do not use em dashes in generated content, preserve standalone punchy
+  lines, and keep verbosity proportional to understanding produced.
+- Do not put secrets, credentials, personal data, or machine-specific paths into
+  guidance, canon, prompts, or generated artifacts.
 
----
+## Safe change procedure
 
-## Directory Map
+Before changing anything:
 
-### `canon/` — The Authoritative Source of Truth
+1. Read this file, `README.md`, `manifest.yaml`, and the relevant folder README.
+2. Check `git status --short` and preserve existing user changes.
+3. For canon or governance work, read the applicable directive and ledger before
+   editing. Search for existing IDs and seals before adding content.
+4. Keep changes limited to the requested scope. Do not edit dependencies, generated
+   artifacts, CI behavior, or unrelated documentation as a side effect.
+5. Use non-destructive version-control operations. Never use `git reset --hard`,
+   `git checkout --`, or broad deletion commands unless the owner explicitly asks.
+6. Re-read every changed guidance file and verify every newly referenced path or
+   command before handing the work back.
 
-The 9 canonical dataLedger files. These override all other sources.
-**Do not remove content. Do not alter CanonSeal tags.**
+## Verified maintenance commands
 
-| File | Role | When to Read |
-|------|------|-------------|
-| `dataledger_registry_v3.md` | All registered GPT entities and IDs | Checking entity existence, adding new GPTs |
-| `dataledger_persona_v3.md` | Tone overlays and persona schemas | Tone questions, overlay assignments |
-| `dataledger_parameters_v3.md` | Runtime flags and suffix rules | Execution modes, toggle decisions |
-| `dataledger_system_v3.md` | PME/CME engine schemas | Lifecycle questions, engine logic |
-| `dataledger_hydration_v3.md` | Runtime snapshots and handoff schema | Cross-GPT continuity, thread restoration |
-| `dataledger_narrative_v3.md` | Finalized narrative clauses | Brand copy, canonical descriptions |
-| `dataledger_ideation_v3.md` | Active idea seeds | Finding candidate new Tools/Tool-ettes |
-| `dataledger_archive_v3.md` | Retired logic | Checking deprecation status |
-| `dataledger_processing_v3.md` | Legacy only — deprioritized | Only for pre-v3.0.1 trail lookup |
+Run commands from the repository root. These are the useful checks currently
+available, with their present limitations:
 
-### `governance/` — Directives and Cathedral Layout
-
-| File | Role |
-|------|------|
-| `glee-fully_project_governance_v3-0-1.md` | Canonical Governance Directive — primary rule document |
-| `glee-fully_project_instructions.md` | Project-level execution compliance instructions |
-| `00-glee-fully-strategy-center_instructions.md` | StrategyCenter project instructions |
-| `operators-cathedral-layout.md` | Master architecture reference (865KB — comprehensive layout) |
-
-### `docs/` — Overviews and Synthesis
-
-| File | Role |
-|------|------|
-| `gleefully_technical_overview.md` | Engineering architecture, PromptChain lifecycle, role discipline |
-| `gleefully_narrative_overview.md` | Brand story, ecosystem metaphors, tone philosophy |
-| `structure-and-ordering-for-custom-gpt-instruction-blocks.md` | GPT instruction block ordering rules |
-
-### `prompts/` — Build Engine and Scaffolds
-
-| File | Role |
-|------|------|
-| `glee-fully-builder-ready-promptchain-v2-0.md` | Primary GPT forge engine (PROMPT00–PROMPT05+) |
-| `custom_gpt_scaffold.md` | Base GPT instruction scaffold |
-| `custom_gpt_hybrid_scaffold.md` | Hybrid scaffold for branch/twig combinations |
-| `glee-fully_tools_megaprompt.md` | Megaprompt for multi-tool operations |
-
-### `vernacular/` — Voice and Tone Reference
-
-| File | Role |
-|------|------|
-| `glee-fully-vernacular-complete.md` | Full voice library — all tone patterns, phrases, expressions |
-| `glee-fully-vernacular-lite.md` | Condensed quick-reference for tone compliance |
-
-### `templates/` — GPT Instruction Template Variants
-
-FrankenTemplate iterations (alphabetically lettered: a, ab, ae, c, e, g, h, i, j, k, m, n, o, q, r, s, t, u, v, y).
-Each letter represents a distinct structural or tonal iteration. Use the latest (`ae` or `y`) as base.
-
-### `evaluation/` — GPT Quality Rubrics
-
-| File | Role |
-|------|------|
-| `gpt-pulsebook-evaluation-v1-4.md` | PulseBook evaluation v1.4 |
-| `gpt-pulsebook-evaluation-v1-6.md` | PulseBook evaluation v1.6 |
-| `gpt-pulsebook-evaluation-v1-7.md` | PulseBook evaluation v1.7 (latest) |
-
-### `inventory/` — Entity Catalog
-
-| File | Role |
-|------|------|
-| `inventory_of_toolbox_tools_and_tool-ettes.md` | Full catalog of all registered Tools and Tool-ettes |
-
-### `web-templates/` — Webpage Template Assets
-
-Static HTML/CSS templates for Glee-fully child repo public-facing pages.
-**These are template assets only. Do not serve from this workbench.**
-
-### `scripts/` — Governance Utility Scripts
-
-Python 3 utility scripts for filename normalization, manifest validation, registry
-auditing, and foundry sync posture reporting. No third-party dependencies.
-
-### `snapshots/` — Historical State Captures
-
-Point-in-time ledger and template snapshots. Latest is `2025-09-14/`.
-Use for lineage verification and rollback reference only.
-
----
-
-## Governance Rules You Must Follow
-
-### 1. Expansion-Only Discipline
-Never delete, simplify, or reduce existing content in any canonical file.
-All edits add detail, specificity, or capability. Existing clauses are never removed.
-
-### 2. Growth-Only Mutation
-If a file has a `::CanonSeal[...]::` tag, it is locked for growth only.
-Any edit must preserve all prior content and extend it.
-
-### 3. Canon Authority Hierarchy
+```bash
+git status --short --branch
+git diff --check
+python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
+python3 scripts/manifest-audit.py .
+python3 scripts/registry-audit.py .
+python3 scripts/foundry-sync.py
+python3 scripts/sync-report.py
 ```
-canon/ dataledger_* files  >  governance/ directives  >  GPT-local logic
-```
-When sources conflict, the canon files win.
 
-### 4. Output Signature Requirement
-All outputs from canonical logic must carry a `!CLAUSE` ID declared in
-`canon/dataledger_registry_v3.md`. Format:
+The filename normalizer is dry-run by default. Do not pass `--apply` without an
+explicit request because the current dry run proposes 12 renames, including a
+case-normalization proposal for `CLAUDE.md` and changes under `attached_assets/`.
+
+The other audits are useful evidence, but they are not currently clean for this
+repository:
+
+- `manifest-audit.py` expects a top-level `brand_domain:` field, while the current
+  manifest stores it as `brand.domain`.
+- `registry-audit.py` checks for `registry/index.yaml`, which is absent. The actual
+  canonical registry is `canon/dataledger_registry_v3.md`.
+- `foundry-sync.py` checks for `_template/`, `registry/`, `schemas/`, and `.github/`
+  paths that are absent from this workbench. Its strict baseline appears to target a
+  different FoundRy layout.
+- `sync-report.py` runs and reports the same absent inherited-baseline paths; it is
+  a report, not proof of repository compliance.
+
+No build, test, package-install, local-server, or deployment command is defined or
+verified for this workbench. Do not invent one. The repository's meaningful checks
+are documentation review, canon-preservation review, and the read-only maintenance
+audits above.
+
+## Known gaps and stale claims
+
+- Several README files describe the repository as containing live or deployed GPTs.
+  Treat that as project documentation, not local proof of current external status.
+- `README.md` and `web-templates/README.md` describe image assets and some template
+  layout details that are not present in the current checkout. Do not create missing
+  assets merely to satisfy documentation claims.
+- The audit scripts contain assumptions from another FoundRy baseline and should not
+  be silently treated as repository health gates. Updating those scripts is separate
+  work and requires an explicit request.
+- `CHANGELOG.md` lists planned population of several seeded ledgers and a child-repo
+  registry. Confirm owner intent before treating those as current requirements.
+- The canonical registry and other ledgers use Markdown/YAML hybrid content. Preserve
+  their existing syntax and lineage while following the growth-only rule.
+
+## Keeping this guide current
+
+Update this file when the repository's actual structure, authority chain, validation
+commands, or non-goals change. Base updates on files or executable checks. Label
+inferences and unknowns instead of presenting them as facts. Keep `CLAUDE.md` as a
+short pointer unless Claude-specific instructions genuinely need to be added.
+
+## Output signature reference
+
+When producing output from canonical logic, use the repository's declared clause
+format and an ID that already exists in the registry:
+
 ```yaml
 !CLAUSE: !PME_READY
 ID: [EntityType].[Name].[MajorVersion].[MinorVersion].[Patch]
@@ -159,87 +223,4 @@ TargetPhase: [Gleam / Ideation / Archive]
 DeclaredBy: Glee-fully FoundRy
 ```
 
-### 5. Tone Default
-Threads without an explicit overlay default to `GleeTone.A1`
-(uplifting, whimsical, clear, and articulate). Log deviations in
-`canon/dataledger_persona_v3.md` using `!DRIFT_EVENT`.
-
-### 6. No Prompt-Local Memory
-Runtime state must not be stored in GPT-local logic or prompt context.
-All continuity uses `canon/dataledger_hydration_v3.md`.
-
-### 7. Suffix Law
-`-R` and `-Ry` suffixes are exclusive to OverKill Hill P3 and The GPT Found-Ry.
-Glee-fully GPTs are **exempt** — do not apply these suffixes here.
-Violations must be retired to `canon/dataledger_archive_v3.md` with `!LEGACY_RETIRED`.
-
-### 8. This Is a Workbench — No Web Server
-Do not configure HTTP server workflows, deployment targets, or static site builds.
-The `web-templates/` folder is template source material, not a deployable site.
-
----
-
-## Brand Rules (Apply to All Generated Content)
-
-These rules apply to any content generated in or for this ecosystem:
-
-| Rule | Detail |
-|------|--------|
-| **No em dashes** | Do not use em dashes in any generated content |
-| **Preserve punchy lines** | Standalone short lines must not be consolidated into paragraphs |
-| **ROY principle** | Understanding produced / explanation invested — verbosity must earn its space |
-| **AutoCAD version** | R10 — locked, not negotiable |
-
----
-
-## Required Files for Every Child Repository
-
-```
-AGENTS.md       <- AI agent navigation (this format)
-README.md       <- Human-readable overview
-CHANGELOG.md    <- Version history
-LICENSE.md      <- License declaration
-manifest.yaml   <- Repo metadata (schema_version, type, brand_domain, parent_foundry)
-```
-
----
-
-## Clause Lifecycle (Quick Reference)
-
-```
-dataledger_ideation_v3.md  ->  dataledger_registry_v3.md / dataledger_persona_v3.md / dataledger_parameters_v3.md
-                           ->  dataledger_narrative_v3.md  (finalized)
-                           ->  dataledger_archive_v3.md    (retired)
-```
-
-Clauses may re-enter ideation from `dataledger_hydration_v3.md` with updated `!CLAUSE` tags.
-
----
-
-## Key Contacts and Links
-
-| Resource | URL |
-|----------|-----|
-| GitHub — This Repo | https://github.com/OKHP3/Glee-fullyTools-FoundRy |
-| GitHub — Public Site Repo | https://github.com/OKHP3/Glee-fullyTools |
-| Public Tools Site | https://glee-fully.tools |
-| OKHP3 Universe | https://overkillhill.com/universe |
-| Notion Anchor | https://app.notion.com/p/1a7571754c0d446f8c44e532d2ebad03 |
-| Contact | contact@glee-fully.tools |
-
----
-
-## Local Development Paths
-
-| Environment | Path |
-|-------------|------|
-| Windows | `C:\Users\jamie\OKH-Local\04_GitHub_Mirrors\glee-fullytools-foundry` |
-| Mac | `/Volumes/OKH-Local/04_GitHub_Mirrors/Glee-fullyTools-FoundRy` |
-
----
-
-## Principle
-
-> *The capability is durable. The platform wrapper is temporary.*
-
-## Imported Claude Cowork project instructions
+> The capability is durable. The platform wrapper is temporary.

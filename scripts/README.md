@@ -31,6 +31,7 @@ as a canonical source.
 | [`check-registry.py`](check-registry.py) | Lightweight registry file presence check | Quick integrity check |
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
+| [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
 
 ---
 

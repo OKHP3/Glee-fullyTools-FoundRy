@@ -70,7 +70,8 @@ workflows, hosted-service configuration, or application infrastructure here.
 - `vernacular/`: complete and lite voice and tone references.
 - `inventory/`: human-readable entity catalog that complements the canonical registry.
 - `docs/`: narrative, technical, and instruction-structure documentation, including
-  source-format `.docx` and `.pdf` files.
+  source-format `.docx` and `.pdf` files, plus `technology-inventory.md`, the
+  source list consumed by `scripts/audit-technology-versions.py`.
 - `snapshots/`: dated historical captures. The latest local snapshot is
   `snapshots/2025-09-14/`. Treat snapshots as read-only lineage evidence.
 - `web-templates/`: HTML/CSS/JavaScript template assets for child repositories.
@@ -82,7 +83,13 @@ workflows, hosted-service configuration, or application infrastructure here.
 - `attached_assets/`: imported research, drafts, and reference files. Treat these as
   non-canonical source material unless a canonical file explicitly adopts their content.
 - `.agents/`: repository-local skill catalog and agent memory/reference material.
-  It is not the source of truth for canon.
+  It is not the source of truth for canon. `.agents/memory/` holds agent-maintained
+  reference notes (foundry structure, repo-standardizer state, phase notes).
+  `.agents/skills/` holds 20+ installed and in-development agent skill packages,
+  including several `okhp3-thread-context-extraction-*` platform variants and a
+  `thread-extract-ws` evaluation workspace with iteration benchmarks. Treat skill
+  benchmark and eval output under `.agents/skills/*/iteration-*` and
+  `.agents/skills/*/benchmarks/` as working data, not canon.
 - `manifest.yaml`, `README.md`, `CHANGELOG.md`, `LICENSE.md`, and `replit.md`: root
   metadata, human orientation, history, license, and workbench context.
 
@@ -164,7 +171,14 @@ python3 scripts/manifest-audit.py .
 python3 scripts/registry-audit.py .
 python3 scripts/foundry-sync.py
 python3 scripts/sync-report.py
+python3 scripts/audit-technology-versions.py
 ```
+
+`audit-technology-versions.py` checks `docs/technology-inventory.md` entries
+against current upstream versions. It also runs on a monthly schedule via
+`.github/workflows/technology-version-audit.yml` (with `.github/dependabot.yml`
+alongside it for dependency PRs). Neither workflow has produced a verified run
+in this checkout; treat their output as unconfirmed until a run is observed.
 
 The filename normalizer is dry-run by default. Do not pass `--apply` without an
 explicit request because the current dry run proposes 12 renames, including a
@@ -202,6 +216,14 @@ audits above.
   registry. Confirm owner intent before treating those as current requirements.
 - The canonical registry and other ledgers use Markdown/YAML hybrid content. Preserve
   their existing syntax and lineage while following the growth-only rule.
+
+- This section and the repository map were last synced to commit `7114b31`
+  (2026-07-22). Commits since the July 13 review added the CI technology-audit
+  workflow, `docs/technology-inventory.md`, `scripts/audit-technology-versions.py`,
+  and a reorganized `.agents/skills/` catalog (renamed `okhp3-thread-context-
+  extraction-workspace` to `thread-extract-ws`, among other renames). Re-check
+  this list against `git log` before relying on it if substantial time has
+  passed since that commit.
 
 ## Keeping this guide current
 

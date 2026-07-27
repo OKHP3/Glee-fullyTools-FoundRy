@@ -39,6 +39,7 @@ above.
 | `content-synthesis-for-glee-fully.docx` | Word | Content synthesis document — multi-pass reconciliation of canonical sources |
 | `content-synthesis-for-glee-fully.pdf` | PDF | Portable export of the content synthesis |
 | `brand-origin-story.docx` | Word | Brand origin story and founding narrative |
+| [`glee-fully-repository-crosswalk.md`](glee-fully-repository-crosswalk.md) | Markdown | Operational snapshot crosswalking the 51 in-scope child GitHub repositories to their adjacent local clones |
 
 ---
 

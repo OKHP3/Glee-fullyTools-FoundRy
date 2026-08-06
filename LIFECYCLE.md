@@ -1,7 +1,7 @@
 # LIFECYCLE.md — Glee-fullyTools-FoundRy
 
 **Status:** Active  
-**Last reviewed:** 2026-08-03  
+**Last reviewed:** 2026-08-06
 **Reviewed by:** OverKill Hill P³
 
 ---
@@ -42,7 +42,7 @@
 | Phase | Description | Status |
 |---|---|---|
 | Phase 1–4 | All 50 GPTs to v1.0 via child repos | In progress |
-| Phase 5 | 7–10 domain Agent Skills (consolidation) | Planned |
+| Phase 5 | 7–10 domain Agent Skills (consolidation) | Planned; 52 local skill packages currently provide the broader project-local skill library |
 | Phase 6 | Optional Vite/TypeScript SPA over Agent Skills | Deferred decision |
 
 See `docs/agent-skill-conversion-strategy.md` for full phase rationale.

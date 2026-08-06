@@ -80,16 +80,16 @@ workflows, hosted-service configuration, or application infrastructure here.
   not present in this checkout.
 - `scripts/`: small Python 3 maintenance and audit utilities. They are not build or
   deployment tools.
-- `attached_assets/`: imported research, drafts, and reference files. Treat these as
-  non-canonical source material unless a canonical file explicitly adopts their content.
+- `docs/source-material/`: imported research, drafts, and reference files. Treat these
+  as non-canonical source material unless a canonical file explicitly adopts their content.
 - `.agents/`: repository-local skill catalog and agent memory/reference material.
   It is not the source of truth for canon. `.agents/memory/` holds agent-maintained
   reference notes (foundry structure, repo-standardizer state, phase notes).
-  `.agents/skills/` holds 20+ installed and in-development agent skill packages,
-  including several `okhp3-thread-context-extraction-*` platform variants and a
-  `thread-extract-ws` evaluation workspace with iteration benchmarks. Treat skill
-  benchmark and eval output under `.agents/skills/*/iteration-*` and
-  `.agents/skills/*/benchmarks/` as working data, not canon.
+  `.agents/skills/` currently holds 52 installed or in-development Agent Skill
+  packages, indexed by `.agents/skills/README.md`, including platform and
+  brand-specific variants plus evaluation workspaces. Treat skill benchmark and
+  eval output under `.agents/skills/*/iteration-*`, `.agents/skills/*/workspace/`,
+  and `.agents/skills/*/benchmarks/` as working evidence, not canon.
 - `manifest.yaml`, `README.md`, `CHANGELOG.md`, `LICENSE.md`, and `replit.md`: root
   metadata, human orientation, history, license, and workbench context.
 
@@ -182,7 +182,7 @@ in this checkout; treat their output as unconfirmed until a run is observed.
 
 The filename normalizer is dry-run by default. Do not pass `--apply` without an
 explicit request because the current dry run proposes 12 renames, including a
-case-normalization proposal for `CLAUDE.md` and changes under `attached_assets/`.
+  case-normalization proposal for `CLAUDE.md` and changes under `docs/source-material/`.
 
 The other audits are useful evidence, but they are not currently clean for this
 repository:
@@ -217,13 +217,12 @@ audits above.
 - The canonical registry and other ledgers use Markdown/YAML hybrid content. Preserve
   their existing syntax and lineage while following the growth-only rule.
 
-- This section and the repository map were last synced to commit `7114b31`
-  (2026-07-22). Commits since the July 13 review added the CI technology-audit
+- This section and the repository map were last reconciled on 2026-08-06 against
+  the current `main` tree. The repository includes the CI technology-audit
   workflow, `docs/technology-inventory.md`, `scripts/audit-technology-versions.py`,
-  and a reorganized `.agents/skills/` catalog (renamed `okhp3-thread-context-
-  extraction-workspace` to `thread-extract-ws`, among other renames). Re-check
-  this list against `git log` before relying on it if substantial time has
-  passed since that commit.
+  the current 52-package local skill catalog, and the `skills/` publication mirror
+  for `okhp3-skill-promotion`. Re-check this list against `git log` before relying
+  on it after substantial structural changes.
 
 ## Keeping this guide current
 

@@ -97,4 +97,4 @@ carry the functional workflow.
 ## References
 
 - `docs/agent-skill-conversion-strategy.md` — Full Phase 5 planning document
-- Session notes: voice memo transcripts in `attached_assets/` (2026-08-03 session)
+- Session notes: voice memo transcripts in `docs/source-material/` (2026-08-03 session)

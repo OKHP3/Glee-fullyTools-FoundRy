@@ -5,7 +5,8 @@
 This is the **private workbench** for the Glee-fully Personalizable Tools™ ecosystem.
 It is NOT a deployable web application. All content here is source material — governance
 schemas, canonical ledgers, GPT instruction templates, promptchains, tone frameworks,
-and evaluation tools used to build and maintain Glee-fully GPTs.
+evaluation tools, and repository-local Agent Skills used to build and maintain
+Glee-fully GPTs and their successor workflows.
 
 ## Authority Chain
 
@@ -38,6 +39,8 @@ OKHP3/OverKill-Hill
 | `inventory/` | Full catalog of Toolbox Tools and Tool-ettes |
 | `snapshots/` | Point-in-time ledger and template snapshots (dated) |
 | `web-templates/` | Webpage template assets (for child repo sites — NOT deployed here) |
+| `.agents/skills/` | Repository-local Agent Skills, references, tests, and evaluation evidence |
+| `skills/` | Explicit publication mirror for the promotion package maintained here |
 
 ## User Preferences
 

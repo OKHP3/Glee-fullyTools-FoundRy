@@ -82,10 +82,11 @@ After PROMPT05 the entity is **PME-ready** and eligible for deployment in ChatGP
 
 ## Folder Catalog
 
-This workbench contains 11 top-level folders, each representing a distinct effort or
-artifact layer in the GPT fabrication pipeline. Each folder has its own README with
-a full PRD-style description of its purpose, contents, governance rules, and
-relationships to other folders.
+This workbench contains distinct artifact layers in the GPT fabrication pipeline,
+alongside a repository-local Agent Skills catalog. The content folders each have a
+README describing their purpose, contents, governance rules, and relationships to
+other folders. The local skills are indexed separately in
+`.agents/skills/README.md`.
 
 ---
 
@@ -246,7 +247,7 @@ stop for anyone needing orientation before working in this repo.
 
 **Automated tooling for repo hygiene and compliance verification.**
 
-Seven Python 3 utility scripts (no third-party dependencies) for maintaining the health
+Nine Python 3 utility scripts (no third-party dependencies) for maintaining the health
 and compliance of this repository: filename normalization to lowercase-kebab-case ASCII,
 manifest validation, registry integrity checks, and foundry sync posture auditing.
 Run `normalize_filenames.py` after adding any files. Run the audit suite periodically
@@ -355,6 +356,7 @@ Glee-fullyTools-FoundRy/
 │
 ├── docs/                  ← ⚫ Human-readable ecosystem documentation
 │   ├── README.md
+│   ├── source-material/   ← Imported research, drafts, and non-canonical references
 │   ├── gleefully_narrative_overview.md
 │   ├── gleefully_technical_overview.md
 │   ├── structure-and-ordering-for-custom-gpt-instruction-blocks.md

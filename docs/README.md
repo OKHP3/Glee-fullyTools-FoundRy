@@ -18,6 +18,11 @@ This is also where source-format documents (Word, PDF) live alongside their Mark
 equivalents — making the docs portable across tools while keeping canonical versions
 in Markdown for version control.
 
+Imported research, drafts, pasted source material, and other non-canonical references
+are kept under [`source-material/`](source-material/). Files there retain their source
+filenames and provenance; canonical content belongs in the governed folders described
+above.
+
 ---
 
 ## Files
@@ -82,6 +87,7 @@ docs/       <-- describes  --> governance/ (explains the rules in plain language
 docs/       <-- informs    --> prompts/ (megaprompt uses docs/ as synthesis source)
 docs/       <-- supports   --> web-templates/ (content source for public-facing pages)
 docs/       <-- referenced in --> inventory/ (elevator pitches draw on narrative docs)
+docs/source-material/ <-- supplies evidence to --> docs/ and Phase 5 decision records
 ```
 
 ---
@@ -91,4 +97,5 @@ docs/       <-- referenced in --> inventory/ (elevator pitches draw on narrative
 - When onboarding a new AI agent to this repo, point them to `gleefully_technical_overview.md` first.
 - When a human needs to understand the ecosystem's purpose, start with `gleefully_narrative_overview.md`.
 - The `.docx` and `.pdf` files are source/export formats — the `.md` files are the canonical versions for this repo.
+- `source-material/` contains imported, non-canonical inputs and should not be treated as a source of authority without explicit adoption.
 - The `content-synthesis-for-glee-fully.docx` and `brand-origin-story.docx` are working documents that may be used to generate or refresh website content via the megaprompt (`prompts/glee-fully_tools_megaprompt.md`).

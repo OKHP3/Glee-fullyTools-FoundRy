@@ -1,6 +1,6 @@
 # Technology Inventory and Version Policy
 
-> Review date: 2026-07-20
+> Review date: 2026-09-01
 
 This workbench is not a Vite, TypeScript, Tailwind, React, Node.js, or npm
 application. It is a documentation and governance repository with static web
@@ -14,7 +14,7 @@ template assets and Python maintenance scripts.
 | JavaScript | Browser-side behavior in `web-templates/assets/js/app.js` and an ES module import in `web-templates/index.html`. | Unpinned language/runtime; browser supplied | ECMAScript 2026, ECMA-262 17th edition | Track the browser platform. Do not add a Node toolchain unless the repository becomes an application. |
 | HTML | Static page template in `web-templates/index.html`. | HTML Living Standard, no repository pin | Living standard | Validate in the consuming child repository when a page is deployed. |
 | CSS | Hand-authored stylesheets in `web-templates/theme.css` and `web-templates/assets/css/theme.css`. | No framework or version pin | CSS Snapshot 2025 | Continue using standards-based CSS. Tailwind and PostCSS are not present. |
-| Mermaid | CDN ES module loaded by `web-templates/index.html`. | Major-pinned `@10` | `11.16.0` | The audit detects when the CDN major or release is behind npm. Review major upgrades for diagram compatibility. |
+| Mermaid | CDN ES module loaded by `web-templates/index.html`. | `11.17.2` | `11.17.2` | Review the pinned release when Mermaid publishes a newer version. |
 | Google Fonts | Remote font stylesheet for Fredoka, Open Sans, Poppins, and DM Sans. | No semantic package version | Service-managed | Check URL availability; font families and weights are the meaningful contract. |
 | Ko-fi widget | Remote script loaded by the HTML template. | No public version pin | Service-managed | Check URL availability; update only when Ko-fi changes the integration contract. |
 | YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | YAML 1.2-style usage, no parser dependency | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. Python scripts do not require PyYAML. |

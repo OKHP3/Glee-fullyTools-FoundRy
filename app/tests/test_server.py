@@ -126,6 +126,48 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("## Inputs", package.read("specification.md").decode()); self.assertIn("## Observed acceptance evidence", package.read("evaluation.md").decode()); self.assertIn("Continue from here", package.read("handoff.md").decode())
         status, _, exported=self.request("GET",f"/api/projects/{item['id']}/export?format=markdown"); self.assertEqual(status,200); self.assertIn("&lt;img",exported.decode())
 
+    def test_every_markdown_package_member_escapes_authored_html(self):
+        hostile='<img src=x onerror=alert(1)>'
+        for kind in ("custom-gpt", "agent-skill", "workflow", "web-tool"):
+            with self.subTest(kind=kind):
+                item=self.create(kind=kind, name=hostile, description=hostile,
+                    audience=hostile, inputs=hostile, outputs=hostile,
+                    constraints=hostile, instructions=hostile,
+                    components=[{"id":"core","name":hostile,"purpose":hostile,"dependsOn":[]}],
+                    tests=[{"id":"case","name":hostile,"expected":hostile,"actual":hostile,"status":"pass"}])
+                status, _, raw=self.request("GET", f"/api/projects/{item['id']}/export?format=zip")
+                self.assertEqual(status, 200)
+                with zipfile.ZipFile(BytesIO(raw)) as bundle:
+                    for name in bundle.namelist():
+                        if name.endswith(".md"):
+                            self.assertNotIn(hostile, bundle.read(name).decode(), name)
+                    self.assertIn("&lt;img", bundle.read("evaluation.md").decode())
+                    self.assertEqual(json.loads(bundle.read("project.json")), item)
+                    if kind == "agent-skill":
+                        description=bundle.read("SKILL.md").decode().splitlines()[2].removeprefix("description: ")
+                        self.assertEqual(json.loads(description), hostile)
+
+    def test_retired_references_allow_existing_edits_but_not_new_attachments(self):
+        skill_id=self.server.skills()[0]["id"]
+        item=self.create(skillIds=[skill_id])
+        self.server.skills=lambda: []  # Simulate an unavailable or refreshed shelf.
+        for status in ("archived", "draft"):
+            update=self.project(name="Still editable", status=status,
+                revision=item["revision"], skillIds=[skill_id])
+            code, _, item=self.request("PUT", f"/api/projects/{item['id']}", update)
+            self.assertEqual(code, 200)
+            self.assertEqual(item["skillIds"], [skill_id])
+            self.assertEqual(item["status"], status)
+        report=self.request("GET", f"/api/projects/{item['id']}/validation")[2]
+        self.assertFalse(report["readyForReview"])
+        update=self.project(revision=item["revision"], skillIds=[skill_id,"new-unknown"])
+        self.assertEqual(self.request("PUT", f"/api/projects/{item['id']}", update)[0], 400)
+        update=self.project(revision=item["revision"], skillIds=[])
+        code, _, item=self.request("PUT", f"/api/projects/{item['id']}", update)
+        self.assertEqual(code, 200)
+        update=self.project(revision=item["revision"], skillIds=[skill_id])
+        self.assertEqual(self.request("PUT", f"/api/projects/{item['id']}", update)[0], 400)
+
     def test_body_limit_and_csp(self):
         conn=http.client.HTTPConnection("127.0.0.1",self.port); conn.request("POST","/api/projects",b"{}",{"Content-Type":"application/json","X-Foundry-Request":"1","Content-Length":str(1024*1024+1)}); response=conn.getresponse(); self.assertEqual(response.status,400); response.read();conn.close()
         status, headers, _ = self.request("GET","/api/health"); self.assertEqual(status,200); self.assertIn("default-src 'self'",headers["Content-Security-Policy"])

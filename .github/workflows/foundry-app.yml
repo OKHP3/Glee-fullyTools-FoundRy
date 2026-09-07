@@ -5,11 +5,21 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/foundry-app.yml'
+      - 'prompts/glee-fully-builder-ready-promptchain-v2-0.md'
+      - 'prompts/custom_gpt_scaffold.md'
+      - 'evaluation/gpt-pulsebook-evaluation-v1-7.md'
+      - 'vernacular/glee-fully-vernacular-lite.md'
+      - 'canon/README.md'
   push:
     branches: [main]
     paths:
       - 'app/**'
       - '.github/workflows/foundry-app.yml'
+      - 'prompts/glee-fully-builder-ready-promptchain-v2-0.md'
+      - 'prompts/custom_gpt_scaffold.md'
+      - 'evaluation/gpt-pulsebook-evaluation-v1-7.md'
+      - 'vernacular/glee-fully-vernacular-lite.md'
+      - 'canon/README.md'
   workflow_dispatch:
 
 permissions:

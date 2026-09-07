@@ -76,6 +76,9 @@ in the [research report](../research/okhp3-universe-2026-09-07/report.html).
 full commit revisions and source paths. Refresh it only after verifying each
 new target file; do not treat catalog generation timestamps as behavioral proof.
 This is a curated reference shelf, not a replacement catalog or live sync.
+If a reference becomes unavailable, its existing project remains editable and
+archivable. The shelf displays that ID for optional removal, and readiness names
+it as unresolved. Newly attached references must exist in the current shelf.
 
 The API contract is in [api-contract.md](api-contract.md). There are no endpoints
 for executing code, fetching arbitrary URLs, changing canon, sending messages,

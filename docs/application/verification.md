@@ -80,3 +80,13 @@ The 15-test service suite passed again with added readiness/provenance assertion
 JavaScript syntax passed. An isolated Node VM check exercised ID generation with
 crypto absent, randomUUID absent and randomUUID present. These focused checks do
 not imply that the earlier complete browser journey was repeated.
+
+A subsequent Codex review identified raw inline HTML in some Markdown package
+members, edits blocked by retired Skillz references, and missing source-shelf CI
+triggers. These were corrected. The expanded **17-test** suite passed locally,
+including hostile authored HTML across all four package kinds, JSON preservation,
+YAML description round-trip, and retained-reference edits/archive/restore/removal.
+New unknown attachments remain rejected. Both CI path filters were checked against
+all five source allowlist paths. The UI now displays unavailable references for
+optional removal; its syntax was checked, but that specific interaction was not
+repeated in a browser during this follow-up.

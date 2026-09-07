@@ -215,9 +215,13 @@ def readiness(project: dict, skills: list[dict]) -> dict:
     return {"readyForReview": ready, "checks": checks, "summary": "Ready for review; this is not PME or publication certification." if ready else "Complete failed checks and address warnings before review."}
 
 
+def markdown_text(value: str) -> str:
+    # Escape inline HTML consistently across every Markdown package member.
+    return html.escape(value.replace("\r", "").strip(), quote=False)
+
+
 def markdown(project: dict) -> str:
-    # Keep exported Markdown inert when opened by a permissive renderer.
-    esc = lambda value: html.escape(value.replace("\r", "").strip(), quote=False)
+    esc = markdown_text
     lines = [f"# {esc(project['name'])}", "", f"Status: `{project['status']}`", "", "## Description", esc(project["description"]), "", "## Audience", esc(project["audience"]), "", "## Inputs", esc(project["inputs"]), "", "## Outputs", esc(project["outputs"]), "", "## Constraints", esc(project["constraints"]), "", "## Instructions", esc(project["instructions"]), "", "## Components"]
     lines += [f"- **{esc(c['name'])}**: {esc(c['purpose'])}" + (" (depends on: " + ", ".join(esc(x) for x in c["dependsOn"]) + ")" if c["dependsOn"] else "") for c in project["components"]] or ["No components recorded."]
     lines += ["", "## Acceptance cases"]
@@ -316,16 +320,17 @@ class Handler(SimpleHTTPRequestHandler):
         skill_map={item["id"]:item for item in self.app.skills()}
         skills=[skill_map[item] for item in project["skillIds"] if item in skill_map]
         missing_skills=[item for item in project["skillIds"] if item not in skill_map]
-        evidence="\n".join(f"- {case['name']}: expected {case['expected']}; status `{case['status']}`; actual {case['actual'] or 'not recorded'}" for case in project["tests"]) or "- No acceptance cases recorded."
+        esc = markdown_text
+        evidence="\n".join(f"- {esc(case['name'])}: expected {esc(case['expected'])}; status `{case['status']}`; actual {esc(case['actual']) or 'not recorded'}" for case in project["tests"]) or "- No acceptance cases recorded."
         refs="\n".join(f"- [{item['name']}]({item['url']}) (`{item['id']}`, revision `{item['revision']}`, source `{item['sourcePath']}`): {item['description']}" for item in skills) or "No Skillz references attached."
         if missing_skills:
             refs += "\nUnavailable references: " + ", ".join(missing_skills) + ". Recover their recorded source before review."
-        checks="\n".join(f"- {check['label']}: `{check['status']}`. {check['detail']}" for check in report["checks"])
-        contents={"project.json":json.dumps(project,indent=2),"README.md":markdown(project),"specification.md":markdown(project),"evaluation.md":f"# Evaluation for {project['name']}\n\nProject status: `{project['status']}`.\n\n## Observed acceptance evidence\n{evidence}\n\n## Readiness observations\n{checks}\n\n{report['summary']}\n", "skill-references.md":"# Skill references\n\n"+refs+"\n", "handoff.md":f"# Handoff: {project['name']}\n\nThis package is a `{project['status']}` working record at revision {project['revision']}. It does not certify PME readiness, publication readiness, deployment, or automatic behavioral validation.\n\n## Continue from here\n\n1. Review `specification.md` and the recorded acceptance evidence.\n2. Add or revise observed evidence in the FoundRy application, then export a new revision.\n3. For a web-tool package, open `index.html` in a modern browser and exercise add, complete, reopen, and filters.\n4. Treat attached Skillz references as pinned provenance, not executable dependencies.\n"}
-        if project["kind"] == "custom-gpt": contents.update({"instructions.md":project["instructions"]+"\n", "starters.md":f"# Conversation starters for {project['name']}\n\n- Help me with: {project['description'] or 'this project'}\n- My input is: {project['inputs'] or 'not yet specified'}\n- What output should I expect? {project['outputs'] or 'not yet specified'}\n"})
+        checks="\n".join(f"- {esc(check['label'])}: `{check['status']}`. {esc(check['detail'])}" for check in report["checks"])
+        contents={"project.json":json.dumps(project,indent=2),"README.md":markdown(project),"specification.md":markdown(project),"evaluation.md":f"# Evaluation for {esc(project['name'])}\n\nProject status: `{project['status']}`.\n\n## Observed acceptance evidence\n{evidence}\n\n## Readiness observations\n{checks}\n\n{esc(report['summary'])}\n", "skill-references.md":"# Skill references\n\n"+refs+"\n", "handoff.md":f"# Handoff: {esc(project['name'])}\n\nThis package is a `{project['status']}` working record at revision {project['revision']}. It does not certify PME readiness, publication readiness, deployment, or automatic behavioral validation.\n\n## Continue from here\n\n1. Review `specification.md` and the recorded acceptance evidence.\n2. Add or revise observed evidence in the FoundRy application, then export a new revision.\n3. For a web-tool package, open `index.html` in a modern browser and exercise add, complete, reopen, and filters.\n4. Treat attached Skillz references as pinned provenance, not executable dependencies.\n"}
+        if project["kind"] == "custom-gpt": contents.update({"instructions.md":esc(project["instructions"])+"\n", "starters.md":f"# Conversation starters for {esc(project['name'])}\n\n- Help me with: {esc(project['description']) or 'this project'}\n- My input is: {esc(project['inputs']) or 'not yet specified'}\n- What output should I expect? {esc(project['outputs']) or 'not yet specified'}\n"})
         elif project["kind"] == "agent-skill":
             slug=re.sub(r"[^a-z0-9]+", "-", project["name"].lower()).strip("-")[:64] or "foundry-draft-skill"
-            description=json.dumps(project["description"] or "Draft FoundRy skill.")
+            description=json.dumps(project["description"] or "Draft FoundRy skill.").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
             contents["SKILL.md"]=f"---\nname: {slug}\ndescription: {description}\n---\n\n"+markdown(project)+"\nDraft status only. Review recorded evidence before use.\n"
         elif project["kind"] == "workflow": contents.update({"workflow.md":markdown(project),"workflow.json":json.dumps({"name":project["name"],"components":project["components"]},indent=2)})
         elif project["kind"] == "web-tool": contents.update(web_starter(project))
@@ -363,7 +368,11 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             payload=self.body()
             if not isinstance(payload,dict) or type(payload.get("revision")) is not int: raise ValidationError("current revision is required")
-            editable=validate_project(payload); self.app.validate_skill_ids(editable); project=self.app.store.update(match.group(1),editable,payload["revision"])
+            editable=validate_project(payload)
+            existing=self.app.store.get(match.group(1))
+            if not existing: return self.error_json(404,"project not found")
+            self.app.validate_skill_ids(editable, existing_ids=existing["skillIds"])
+            project=self.app.store.update(match.group(1),editable,payload["revision"])
             if not project:return self.error_json(404,"project not found")
             return self.json(200,project)
         except RuntimeError: return self.error_json(409,"revision conflict")
@@ -388,9 +397,9 @@ class FoundryServer(ThreadingHTTPServer):
             required={"id","name","description","url","sourcePath","revision"}
             return [x for x in result if isinstance(x,dict) and set(x)==required and all(isinstance(x[k],str) for k in required) and x["url"].startswith("https://")]
         except (OSError,json.JSONDecodeError): return []
-    def validate_skill_ids(self, project):
+    def validate_skill_ids(self, project, *, existing_ids=()):
         allowed={skill["id"] for skill in self.skills()}
-        unknown=set(project["skillIds"]) - allowed
+        unknown=set(project["skillIds"]) - allowed - set(existing_ids)
         if unknown:
             raise ValidationError("unknown registered skill IDs: " + ", ".join(sorted(unknown)))
 

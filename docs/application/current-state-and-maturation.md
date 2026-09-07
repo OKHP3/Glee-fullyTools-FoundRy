@@ -100,6 +100,15 @@ remain unverified. Replit workspace visibility was observed through a parallel
 authenticated coordinator; exact commit parity and application deployment there
 were not established.
 
+## Subsequent review follow-up
+
+The committed assessment was followed by corrections to readiness messages,
+browser ID fallback, inline-HTML escaping across Markdown exports, retained
+unavailable Skillz references and CI coverage of the reference shelf. The local
+suite now has 17 passing tests, including all-kind Markdown export checks and
+retired-reference edit/archive/restore behavior. See the PR for the latest commit
+and CI result; the baseline CI link above remains historical evidence.
+
 ## Recommended order of maturation
 
 The following stages are proposals. Advance on evidence of useful outcomes, not

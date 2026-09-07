@@ -29,7 +29,7 @@
       </div>
       <div id="editor" hidden>
         <div class="project-bar"><div><p id="project-kind" class="eyebrow"></p><h2 id="project-title">Untitled</h2><p id="project-meta" class="muted"></p></div><div class="project-actions"><button id="archive-button" class="button ghost">Archive</button><button id="save-button" class="button primary">Save draft</button></div></div>
-        <nav class="editor-tabs" aria-label="Project workspace"><button class="editor-tab active" data-panel="brief">Brief</button><button class="editor-tab" data-panel="build">Components</button><button class="editor-tab" data-panel="review">Review</button><button class="editor-tab" data-panel="references">References</button><button class="editor-tab" data-panel="universe">Universe</button></nav>
+        <nav class="editor-tabs" aria-label="Project workspace"><button class="editor-tab active" data-panel="brief" aria-current="page">Brief</button><button class="editor-tab" data-panel="build">Components</button><button class="editor-tab" data-panel="review">Review</button><button class="editor-tab" data-panel="references">References</button><button class="editor-tab" data-panel="universe">Universe</button></nav>
         <form id="project-form" novalidate>
           <section class="panel active" id="panel-brief">
             <div class="section-heading"><div><p class="eyebrow">The human part</p><h3>What are we making?</h3></div><p>Start loose. Shape it as you learn.</p></div>
@@ -41,8 +41,8 @@
           </section>
           <section class="panel" id="panel-build">
             <div class="section-heading"><div><p class="eyebrow">The working pieces</p><h3>Components &amp; dependencies</h3></div><button type="button" class="button secondary" id="add-component">Add component</button></div>
-            <p class="muted">Give each part a purpose, then connect it only to the parts it needs. Cycles are caught during review.</p><div id="components" class="component-list"></div>
-            <div class="section-heading evidence-heading"><div><p class="eyebrow">Observed, not imagined</p><h3>Acceptance evidence</h3></div><button type="button" class="button secondary" id="add-test">Add evidence</button></div><p class="muted">A pass needs actual evidence. “Not run” is an honest place to start.</p><div id="tests" class="test-list"></div>
+            <p class="muted">Give each part a purpose, then connect it only to the parts it needs. Save checks dependencies and rejects cycles.</p><div id="components" class="component-list"></div>
+            <div class="section-heading evidence-heading"><div><p class="eyebrow">Observed, not imagined</p><h3>Acceptance evidence</h3></div><button type="button" class="button secondary" id="add-test">Add evidence</button></div><p class="muted">Save the specification first, then record your test run. A pass needs actual evidence.</p><div id="tests" class="test-list"></div>
           </section>
           <section class="panel" id="panel-review">
             <div class="section-heading"><div><p class="eyebrow">A careful checkpoint</p><h3>Readiness &amp; history</h3></div><div class="button-row"><button type="button" class="button secondary" id="validate-button">Check readiness</button><button type="button" class="button secondary" data-export="json">JSON</button><button type="button" class="button secondary" data-export="markdown">Markdown</button><button type="button" class="button secondary" data-export="zip">ZIP package</button></div></div>

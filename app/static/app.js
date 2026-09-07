@@ -18,12 +18,37 @@
   const clearStatus = () => { $('#message').hidden = true; };
   const setConnection = (ok) => { const c = $('#connection'); c.textContent = ok ? 'Local service ready' : 'Local service unavailable'; c.className = `connection ${ok ? 'ok' : 'bad'}`; };
   const projectCard = (p) => `<button class="project-card${state.current?.id === p.id ? ' active':''}" data-id="${esc(p.id)}"><strong>${esc(p.name || 'Untitled')}</strong><small>${esc(kinds[p.kind] || p.kind)} · r${esc(p.revision ?? 0)}</small></button>`;
+
+  function setBusy(value) {
+    state.busy = value;
+    $('#workspace').setAttribute('aria-busy', String(value));
+    $$('button, input, textarea, select').forEach(control => { control.disabled = value; });
+  }
+  function invalidateReview() {
+    state.validation = null;
+    $('#validation-result').innerHTML = '<p>Check readiness for this saved revision. Earlier results are no longer shown.</p>';
+  }
+  function showSaved(project) {
+    state.current = project;
+    state.saved = structuredClone(project);
+    state.dirty = false;
+    state.sourceToken++;
+    $('#source-viewer').hidden = true;
+    $('#save-button').textContent = 'Save draft';
+    invalidateReview();
+    renderCurrent();
+    renderLibrary();
+  }
+  async function refreshAfterSave() {
+    try { await refreshProjects(); }
+    catch (_) { status('The record was saved, but the library could not refresh. Reopen the page when the service is available.', true); }
+  }
   function renderLibrary() { const q = $('#project-search').value.trim().toLowerCase(); const archived = state.library === 'archived'; const projects = state.projects.filter(p => (p.status === 'archived') === archived && `${p.name} ${p.kind}`.toLowerCase().includes(q)); $('#project-list').innerHTML = projects.length ? projects.map(projectCard).join('') : `<p class="muted">${archived ? 'Nothing archived yet.' : 'No matching drafts. Start one above.'}</p>`; $$('.project-card').forEach(b => b.addEventListener('click', () => requestOpen(b.dataset.id))); }
   function templateButton(t) { return `<button type="button" class="template" data-template="${esc(t.id)}"><p class="eyebrow">${esc(kinds[t.project?.kind] || 'Template')}</p><h3>${esc(t.name)}</h3><p>${esc(t.description)}</p></button>`; }
   function renderTemplates() { const markup = state.bootstrap.templates.map(templateButton).join(''); $('#template-grid').innerHTML = markup; $('#dialog-templates').innerHTML = markup; $$('[data-template]').forEach(b => b.addEventListener('click', () => createFromTemplate(b.dataset.template))); }
   function optionList(selected, components) { return components.filter(c => c.id !== selected).map(c => `<option value="${esc(c.id)}">${esc(c.name || c.id)}</option>`).join(''); }
-  function renderComponents() { const wrap = $('#components'); const components = state.current?.components || []; wrap.innerHTML = components.length ? components.map((c, i) => `<article class="component" data-index="${i}"><button type="button" class="remove" aria-label="Remove component">Remove</button><div class="component-grid"><label>Name<input data-key="name" value="${esc(c.name)}" placeholder="Component name"></label><label>Reference ID<input data-key="id" value="${esc(c.id)}" placeholder="component-id"></label></div><label>Purpose<textarea data-key="purpose" rows="2" placeholder="What this part makes possible">${esc(c.purpose)}</textarea></label><label>Depends on <select data-key="dependsOn" multiple size="${Math.max(2,Math.min(5,components.length - 1))}">${optionList(c.id, components)}</select></label></article>`).join('') : '<p class="muted">No pieces yet. Add only what helps the project work.</p>';
-    $$('.component', wrap).forEach((node, i) => { const c = components[i]; const select = $('[data-key="dependsOn"]', node); [...select.options].forEach(o => o.selected = (c.dependsOn || []).includes(o.value)); $$('.remove', node).forEach(b => b.addEventListener('click', () => { state.current.components.splice(i,1); markDirty(); renderComponents(); })); $$('[data-key]', node).forEach(control => control.addEventListener('input', () => { c[control.dataset.key] = control.multiple ? [...control.selectedOptions].map(o => o.value) : control.value; markDirty(); })); }); }
+  function renderComponents() { const wrap = $('#components'); const components = state.current?.components || []; wrap.innerHTML = components.length ? components.map((c, i) => `<article class="component" data-index="${i}"><button type="button" class="remove" aria-label="Remove component">Remove</button><div class="component-grid"><label>Name<input data-key="name" value="${esc(c.name)}" placeholder="Component name"></label><label>Reference ID<input data-key="id" readonly value="${esc(c.id)}" placeholder="component-id"></label></div><label>Purpose<textarea data-key="purpose" rows="2" placeholder="What this part makes possible">${esc(c.purpose)}</textarea></label><label>Depends on <select data-key="dependsOn" multiple size="${Math.max(2,Math.min(5,components.length - 1))}">${optionList(c.id, components)}</select></label></article>`).join('') : '<p class="muted">No pieces yet. Add only what helps the project work.</p>';
+    $$('.component', wrap).forEach((node, i) => { const c = components[i]; const select = $('[data-key="dependsOn"]', node); [...select.options].forEach(o => o.selected = (c.dependsOn || []).includes(o.value)); $$('.remove', node).forEach(b => b.addEventListener('click', () => { const removed = state.current.components.splice(i,1)[0]; state.current.components.forEach(item => { item.dependsOn = item.dependsOn.filter(id => id !== removed.id); }); markDirty(); renderComponents(); })); $$('[data-key]', node).forEach(control => control.addEventListener('input', () => { c[control.dataset.key] = control.multiple ? [...control.selectedOptions].map(o => o.value) : control.value; markDirty(); })); }); }
   function renderTests() { const wrap = $('#tests'); const tests = state.current?.tests || []; wrap.innerHTML = tests.length ? tests.map((t,i) => `<article class="test" data-index="${i}"><button type="button" class="remove" aria-label="Remove evidence">Remove</button><div class="test-grid"><label>Acceptance case<input data-key="name" value="${esc(t.name)}" placeholder="What should happen?"></label><label>Status<select data-key="status"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option></select></label></div><label>Expected result<textarea data-key="expected" rows="2">${esc(t.expected)}</textarea></label><label>Actual observed evidence<textarea data-key="actual" rows="2" placeholder="Record what you actually saw or measured.">${esc(t.actual)}</textarea></label></article>`).join('') : '<p class="muted">No evidence cases yet. Add one when you can describe a useful result.</p>';
     $$('.test', wrap).forEach((node,i) => { const t = tests[i]; $('[data-key="status"]',node).value = t.status || 'not-run'; $('.remove',node).addEventListener('click', () => { state.current.tests.splice(i,1); markDirty(); renderTests(); }); $$('[data-key]',node).forEach(control => control.addEventListener('input', () => { t[control.dataset.key] = control.value; markDirty(); })); }); }
   function renderSkills() { const chosen = new Set(state.current?.skillIds || []); const skills = state.bootstrap.skills || []; $('#skills').innerHTML = skills.length ? skills.map(s => `<div class="choice"><input id="skill-${esc(s.id)}" type="checkbox" value="${esc(s.id)}" ${chosen.has(s.id) ? 'checked':''}><label for="skill-${esc(s.id)}"><strong>${esc(s.name)}</strong><span class="muted">${esc(s.description || '')}${s.revision ? ` · ${esc(s.revision)}` : ''}</span></label></div>`).join('') : '<p class="muted">No Skillz reference file is available to this local service.</p>';
@@ -32,27 +57,150 @@
     $('#sources').innerHTML = (state.bootstrap.sources || []).map(s => `<button type="button" class="source-button" data-source="${esc(s.id)}"><strong>${esc(s.title)}</strong><br><small>${esc(s.description || 'Read-only reference')}</small></button>`).join('') || '<p class="muted">No reference sources are configured.</p>';
     $$('[data-source]').forEach(b => b.addEventListener('click', () => openSource(b.dataset.source)));
   }
-  function renderUniverse() { const all = state.bootstrap.universe || []; if (all.length !== 7) { $('#universe-map').innerHTML = '<p class="universe-unavailable">Universe data is unavailable from the local service.</p>'; $('#universe-list').innerHTML = '<p class="muted">No universe records were returned.</p>'; return; }
-    const lookup = id => all.find(x => x.id === id); const ask = lookup('askjamie'), overkill = lookup('overkill'), glee = lookup('gleefully'), skillz = lookup('skillz'), foundry = lookup('overkill-foundry'); if (!ask || !overkill || !glee || !skillz || !foundry) { $('#universe-map').innerHTML = '<p class="universe-unavailable">Universe records are incomplete.</p>'; } else $('#universe-map').innerHTML = `<div class="ring ask"><span>${esc(ask.name)}<small>left</small></span></div><div class="ring overkill"><span>${esc(overkill.name)}<small>connective center</small></span></div><div class="ring glee"><span>${esc(glee.name)}<small>right</small></span></div><div class="universe-node shared-node"><strong>${esc(skillz.name)}</strong><small>shared</small></div><div class="universe-node foundry-node"><strong>${esc(foundry.name)}</strong><small>OverKill-only</small></div>`;
-    $('#universe-list').innerHTML = all.map(u => `<article class="universe-item${u.shared ? ' shared':''}"><strong>${esc(u.name)}</strong><br><small>${esc(u.role || u.description || (u.shared ? 'Shared' : 'In its own lane'))}${u.shared ? ' · Shared' : ''}</small></article>`).join(''); }
+  function renderUniverse() {
+    const all = state.bootstrap.universe || [];
+    const byId = Object.fromEntries(all.map(item => [item.id, item]));
+    const required = ['askjamie','overkill','gleefully','skillz','askjamie-foundry','overkill-foundry','gleefully-foundry'];
+    if (all.length !== 7 || required.some(id => !byId[id])) {
+      $('#universe-map').textContent = 'The seven universe records are unavailable.';
+      $('#universe-list').replaceChildren(); return;
+    }
+    $('#universe-map').innerHTML = `<svg viewBox="0 0 960 445" role="img" aria-labelledby="universe-title universe-description"><title id="universe-title">Three overlapping regions of the OKHP3 universe</title><desc id="universe-description">AskJamie on the left, OverKill at the connective center, Glee-fully on the right. Each has its own FoundRy. Skillz is shared across all three. OverKill Found-Ry stays exclusively in OverKill.</desc><g fill-opacity=".08" stroke-width="3"><circle cx="260" cy="215" r="195" fill="#2d6f7e" stroke="#2d6f7e"/><circle cx="480" cy="215" r="195" fill="#6b5e57" stroke="#6b5e57"/><circle cx="700" cy="215" r="195" fill="#d94f63" stroke="#d94f63"/></g><g text-anchor="middle" fill="#2e2b29"><text x="205" y="140" font-size="27" font-weight="700">AskJamie</text><text x="480" y="97" font-size="27" font-weight="700">OverKill Hill</text><text x="755" y="140" font-size="27" font-weight="700">Glee-fully</text><text x="205" y="190" font-size="17">Helpdesk and lenses</text><text x="205" y="239" font-size="17">AskJamie FoundRy</text><text x="480" y="148" font-size="17">Connective center</text><text x="480" y="208" font-size="18" font-weight="700">OverKill Found-Ry</text><text x="480" y="239" font-size="15">OverKill only</text><text x="755" y="190" font-size="17">Personalizable tools</text><text x="755" y="239" font-size="17">Glee-fully FoundRy</text><rect x="318" y="314" width="324" height="63" rx="18" fill="#2d6f7e"/><text x="480" y="339" fill="white" font-size="20" font-weight="700">Skillz</text><text x="480" y="361" fill="white" font-size="15">Shared skills for all three regions</text></g></svg>`;
+    $('#universe-list').innerHTML = all.map(item => `<article class="universe-item${item.shared ? ' shared' : ''}"><strong>${/^https:\/\//.test(item.url) ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.name)}</a>` : esc(item.name)}</strong><br><small>${esc(item.role)}${item.shared ? ' · Shared across all three' : ''}</small></article>`).join('');
+  }
   function renderCurrent() { const p = state.current; if (!p) return; $('#empty-state').hidden = true; $('#editor').hidden = false; fields.forEach(f => { const input = $(`[name="${f}"]`); if (input) input.value = p[f] || ''; }); $('#project-kind').textContent = kinds[p.kind] || p.kind; $('#project-title').textContent = p.name || 'Untitled'; $('#project-meta').textContent = `Revision ${p.revision ?? 0} · Last saved ${p.updatedAt ? new Date(p.updatedAt).toLocaleString() : 'locally pending'}`; $('#archive-button').textContent = p.status === 'archived' ? 'Restore draft' : 'Archive'; renderComponents(); renderTests(); renderSkills(); renderUniverse(); loadHistory(); }
-  async function loadHistory() { if (!state.current?.id) return; try { const d = await (await api(`/api/projects/${encodeURIComponent(state.current.id)}/history`)).json(); $('#history').innerHTML = (d.history || []).map(h => `<li><strong>r${esc(h.revision)}</strong> · ${esc(h.action)}<br><small>${esc(h.summary || '')} · ${h.at ? new Date(h.at).toLocaleString() : ''}</small></li>`).join('') || '<li class="muted">No revision history returned yet.</li>'; } catch (_) { $('#history').innerHTML = '<li class="muted">History will appear when the saved service record is available.</li>'; } }
+  async function loadHistory() {
+    const id = state.current?.id, token = ++state.historyToken;
+    if (!id) return;
+    $('#history').textContent = 'Loading revision history…';
+    try {
+      const data = await (await api(`/api/projects/${encodeURIComponent(id)}/history`)).json();
+      if (token !== state.historyToken || id !== state.current?.id) return;
+      $('#history').innerHTML = data.history.map(h => `<li><strong>r${esc(h.revision)}</strong> · ${esc(h.action)}<br><small>${esc(h.summary)} · ${esc(new Date(h.at).toLocaleString())}</small></li>`).join('');
+    } catch (_) {
+      if (token === state.historyToken) $('#history').textContent = 'Revision history is unavailable right now.';
+    }
+  }
   function markDirty() { if (state.busy) return; state.dirty = true; state.validation = null; $('#save-button').textContent = 'Save draft · changes'; $('#project-title').textContent = $('[name="name"]').value || 'Untitled'; $('#validation-result').innerHTML = '<p>Edits are unsaved. Current review results are no longer shown. Save before checking readiness.</p>'; }
   function collect() { const p = { revision: state.current.revision, status: state.current.status || 'draft', components: state.current.components || [], tests: state.current.tests || [], skillIds: state.current.skillIds || [] }; fields.forEach(f => { p[f] = $(`[name="${f}"]`).value; }); return p; }
   async function refreshProjects() { const d = await (await api('/api/projects')).json(); state.projects = d.projects || []; renderLibrary(); }
-  function showNew() { if (state.dirty) { state.pending = () => $('#template-dialog').showModal(); $('#confirm-dialog').showModal(); return; } $('#template-dialog').showModal(); }
-  async function createFromTemplate(id) { const t = state.bootstrap.templates.find(x => x.id === id); if (!t) return; $('#template-dialog').close(); try { const r = await api('/api/projects',{method:'POST',body:JSON.stringify(t.project || {})}); state.current = await r.json(); state.dirty = false; await refreshProjects(); renderCurrent(); status('Draft created. Give it the useful details only you know.'); } catch (e) { status(e.message,true); } }
-  async function save() { if (!state.current || state.busy) return false; clearStatus(); const p = collect(); const changed = ['kind','description','audience','inputs','outputs','constraints','instructions','components'].some(k => JSON.stringify(p[k]) !== JSON.stringify(state.current[k])); state.busy = true; try { const r = await api(`/api/projects/${encodeURIComponent(state.current.id)}`,{method:'PUT',body:JSON.stringify(p)}); state.current = await r.json(); state.dirty = false; state.validation = null; $('#save-button').textContent = 'Save draft'; await refreshProjects(); renderCurrent(); status(changed ? 'Saved locally. The specification changed, so the service reset acceptance evidence to not run.' : 'Saved locally.'); return true; } catch (e) { status(e.message,true); return false; } finally { state.busy = false; } }
-  async function requestOpen(id) { if (state.current?.id === id) return; if (state.dirty) { state.pending = () => openProject(id); $('#confirm-dialog').showModal(); return; } openProject(id); }
-  async function openProject(id) { try { state.current = await (await api(`/api/projects/${encodeURIComponent(id)}`)).json(); state.dirty = false; clearStatus(); renderCurrent(); renderLibrary(); } catch(e) { status(e.message,true); } }
-  async function toggleArchive() { if (!state.current) return; if (state.dirty && !(await save())) return; const p = { ...state.current, status: state.current.status === 'archived' ? 'draft':'archived' }; try { state.current = await (await api(`/api/projects/${encodeURIComponent(p.id)}`,{method:'PUT',body:JSON.stringify(p)})).json(); await refreshProjects(); renderCurrent(); status(p.status === 'archived' ? 'Archived safely. You can restore it anytime.' : 'Draft restored to the active library.'); } catch(e) { status(e.message,true); } }
-  async function validate() { if (state.dirty && !(await save())) return; try { const d = await (await api(`/api/projects/${encodeURIComponent(state.current.id)}/validation`)).json(); $('#validation-result').innerHTML = `<p><strong>${d.readyForReview ? 'Ready for review' : 'Still shaping'}</strong> · ${esc(d.summary)}</p>${(d.checks || []).map(c => `<div class="check ${esc(c.status)}"><span class="check-icon">${c.status === 'pass' ? '✓' : c.status === 'fail' ? '×' : '!'}</span><div><strong>${esc(c.label)}</strong><br><small>${esc(c.detail)}</small></div></div>`).join('')}`; status('Review checks came from the saved service record.'); } catch(e) { status(e.message,true); } }
-  async function download(format) { if (state.busy || (state.dirty && !(await save()))) return; state.busy = true; try { const r = await api(`/api/projects/${encodeURIComponent(state.current.id)}/export?format=${encodeURIComponent(format)}`); const blob = await r.blob(); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${(state.current.name || 'foundry-draft').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'') || 'foundry-draft'}.${format === 'markdown' ? 'md' : format}`; document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(link.href); status(`${format.toUpperCase()} download prepared from the saved draft.`); } catch(e) { status(e.message,true); } finally { state.busy = false; } }
-  async function openSource(id) { try { const s = await (await api(`/api/sources/${encodeURIComponent(id)}`)).json(); $('#source-title').textContent = s.title; $('#source-content').textContent = s.content; $('#source-viewer').hidden = false; $('#source-viewer').scrollIntoView({behavior:'smooth',block:'start'}); } catch(e) { status(e.message,true); } }
-  async function importFile(file) { if (!file) return; if (state.dirty) { state.pending = () => importFileAfterWarning(file); $('#confirm-dialog').showModal(); return; } importFileAfterWarning(file); }
-  async function importFileAfterWarning(file) { try { const imported = JSON.parse(await file.text()); const body = imported.project || imported; const r = await api('/api/import',{method:'POST',body:JSON.stringify({project:body})}); state.current = await r.json(); state.dirty = false; await refreshProjects(); renderCurrent(); status('Imported as a fresh draft. Evaluation evidence was reset by the service.'); } catch(e) { status(e.message || 'That file is not valid project JSON.',true); } finally { $('#import-file').value = ''; } }
-  function activatePanel(name) { $$('.editor-tab').forEach(b => b.classList.toggle('active',b.dataset.panel === name)); $$('.panel').forEach(p => p.classList.toggle('active',p.id === `panel-${name}`)); }
-  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#archive-button').addEventListener('click',toggleArchive); $('#validate-button').addEventListener('click',validate); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>$('#source-viewer').hidden=true); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;state.dirty=false;fn();}else state.pending=null;}); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
+  function showNew() {
+    if (state.busy) return;
+    const open = () => { if (state.saved) showSaved(structuredClone(state.saved)); $('#template-dialog').showModal(); };
+    if (state.dirty) { state.pending = open; $('#confirm-dialog').showModal(); }
+    else open();
+  }
+  async function createFromTemplate(id) {
+    if (state.busy) return;
+    const item = state.bootstrap.templates.find(t => t.id === id);
+    if (!item) return;
+    $('#template-dialog').close();
+    setBusy(true);
+    try {
+      const project = await (await api('/api/projects', {method:'POST', body:JSON.stringify(item.project)})).json();
+      showSaved(project); activatePanel('brief');
+      status('Draft created. Adapt the starting instructions and save the specification before recording evidence.');
+      await refreshAfterSave();
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function save() {
+    if (!state.current || state.busy) return false;
+    const id = state.current.id, payload = collect();
+    const previous = payload.tests.filter(t => t.status !== 'not-run' || t.actual);
+    setBusy(true); clearStatus();
+    try {
+      const project = await (await api(`/api/projects/${id}`, {method:'PUT', body:JSON.stringify(payload)})).json();
+      const reset = previous.some(old => project.tests.some(t => t.id === old.id && t.status === 'not-run' && !t.actual));
+      showSaved(project);
+      status(reset ? 'Saved. Changed specifications or acceptance criteria reset the old evidence. Record the new test run next.' : 'Saved locally.');
+      await refreshAfterSave();
+      return true;
+    } catch (error) { status(error.message, true); return false; }
+    finally { setBusy(false); }
+  }
+  async function requestOpen(id) {
+    if (state.busy || state.current?.id === id) return;
+    if (state.dirty) { state.pending = () => openProject(id); $('#confirm-dialog').showModal(); }
+    else await openProject(id);
+  }
+  async function openProject(id) {
+    if (state.busy) return;
+    setBusy(true);
+    try { showSaved(await (await api(`/api/projects/${encodeURIComponent(id)}`)).json()); clearStatus(); }
+    catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function toggleArchive() {
+    if (state.busy || !state.current || (state.dirty && !(await save()))) return;
+    const id = state.current.id, payload = collect();
+    payload.status = payload.status === 'archived' ? 'draft' : 'archived';
+    setBusy(true);
+    try {
+      const project = await (await api(`/api/projects/${id}`, {method:'PUT', body:JSON.stringify(payload)})).json();
+      showSaved(project);
+      status(project.status === 'archived' ? 'Archived. Restore it whenever you need it again.' : 'Restored to the active library.');
+      await refreshAfterSave();
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function validate() {
+    if (state.busy || !state.current || (state.dirty && !(await save()))) return;
+    setBusy(true);
+    try {
+      const data = await (await api(`/api/projects/${state.current.id}/validation`)).json();
+      state.validation = data;
+      $('#validation-result').innerHTML = `<p><strong>${data.readyForReview ? 'Ready for review' : 'Still shaping'}</strong> · ${esc(data.summary)}</p>${data.checks.map(c => `<div class="check ${esc(c.status)}"><span class="check-icon" aria-hidden="true">${c.status === 'pass' ? '✓' : c.status === 'fail' ? '×' : '!'}</span><div><strong>${esc(c.label)} · ${esc(c.status)}</strong><br><small>${esc(c.detail)}</small></div></div>`).join('')}`;
+      status('Review checks reflect the saved revision and the evidence you recorded.');
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function download(format) {
+    if (state.busy || !state.current || (state.dirty && !(await save()))) return;
+    setBusy(true);
+    try {
+      const response = await api(`/api/projects/${state.current.id}/export?format=${encodeURIComponent(format)}`);
+      const url = URL.createObjectURL(await response.blob()), link = document.createElement('a');
+      link.href = url;
+      link.download = `${state.current.name.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'') || 'foundry-draft'}.${format === 'markdown' ? 'md' : format}`;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      status(`${format.toUpperCase()} download prepared from the saved revision.`);
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function openSource(id) {
+    const token = ++state.sourceToken, projectId = state.current?.id;
+    try {
+      const source = await (await api(`/api/sources/${encodeURIComponent(id)}`)).json();
+      if (token !== state.sourceToken || projectId !== state.current?.id) return;
+      $('#source-title').textContent = source.title;
+      $('#source-content').textContent = source.content;
+      $('#source-viewer').hidden = false;
+      $('#source-title').setAttribute('tabindex', '-1'); $('#source-title').focus();
+      $('#source-viewer').scrollIntoView({block:'start'});
+    } catch (error) { if (token === state.sourceToken) status(error.message, true); }
+  }
+  async function importFile(file) {
+    if (!file || state.busy) return;
+    if (state.dirty) { state.pending = () => importFileAfterWarning(file); $('#confirm-dialog').showModal(); }
+    else await importFileAfterWarning(file);
+  }
+  async function importFileAfterWarning(file) {
+    if (state.busy) return;
+    setBusy(true);
+    try {
+      if (file.size > 1024 * 1024) throw new Error('Choose a project JSON file smaller than 1 MB.');
+      const imported = JSON.parse(await file.text());
+      const project = await (await api('/api/import', {method:'POST', body:JSON.stringify({project: imported.project || imported})})).json();
+      showSaved(project); activatePanel('brief');
+      status('Imported as a fresh draft. Its acceptance cases need a new test run.');
+      await refreshAfterSave();
+    } catch (error) { status(error.message || 'The file is not valid project JSON.', true); }
+    finally { $('#import-file').value = ''; setBusy(false); }
+  }
+  function activatePanel(name) { $$('.editor-tab').forEach(b => { const active = b.dataset.panel === name; b.classList.toggle('active', active); if (active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }); $$('.panel').forEach(p => p.classList.toggle('active',p.id === `panel-${name}`)); }
+  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#archive-button').addEventListener('click',toggleArchive); $('#validate-button').addEventListener('click',validate); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>{ state.sourceToken++; $('#source-viewer').hidden=true; }); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;fn();}else state.pending=null;}); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
     try { const [boot, projects] = await Promise.all([api('/api/bootstrap'),api('/api/projects')]); state.bootstrap = await boot.json(); state.projects = (await projects.json()).projects || []; setConnection(true); renderTemplates(); renderLibrary(); renderUniverse(); } catch(e) { setConnection(false); $('#empty-state').querySelector('p:last-of-type').textContent = 'The local service is not running yet. Start it, then refresh this workspace.'; status(e.message,true); }
   }
   init();

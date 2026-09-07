@@ -14,10 +14,10 @@ The planning tool was unavailable in this session; this versioned plan records s
 |---|---|---|
 | 1. Discover and reconcile seven elements | Complete, access limits recorded | Source report, claim ledger, contradictions and access gaps |
 | 2. Define application contract | Complete | Architecture, API, explicit completion contract |
-| 3. Build durable engine and package exporters | In progress | Python standard-library service, SQLite, validation and tests |
-| 4. Build Glee-fully workspace | Delegated within implementation | Accessible responsive editor, project library, sources, universe map |
-| 5. Integrate and challenge behavior | Pending | Import/export round trip, persistence, hostile input, complete user journey |
-| 6. Deliver reviewable GitHub changes | Pending | Branches, pull requests, run instructions and verified preview |
+| 3. Build durable engine and package exporters | Complete | Python standard-library service, SQLite, validation and tests |
+| 4. Build Glee-fully workspace | Complete | Accessible responsive editor, project library, sources, universe map |
+| 5. Integrate and challenge behavior | Complete; see verification record | Import/export round trip, persistence, hostile input, complete user journey |
+| 6. Deliver reviewable GitHub changes | In progress: PR #5, final checks | Branches, pull requests, run instructions and verified preview |
 
 ## First-release completion contract
 
@@ -36,3 +36,20 @@ Two bounded research lanes use GPT-5.6 Luna at medium effort. A separately track
 - Extract and execute the generated web starter, not just inspect its filenames.
 - Compare canon, governance and snapshot file hashes against the starting commit; never rewrite existing seals.
 - Record unavailable verification explicitly. Private Replit state is currently inaccessible because its connector needs reauthentication and its web page requests login.
+
+## Execution record
+
+Research lanes: Luna/medium, two bounded assignments. Frontend: a separate
+Terra/medium Codex worktree task. Engine and focused interface repair: a
+Terra/medium subagent on separate branches. A Luna/medium reviewer performed a
+bounded backend review. The coordinator reconciled evidence, corrected interface
+and validation defects, and performed browser/package verification. No paid
+Replit generation or external AI-provider calls were invoked; exact model spend
+was not available and no cost-saving percentage is claimed.
+
+Integration branch: `codex/foundry-application-2026-09-07`. Engine branch:
+`codex/foundry-engine-2026-09-07`. Interface repair branch:
+`codex/foundry-interface-2026-09-07`.
+
+Reviewable integration: [PR #5](https://github.com/OKHP3/Glee-fullyTools-FoundRy/pull/5).
+The owner's original main checkout remains unchanged.

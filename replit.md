@@ -2,11 +2,14 @@
 
 ## Purpose
 
-This is the **private workbench** for the Glee-fully Personalizable Tools™ ecosystem.
-It is NOT a deployable web application. All content here is source material — governance
-schemas, canonical ledgers, GPT instruction templates, promptchains, tone frameworks,
-evaluation tools, and repository-local Agent Skills used to build and maintain
-Glee-fully GPTs and their successor workflows.
+This repository now contains an owner-local Glee-fully builder application under
+`app/` alongside its preserved canonical workbench. Start locally with
+`python3 -m app.server`. The service intentionally binds to loopback only.
+
+Private Replit runtime, branch and deployment state could not be verified during
+the September 7, 2026 research. Do not infer GitHub/Replit parity from this file.
+A hosted preview or deployment requires authentication and an explicit hosting
+boundary before adapting the loopback service. Do not expose the private root.
 
 ## Authority Chain
 
@@ -20,7 +23,8 @@ OKHP3/OverKill-Hill
 
 | Layer | Repo / Site | Role |
 |-------|-------------|------|
-| Parent Foundry | OKHP3/OverKill-Hill-FoundRy | Root governance, cross-ecosystem standards |
+| Shared skills | OKHP3/skillz | Portable skills for all three regions |
+| Historical parent | OKHP3/OverKill-Hill-FoundRy | Lineage only; OverKill-specific builder |
 | This Workbench | OKHP3/Glee-fullyTools-FoundRy | Glee-fully fabrication line |
 | Public Storefront | github.com/OKHP3/Glee-fullyTools → glee-fully.tools | Consumer-facing site and catalog |
 | Universe | overkillhill.com/universe | OKHP3 universe overview |
@@ -29,6 +33,7 @@ OKHP3/OverKill-Hill
 
 | Folder | Contents |
 |--------|----------|
+| `app/` | Owner-local workspace, working records, validation and export |
 | `canon/` | The 9 canonical dataLedger files — authoritative source of truth |
 | `governance/` | Project governance directives, instructions, Cathedral Layout |
 | `docs/` | Narrative and technical overviews, synthesis documents |
@@ -44,7 +49,7 @@ OKHP3/OverKill-Hill
 
 ## User Preferences
 
-- This is a private workbench — do not configure web server workflows or deployment targets
+- Owner-local `app/` runtime is authorized; no hosted deployment is configured
 - Do not serve webpage-build or web-templates as a live site from this project
 - Follow Expansion-Only Discipline: never remove existing content, only elaborate
 - All canon changes must flow through the dataLedger schema in `canon/`

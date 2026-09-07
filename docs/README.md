@@ -25,6 +25,13 @@ above.
 
 ---
 
+## Application and research
+
+The [application guide](application/README.md), [implementation plan](application/implementation-plan.md)
+and [seven-element research report](research/okhp3-universe-2026-09-07/report.html)
+document the September 2026 owner-authorized application transition. Historical
+technical descriptions below remain source context, not proof of live operation.
+
 ## Files
 
 | File | Format | Purpose |

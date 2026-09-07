@@ -1,0 +1,58 @@
+[
+  {
+    "id": "gpt-readiness",
+    "name": "Glee-fully GPT readiness",
+    "description": "Assess evidence, gaps and readiness before building a Glee-fully GPT.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/glee-fully/okhp3-glee-fully-gpt-readiness/SKILL.md",
+    "sourcePath": "glee-fully/okhp3-glee-fully-gpt-readiness/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "gpt-builder",
+    "name": "Glee-fully GPT builder",
+    "description": "Design and evaluate Glee-fully Tools and Tool-ettes.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/glee-fully/okhp3-glee-fully-gpt-builder/SKILL.md",
+    "sourcePath": "glee-fully/okhp3-glee-fully-gpt-builder/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "process-intake",
+    "name": "Process intake and scope",
+    "description": "Bound the outcome, participants, inputs and unknowns of a process.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/process-capture/okhp3-process-intake-and-scope/SKILL.md",
+    "sourcePath": "process-capture/okhp3-process-intake-and-scope/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "artifact-validation",
+    "name": "Artifact validation",
+    "description": "Check a draft or package against explicit evidence and acceptance criteria.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/knowledge-operations/okhp3-artifact-validation/SKILL.md",
+    "sourcePath": "knowledge-operations/okhp3-artifact-validation/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "skill-foundry",
+    "name": "Skill foundry",
+    "description": "Author and improve portable Agent Skills with supporting evidence.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/universal/okhp3-skill-foundry/SKILL.md",
+    "sourcePath": "universal/okhp3-skill-foundry/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "handoff-packaging",
+    "name": "Publication handoff packaging",
+    "description": "Prepare an inspectable handoff package with validation and provenance.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/process-capture/okhp3-publication-handoff-packaging/SKILL.md",
+    "sourcePath": "process-capture/okhp3-publication-handoff-packaging/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  },
+  {
+    "id": "glee-brand",
+    "name": "Glee-fully brand",
+    "description": "Apply the Glee-fully palette, typography, warmth and accessibility guidance.",
+    "url": "https://github.com/OKHP3/skillz/blob/7616ccd7c92b65dafc936f744208ba62507b3c5c/glee-fully/okhp3-glee-fully-brand/SKILL.md",
+    "sourcePath": "glee-fully/okhp3-glee-fully-brand/SKILL.md",
+    "revision": "7616ccd7c92b65dafc936f744208ba62507b3c5c"
+  }
+]

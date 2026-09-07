@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#d94f63">
+  <title>Glee-fully FoundRy</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to workspace</a>
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><p class="eyebrow">Glee-fully Personalizable Tools</p><h1>FoundRy <em>workbench</em></h1></div></div>
+    <div class="mast-actions"><span id="connection" class="connection" role="status">Connecting locally…</span><button class="button ghost" id="import-button">Import JSON</button><input id="import-file" type="file" accept="application/json,.json" hidden></div>
+  </header>
+  <main id="workspace" class="shell">
+    <aside class="rail" aria-label="Project library">
+      <div class="rail-heading"><div><p class="eyebrow">Project library</p><h2>In the forge</h2></div><button class="icon-button" id="new-button" title="Create a project" aria-label="Create a project">+</button></div>
+      <div class="library-controls"><label class="search-label" for="project-search">Find a project</label><input id="project-search" type="search" placeholder="Search drafts"></div>
+      <div class="library-tabs" role="tablist" aria-label="Project status"><button class="tab active" data-library="active" role="tab" aria-selected="true">Active</button><button class="tab" data-library="archived" role="tab" aria-selected="false">Archive</button></div>
+      <div id="project-list" class="project-list" aria-live="polite"></div>
+      <p class="rail-note">Drafts are working records. They never write canon.</p>
+    </aside>
+    <section class="content" aria-live="polite">
+      <div id="empty-state" class="empty-state">
+        <p class="eyebrow">A practical starting point</p><h2>Make room for the next useful thing.</h2><p>Choose a template to begin a governed draft, or open a project from your library.</p>
+        <div id="template-grid" class="template-grid"></div>
+      </div>
+      <div id="editor" hidden>
+        <div class="project-bar"><div><p id="project-kind" class="eyebrow"></p><h2 id="project-title">Untitled</h2><p id="project-meta" class="muted"></p></div><div class="project-actions"><button id="archive-button" class="button ghost">Archive</button><button id="save-button" class="button primary">Save draft</button></div></div>
+        <div id="message" class="message" hidden role="status"></div>
+        <nav class="editor-tabs" aria-label="Project workspace"><button class="editor-tab active" data-panel="brief">Brief</button><button class="editor-tab" data-panel="build">Components</button><button class="editor-tab" data-panel="review">Review</button><button class="editor-tab" data-panel="references">References</button><button class="editor-tab" data-panel="universe">Universe</button></nav>
+        <form id="project-form" novalidate>
+          <section class="panel active" id="panel-brief">
+            <div class="section-heading"><div><p class="eyebrow">The human part</p><h3>What are we making?</h3></div><p>Start loose. Shape it as you learn.</p></div>
+            <div class="field-grid"><label>Project name<input name="name" required maxlength="180" autocomplete="off"></label><label>Kind<select name="kind" id="kind-select"><option value="custom-gpt">Custom GPT</option><option value="agent-skill">Agent Skill</option><option value="workflow">Workflow</option><option value="web-tool">Web tool</option></select></label></div>
+            <label>Description<textarea name="description" rows="3" maxlength="6000" placeholder="A clear, short description of the useful outcome."></textarea></label>
+            <div class="field-grid"><label>Who is it for?<textarea name="audience" rows="3" maxlength="6000" placeholder="People, context, and boundaries."></textarea></label><label>Purpose<textarea name="inputs" rows="3" maxlength="6000" placeholder="Inputs, starting material, or signals."></textarea></label></div>
+            <div class="field-grid"><label>Outputs<textarea name="outputs" rows="3" maxlength="6000" placeholder="What a person can use next."></textarea></label><label>Constraints<textarea name="constraints" rows="3" maxlength="6000" placeholder="Limits, safety rails, source boundaries."></textarea></label></div>
+            <label>Instructions<textarea name="instructions" rows="10" maxlength="50000" placeholder="Working instructions, in your own words."></textarea></label>
+          </section>
+          <section class="panel" id="panel-build">
+            <div class="section-heading"><div><p class="eyebrow">The working pieces</p><h3>Components &amp; dependencies</h3></div><button type="button" class="button secondary" id="add-component">Add component</button></div>
+            <p class="muted">Give each part a purpose, then connect it only to the parts it needs. Cycles are caught during review.</p><div id="components" class="component-list"></div>
+            <div class="section-heading evidence-heading"><div><p class="eyebrow">Observed, not imagined</p><h3>Acceptance evidence</h3></div><button type="button" class="button secondary" id="add-test">Add evidence</button></div><p class="muted">A pass needs actual evidence. “Not run” is an honest place to start.</p><div id="tests" class="test-list"></div>
+          </section>
+          <section class="panel" id="panel-review">
+            <div class="section-heading"><div><p class="eyebrow">A careful checkpoint</p><h3>Readiness &amp; history</h3></div><div class="button-row"><button type="button" class="button secondary" id="validate-button">Check readiness</button><button type="button" class="button secondary" id="export-button">Download package</button></div></div>
+            <p class="muted">Checking review readiness is not PME approval or publication certification.</p><div id="validation-result" class="review-card"><p>Save your draft, then ask the service for its current review checks.</p></div>
+            <h3 class="subheading">Revision trail</h3><ol id="history" class="history"></ol>
+          </section>
+          <section class="panel" id="panel-references">
+            <div class="section-heading"><div><p class="eyebrow">Keep the receipts nearby</p><h3>Skillz &amp; source reading</h3></div></div>
+            <div class="reference-layout"><div><h3 class="subheading">Attached Skillz</h3><p class="muted">Optional, pinned references. Their source stays visible.</p><div id="skills" class="choice-list"></div></div><div><h3 class="subheading">Read-only source shelf</h3><div id="sources" class="source-list"></div></div></div>
+            <article id="source-viewer" class="source-viewer" hidden><button type="button" class="close-viewer" id="close-source">Close reading</button><h3 id="source-title"></h3><pre id="source-content"></pre></article>
+          </section>
+          <section class="panel" id="panel-universe"><div class="section-heading"><div><p class="eyebrow">Seven elements, one working context</p><h3>Universe map</h3></div><p>Relationships, not ownership transfers.</p></div><div id="universe-map" class="universe-map" aria-label="Universe relationship diagram"></div><div id="universe-list" class="universe-list"></div></section>
+        </form>
+      </div>
+    </section>
+  </main>
+  <dialog id="template-dialog"><form method="dialog" class="dialog-card"><button class="dialog-close" value="cancel" aria-label="Close">×</button><p class="eyebrow">Start a draft</p><h2>Choose a shape, not a destiny.</h2><div id="dialog-templates" class="template-grid"></div></form></dialog>
+  <dialog id="confirm-dialog"><form method="dialog" class="dialog-card"><p class="eyebrow">Unsaved work</p><h2>Leave this draft?</h2><p>You have changes that are not saved. Leaving will discard them from this screen.</p><div class="button-row"><button value="cancel" class="button secondary">Keep editing</button><button id="confirm-leave" value="leave" class="button danger">Discard changes</button></div></form></dialog>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

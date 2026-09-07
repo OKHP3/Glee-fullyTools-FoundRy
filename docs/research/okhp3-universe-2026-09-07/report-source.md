@@ -1,5 +1,15 @@
 # Seven elements, three regions, one shared skill library
 
+## Visibility update after the research baseline
+
+On September 7, 2026 the owner confirmed that OverKill-Hill-FoundRy,
+Glee-fullyTools-FoundRy and AskJamie-FoundRy are all intentionally public.
+GitHub API metadata for each named repository returned `visibility: public`.
+This supersedes the baseline visibility descriptions below; historical source
+observations remain evidence of the earlier state. Public repository visibility
+does not establish a hosted application or shared access to local project data.
+
+
 **Research date:** September 7, 2026. **Audience:** the owner and implementers of Glee-fullyTools-FoundRy. **Decision:** how to turn this repository into a useful builder application while retaining its identity and source lineage.
 
 ## Direct answer

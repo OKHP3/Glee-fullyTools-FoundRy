@@ -1,5 +1,11 @@
 # Current state and maturation roadmap
 
+Current visibility update, September 7, 2026: the owner confirms all three
+FoundRy repositories are intentionally public, corroborated by GitHub API
+metadata. This application remains locally run; public source availability does
+not create a hosted service or publish its ignored SQLite working records.
+
+
 Assessment date: September 7, 2026. Application baseline: `a2eebe88eb46de0537a3fc225041433a9ef54c08`.
 This assessment separates implemented behavior, recorded verification and proposed work.
 It is not a formal maturity certification or a commitment to a delivery date.

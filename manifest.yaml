@@ -5,9 +5,9 @@ repo:
   display_name: "Glee-fully Tools FoundRy"
   type: foundry-application
   lifecycle_status: active
-  visibility: private
+  visibility: public
   description: >
-    Private owner-local application and canonical workbench for designing,
+    Public-source owner-local application and canonical workbench for designing,
     evaluating and packaging Glee-fully systems, tools, GPTs and Agent Skills.
 
 brand:

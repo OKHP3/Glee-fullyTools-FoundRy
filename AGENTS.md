@@ -8,11 +8,11 @@ Git repositories or nested agent guides were found during the July 13, 2026 revi
 
 Confirmed by `manifest.yaml`, `README.md`, and the directory layout:
 
-- This is the private Glee-fully FoundRy application and canonical workbench for
+- This is the public-source Glee-fully FoundRy application and canonical workbench for
   the Glee-fully Personalizable Tools ecosystem. The owner authorized the application
   transition on September 7, 2026; historical no-runtime restrictions are superseded
   for `app/`.
-- It is a Git repository with lifecycle status `active` and private visibility.
+- It is a Git repository with lifecycle status `active` and intentionally public visibility.
 - It combines preserved documentation, governance, prompts, templates, evaluations
   and ledgers with an owner-local Python/SQLite application under `app/`.
 - The application uses the Python standard library and static browser JavaScript.
@@ -41,7 +41,8 @@ and OverKill at the connective center. Skillz is shared across all three.
 OverKill-Hill-FoundRy belongs exclusively to OverKill; it is not a shared
 application, ledger service or runtime dependency. Historical parent references
 record lineage. Universe context and common principles come from OverKill Hill.
-OverKill Found-Ry is intentionally public and provides a mentoring pattern for
+All three FoundRy repositories are intentionally public, confirmed by the owner
+and GitHub metadata on September 7, 2026. OverKill Found-Ry provides a mentoring pattern for
 the regional FoundRys. Mentoring is reciprocal: any FoundRy can inform another,
 while regional application ownership and private records remain distinct.
 
@@ -62,7 +63,7 @@ Within this repository:
 The owner-local application is authorized under `app/`. Keep server binding
 restricted to loopback, user data outside tracked source, and all static/source
 serving allowlisted. Public or multiuser hosting requires a separate architecture
-and release decision; the private repository root must never be served. Do not
+and release decision; the repository root and local working data must never be served. Do not
 add hosted deployment workflows as a side effect.
 
 ## Repository map

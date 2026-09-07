@@ -1,5 +1,15 @@
 # Claim, source and gap ledger
 
+## Visibility update after the research baseline
+
+On September 7, 2026 the owner confirmed that OverKill-Hill-FoundRy,
+Glee-fullyTools-FoundRy and AskJamie-FoundRy are all intentionally public.
+GitHub API metadata for each named repository returned `visibility: public`.
+This supersedes the baseline visibility descriptions below; historical source
+observations remain evidence of the earlier state. Public repository visibility
+does not establish a hosted application or shared access to local project data.
+
+
 Retrieved 2026-09-07. Sources authored by OKHP3 / Jamie Hill unless noted. Paths below are relative to each named repository; no private machine paths are embedded. Current GitHub API metadata was read with authenticated `gh api`. Local trees were read without edits. Source dates other than explicit document dates are unknown.
 
 | Claim family | Source and inspected baseline | Confidence / limitation | Disposition |

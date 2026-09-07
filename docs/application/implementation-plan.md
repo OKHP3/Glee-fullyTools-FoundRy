@@ -1,6 +1,6 @@
 # Glee-fully FoundRy application plan
 
-Date: 2026-09-07. Owner-directed transition from a private documentation workbench to an owner-run application for building systems and tooling. Existing canon and seals remain source authority for Glee-fully canonical content. Draft application projects are editable working records, not new canonical declarations.
+Date: 2026-09-07. Owner-directed transition from the formerly private documentation workbench to an owner-run application for building systems and tooling. Existing canon and seals remain source authority for Glee-fully canonical content. Draft application projects are editable working records, not new canonical declarations.
 
 ## Scope and evidence
 
@@ -23,7 +23,7 @@ The planning tool was unavailable in this session; this versioned plan records s
 
 The owner can create a project from a Custom GPT, Agent Skill, workflow, or web-tool template; define purpose, audience, inputs, outputs, constraints, instructions, components and acceptance cases; attach pinned Skillz references; save and reopen it after a service restart; record actual evaluation evidence; inspect readiness without invented passes; and export/import portable JSON or download Markdown and ZIP packages. A web-tool ZIP contains a runnable local starter with useful record creation, completion, filtering and persistence, plus the project-specific specification. Generated starters are editable baselines, not arbitrary AI-built systems. The app must identify the seven universe elements and the shared Skillz boundary accurately.
 
-The application is local to its owner, with SQLite working data excluded from Git, no external credentials, no paid model calls, no telemetry, and no public deployment of private source. Publishing to a hosted multiuser service, integrating paid AI, automatically executing imported code and deploying arbitrary generated applications are separate capabilities, not claimed by this release. This is a functional design/validation/package-building application, not a production certification of exported projects.
+The application is local to its owner, with SQLite working data excluded from Git, no external credentials, no paid model calls, no telemetry, and an allowlisted server that does not expose working data or the repository root. Publishing to a hosted multiuser service, integrating paid AI, automatically executing imported code and deploying arbitrary generated applications are separate capabilities, not claimed by this release. This is a functional design/validation/package-building application, not a production certification of exported projects.
 
 ## Delegation and cost
 

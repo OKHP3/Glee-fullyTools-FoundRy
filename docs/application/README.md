@@ -1,6 +1,6 @@
 # Glee-fully FoundRy application
 
-This private, owner-run workspace helps you design, evaluate and package systems
+This public-source, locally run workspace helps you design, evaluate and package systems
 and tools. Canon remains in the existing ledgers; application projects are drafts
 with their own revision history. No draft is automatically registered or PME-approved.
 

@@ -1,6 +1,6 @@
 # Glee-fullyTools-FoundRy
 
-**A private workspace for designing, evaluating and packaging Glee-fully systems and tools.**
+**A public-source, locally run workspace for designing, evaluating and packaging Glee-fully systems and tools.**
 
 The owner-authorized application adds durable project records and useful exports to
 this repository's existing canon, prompts, templates and evaluation material.
@@ -25,7 +25,8 @@ AskJamie sits to the left, Glee-fully to the right, and OverKill at the connecti
 center. **Skillz is shared by all three. Each region has its own FoundRy.**
 OverKill Hill provides the common baseline. OverKill Found-Ry belongs to OverKill
 and provides a mentoring pattern; each sibling FoundRy can contribute improvements
-to it or to another sibling. Its public visibility is intentional. Mentoring does
+to it or to another sibling. All three FoundRy repositories are intentionally public, as confirmed by the owner
+on September 7, 2026 and verified against GitHub metadata. Mentoring does
 not imply a shared runtime, database or permission to share private records.
 Historical parent references remain lineage evidence.
 

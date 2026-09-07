@@ -203,11 +203,14 @@ def readiness(project: dict, skills: list[dict]) -> dict:
     def required(id, label, value): checks.append({"id": id, "label": label, "status": "pass" if value.strip() else "fail", "detail": "Recorded." if value.strip() else "Add this before review."})
     required("purpose", "Purpose", project["description"]); required("audience", "Audience", project["audience"])
     required("inputs", "Inputs", project["inputs"]); required("outputs", "Outputs", project["outputs"]); required("constraints", "Constraints", project["constraints"]); required("instructions", "Instructions", project["instructions"])
-    checks.append({"id":"components", "label":"Components and dependencies", "status":"pass" if project["components"] else "warning", "detail":"Recorded." if project["components"] else "No components recorded."})
+    checks.append({"id":"components", "label":"Components and dependencies", "status":"pass" if project["components"] else "fail", "detail":"Recorded." if project["components"] else "Add at least one component before review."})
     evidence_ok = bool(project["tests"]) and all(x["status"] == "pass" and x["actual"].strip() for x in project["tests"])
     checks.append({"id":"evidence", "label":"Acceptance evidence", "status":"pass" if evidence_ok else "fail", "detail":"All acceptance cases have observed passing evidence." if evidence_ok else "Add acceptance cases and record passing actual evidence for every case."})
     ids = {x.get("id") for x in skills}; attached = project["skillIds"]
-    checks.append({"id":"skills", "label":"Attached skill provenance", "status":"pass" if all(x in ids for x in attached) else "fail", "detail":"Pinned skill references recorded." if attached else "No skills attached; this is optional."})
+    missing = sorted(set(attached) - ids)
+    skill_detail = ("Unavailable skill references: " + ", ".join(missing) if missing else
+                    "Pinned skill references recorded." if attached else "No skills attached; this is optional.")
+    checks.append({"id":"skills", "label":"Attached skill provenance", "status":"fail" if missing else "pass", "detail":skill_detail})
     ready = all(c["status"] == "pass" for c in checks)
     return {"readyForReview": ready, "checks": checks, "summary": "Ready for review; this is not PME or publication certification." if ready else "Complete failed checks and address warnings before review."}
 

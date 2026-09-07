@@ -104,6 +104,9 @@ class ServiceTests(unittest.TestCase):
         item=self.create(); status, _, report=self.request("GET",f"/api/projects/{item['id']}/validation")
         self.assertEqual(status,200); self.assertFalse(report["readyForReview"]); self.assertIn("evidence", " ".join(x["id"] for x in report["checks"]))
         direct=readiness(item,[]); self.assertFalse(direct["readyForReview"])
+        self.assertEqual(next(x for x in direct["checks"] if x["id"] == "components")["status"], "fail")
+        complete=self.project(components=[{"id":"core","name":"Core","purpose":"Work","dependsOn":[]}], tests=[{"id":"case","name":"Check","expected":"Works","actual":"Observed","status":"pass"}])
+        self.assertTrue(readiness(complete,[])["readyForReview"])
         incomplete=self.create(inputs="", tests=[{"id":"case","name":"Check","expected":"Works","actual":"Observed","status":"pass"}])
         report=self.request("GET",f"/api/projects/{incomplete['id']}/validation")[2]
         self.assertFalse(report["readyForReview"]); self.assertEqual(next(x for x in report["checks"] if x["id"] == "inputs")["status"], "fail")
@@ -154,6 +157,10 @@ class ServiceTests(unittest.TestCase):
     def test_missing_reference_does_not_destroy_export(self):
         item = self.create()
         item["skillIds"] = ["retired-reference"]
+        check=next(x for x in readiness(item,[])["checks"] if x["id"] == "skills")
+        self.assertEqual(check["status"], "fail")
+        self.assertIn("retired-reference", check["detail"])
+        self.assertNotIn("Pinned skill references recorded.", check["detail"])
         # A later curated-shelf change must not crash export of an older record.
         editable = {k: v for k, v in item.items() if k not in {"id","revision","schemaVersion","createdAt","updatedAt"}}
         self.server.store.update(item["id"], editable, item["revision"])

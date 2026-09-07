@@ -69,3 +69,14 @@ The latest attributed authenticated Replit observation shows this FoundRy on mai
 with no changes; exact commit parity and private runtime behavior remain unverified.
 No full assistive-technology, cross-browser, multiuser or production-hosting audit
 is claimed. This service is explicitly owner-local.
+
+## PR review follow-up, September 7
+
+The three initial Copilot review observations were addressed: unavailable Skillz
+IDs are named in failed readiness output; an absent required component is marked
+fail; and browser-local ID generation handles absent crypto/randomUUID, with a
+sequence suffix avoiding duplicate fallback IDs within the same millisecond.
+The 15-test service suite passed again with added readiness/provenance assertions.
+JavaScript syntax passed. An isolated Node VM check exercised ID generation with
+crypto absent, randomUUID absent and randomUUID present. These focused checks do
+not imply that the earlier complete browser journey was repeated.

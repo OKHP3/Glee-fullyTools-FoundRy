@@ -4,6 +4,9 @@ This private, owner-run workspace helps you design, evaluate and package systems
 and tools. Canon remains in the existing ledgers; application projects are drafts
 with their own revision history. No draft is automatically registered or PME-approved.
 
+See the [current-state assessment and maturation roadmap](current-state-and-maturation.md)
+for implemented capabilities, evidence limits and the proposed next stages.
+
 ## Run
 
 Use Python 3.11 or newer. From the repository root:

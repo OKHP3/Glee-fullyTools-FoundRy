@@ -13,7 +13,8 @@
     return response;
   };
   const esc = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  const safeId = () => `local-${crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)}`;
+  let localIdSequence = 0;
+  const safeId = () => `local-${typeof globalThis.crypto?.randomUUID === 'function' ? globalThis.crypto.randomUUID() : `${Date.now().toString(36)}-${++localIdSequence}`}`;
   const status = (text, error = false) => { const m = $('#message'); m.textContent = text; m.className = `message global-message${error ? ' error' : ''}`; m.hidden = false; if (error) m.focus(); };
   const clearStatus = () => { $('#message').hidden = true; };
   const setConnection = (ok) => { const c = $('#connection'); c.textContent = ok ? 'Local service ready' : 'Local service unavailable'; c.className = `connection ${ok ? 'ok' : 'bad'}`; };

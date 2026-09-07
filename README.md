@@ -23,9 +23,11 @@ working-record check, not PME certification or permission to publish.
 
 AskJamie sits to the left, Glee-fully to the right, and OverKill at the connective
 center. **Skillz is shared by all three. Each region has its own FoundRy.**
-OverKill Found-Ry is exclusive to OverKill. Historical shared-parent references
-below and within sealed sources record the earlier model, not an application
-dependency or permission to share private records.
+OverKill Hill provides the common baseline. OverKill Found-Ry belongs to OverKill
+and provides a mentoring pattern; each sibling FoundRy can contribute improvements
+to it or to another sibling. Its public visibility is intentional. Mentoring does
+not imply a shared runtime, database or permission to share private records.
+Historical parent references remain lineage evidence.
 
 | Element | Role |
 |---|---|

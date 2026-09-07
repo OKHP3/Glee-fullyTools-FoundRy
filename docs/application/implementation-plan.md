@@ -17,7 +17,7 @@ The planning tool was unavailable in this session; this versioned plan records s
 | 3. Build durable engine and package exporters | Complete | Python standard-library service, SQLite, validation and tests |
 | 4. Build Glee-fully workspace | Complete | Accessible responsive editor, project library, sources, universe map |
 | 5. Integrate and challenge behavior | Complete; see verification record | Import/export round trip, persistence, hostile input, complete user journey |
-| 6. Deliver reviewable GitHub changes | In progress: PR #5, final checks | Branches, pull requests, run instructions and verified preview |
+| 6. Deliver reviewable GitHub changes | Complete: PR #5 and passing application checks | Branches, pull requests, run instructions and verified preview |
 
 ## First-release completion contract
 
@@ -27,7 +27,7 @@ The application is local to its owner, with SQLite working data excluded from Gi
 
 ## Delegation and cost
 
-Two bounded research lanes use GPT-5.6 Luna at medium effort. A separately tracked frontend task will use GPT-5.6 Terra at medium effort; a backend subagent will use the same level for schema, persistence, exports and request boundaries. The coordinator owns synthesis, interfaces, integration, end-to-end verification and PR delivery. Reuse evidence, avoid duplicate tests, and escalate only on a concrete unresolved defect. Each implementation lane owns disjoint paths on its own branch/worktree. Preserve the owner's main checkout.
+Two bounded research lanes use GPT-5.6 Luna at medium effort. A separately tracked frontend task used GPT-5.6 Terra at medium effort; a backend subagent used the same level for schema, persistence, exports and request boundaries. The coordinator owns synthesis, interfaces, integration, end-to-end verification and PR delivery. Reuse evidence, avoid duplicate tests, and escalate only on a concrete unresolved defect. Each implementation lane owns disjoint paths on its own branch/worktree. Preserve the owner's main checkout.
 
 ## Acceptance evidence
 
@@ -35,7 +35,7 @@ Two bounded research lanes use GPT-5.6 Luna at medium effort. A separately track
 - Browser checks cover create/edit/save/reopen, template switching through project creation, sources, evaluation, export, error reporting, keyboard focus, narrow layout and the three-ring map.
 - Extract and execute the generated web starter, not just inspect its filenames.
 - Compare canon, governance and snapshot file hashes against the starting commit; never rewrite existing seals.
-- Record unavailable verification explicitly. Private Replit state is currently inaccessible because its connector needs reauthentication and its web page requests login.
+- Record unavailable verification explicitly. The connector needs reauthentication. A later authenticated sibling-coordinator observation confirms the workspace on main with no changes; exact SHA parity and runtime behavior remain unverified.
 
 ## Execution record
 

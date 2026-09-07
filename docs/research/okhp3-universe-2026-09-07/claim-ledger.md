@@ -9,13 +9,13 @@ Retrieved 2026-09-07. Sources authored by OKHP3 / Jamie Hill unless noted. Paths
 | Skillz distribution vs local support | skillz AGENTS lines 5-29, README and `artifacts/forge/src/types/catalog.ts`; remote main `7616ccd7c92b65dafc936f744208ba62507b3c5c` | High for distribution architecture; count not invariant | Attach pinned public distribution references |
 | Skillz implemented frontend | `artifacts/forge/src/App.tsx`, Explore, SkillDetail, Activity; live Pages HTTP 200 | Code corroborates behaviors; not every live journey exercised | Avoid maturity claims |
 | Catalog generation provenance | `artifacts/forge/public/data/catalog.json` at main above: embedded ref `codex/universe-loose-ends`, commit `e3f4559` | Exact-main generation not established; this alone does not prove contents wrong | Verify selected paths directly |
-| OverKill FoundRy original scope | README lines 1-33, 51-123 and dataledgers/README; local `452cea7b`; remote `312256af6d5528df882e2b3263c29cffcd586162` | High for authored source purpose; private language conflicts with visibility | Preserve regional separation |
+| OverKill FoundRy original scope | README lines 1-33, 51-123 and dataledgers/README; local `452cea7b`; remote `312256af6d5528df882e2b3263c29cffcd586162` | High for authored source purpose; private language is stale under later owner clarification | Preserve regional separation |
 | OverKill FoundRy current creator | Pages HTML and linked JS/CSS: nine creator steps, localStorage, import/audit/export machinery | High for delivered implementation code; runtime journeys not executed in this research | Treat as existing regional creator |
-| OverKill FoundRy exposure | Authenticated GitHub metadata `private: false`; Pages HTTP 200 | Confirmed at retrieval; owner privacy intent remains contradictory | No exposure or permission changes |
+| OverKill FoundRy exposure | Authenticated GitHub metadata `private: false`; Pages HTTP 200 | Confirmed at retrieval; owner confirmed public visibility is intentional through the parallel OverKill coordinator | No exposure or permission changes |
 | Glee storefront contract | `docs/suite-promise.md`, 2026-09-04; current main `4cc42218a32d154c513ffbf80d102f767015a4f4`; live homepage | High for publication register, not external GPT behavior | Separate storefront and builder |
 | Glee taxonomy | Live ecosystem page plus source above | High for authored taxonomy | Preserve regional terminology |
 | Glee FoundRy baseline | README, AGENTS, manifest; canon/prompts/evaluation READMEs; remote `a190c026cf9e910fc843eb14562f22c51278947f` | High for private source workbench; baseline has no app runtime | Owner-authorized new `app/` scope |
-| Glee legacy authority conflict | README authority table; manifest parent_foundry; sealed registry/parameters/system lineage | Confirmed contradiction with owner instruction | Update active explanations, preserve sealed source |
+| Glee legacy authority conflict | README authority table; manifest parent_foundry; sealed registry/parameters/system lineage | Legacy parent language requires distinction between reciprocal mentoring and regional application ownership | Update active explanations, preserve sealed source |
 | AskJamie source boundaries | AGENTS lines 42-101; how-askjamie-works/index.html lines 125, 150, 174, 213; current main `7de1472025b38d7d763a9e5696b7118b482b2fad` | High; source denies hidden memory pipeline and general site chat | No shared hidden state |
 | AskJamie vertical-model conflict | Live askjamie.bot homepage, Where it fits | Confirmed authored public wording | Owner ring model prevails |
 | AskJamie FoundRy | AGENTS lines 5-45; docs/governance lines 41-95; manifest lines 16-49; main `a687f68c091c4507cf76fc48b78224ed592b38cb` | Authenticated metadata confirms private; anonymous 404 does not mean missing | Keep client overlays private and region-local |
@@ -46,6 +46,10 @@ Retrieved 2026-09-07. Sources authored by OKHP3 / Jamie Hill unless noted. Paths
 ## Open questions retained
 
 - Exact private Replit commit parity and runtime/deployment behavior; main/no changes is a latest attributed UI observation for this FoundRy.
-- Intended resolution of OverKill FoundRy public exposure versus private source policy.
+- Older sibling documentation may still describe a private OverKill FoundRy or imply shared application ownership; the latest owner clarification resolves intent, not every historical document.
 - Any future requirement for hosted multiuser operation, AI-provider execution or automatic deployment beyond the first local application contract.
 - Whether owners want the three sibling sites' older hierarchy descriptions reconciled in a separate coordinated change.
+
+## Owner clarification after initial research
+
+The parallel OverKill coordinator relayed the owner's September 7 clarification: OverKill Hill is the centroid and common baseline; OverKill FoundRy is intentionally public and mentors the regional FoundRys, with reciprocal mentoring welcomed among any siblings. This is attributed owner intent, not a new inference from source code. Regional ownership and private-record boundaries remain unchanged.

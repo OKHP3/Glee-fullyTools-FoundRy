@@ -37,11 +37,11 @@ SOURCES = {
 }
 UNIVERSE = [
     {"id": "askjamie", "name": "AskJamie", "region": "left", "role": "Personal guidance", "url": "https://askjamie.bot", "shared": False},
-    {"id": "overkill", "name": "OverKill Hill", "region": "center", "role": "Connective center", "url": "https://overkillhill.com", "shared": False},
+    {"id": "overkill", "name": "OverKill Hill", "region": "center", "role": "Connective center and common baseline", "url": "https://overkillhill.com", "shared": False},
     {"id": "gleefully", "name": "Glee-fully", "region": "right", "role": "Personalizable tools", "url": "https://glee-fully.tools", "shared": False},
     {"id": "skillz", "name": "Skillz", "region": "shared", "role": "Shared skills", "url": "https://github.com/OKHP3/skillz", "shared": True},
     {"id": "askjamie-foundry", "name": "AskJamie FoundRy", "region": "left", "role": "AskJamie-only foundry", "url": "https://github.com/OKHP3/AskJamie-FoundRy", "shared": False},
-    {"id": "overkill-foundry", "name": "OverKill Hill Found-Ry", "region": "center", "role": "OverKill-only foundry", "url": "https://github.com/OKHP3/OverKill-Hill-FoundRy", "shared": False},
+    {"id": "overkill-foundry", "name": "OverKill Hill Found-Ry", "region": "center", "role": "OverKill-owned builder and reciprocal mentoring pattern", "url": "https://github.com/OKHP3/OverKill-Hill-FoundRy", "shared": False},
     {"id": "gleefully-foundry", "name": "Glee-fully Tools FoundRy", "region": "right", "role": "Glee-fully-only foundry", "url": "https://github.com/OKHP3/Glee-fullyTools-FoundRy", "shared": False},
 ]
 

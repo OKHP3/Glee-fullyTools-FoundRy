@@ -61,8 +61,8 @@ concurrency stress testing.
 
 [Pull request #5](https://github.com/OKHP3/Glee-fullyTools-FoundRy/pull/5) contains
 this integration. The PR's FoundRy application check runs the service suite on
-Python 3.11 plus JavaScript syntax and whitespace checks. Its current check result
-is visible on the PR; local test success alone is not an assertion of CI success.
+Python 3.11 plus JavaScript syntax and whitespace checks. The [initial integrated CI run](https://github.com/OKHP3/Glee-fullyTools-FoundRy/actions/runs/34139152682) passed at commit `c5ff4328635043e4882224637e29afdba91c7f45`.
+The PR displays the check result for subsequent documentation and relationship-copy updates.
 
 No public service, AI provider call or Replit deployment was tested or performed.
 The latest attributed authenticated Replit observation shows this FoundRy on main

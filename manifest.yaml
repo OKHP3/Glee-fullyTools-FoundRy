@@ -25,6 +25,8 @@ ecosystem:
 authority_chain:
   universe_context: OKHP3/OverKill-Hill
   historical_parent_foundry: OKHP3/OverKill-Hill-FoundRy
+  mentoring_pattern: OKHP3/OverKill-Hill-FoundRy
+  mentoring_direction: reciprocal
   shared_skill_catalog: OKHP3/skillz
   regional_boundary: gleefully-only
   this_foundry: OKHP3/Glee-fullyTools-FoundRy

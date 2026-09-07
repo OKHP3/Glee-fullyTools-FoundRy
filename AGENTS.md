@@ -41,6 +41,9 @@ and OverKill at the connective center. Skillz is shared across all three.
 OverKill-Hill-FoundRy belongs exclusively to OverKill; it is not a shared
 application, ledger service or runtime dependency. Historical parent references
 record lineage. Universe context and common principles come from OverKill Hill.
+OverKill Found-Ry is intentionally public and provides a mentoring pattern for
+the regional FoundRys. Mentoring is reciprocal: any FoundRy can inform another,
+while regional application ownership and private records remain distinct.
 
 ```text
 OverKill Hill universe context + shared Skillz references

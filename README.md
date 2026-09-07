@@ -1,29 +1,51 @@
 # Glee-fullyTools-FoundRy
 
-> **Private Workbench** — The creative forge behind Glee-fully Personalizable Tools™.
-> This is NOT a deployable web application. It is the fabrication line where GPT tools,
-> governance schemas, tone frameworks, and canonical ledgers are built and maintained.
+**A private workspace for designing, evaluating and packaging Glee-fully systems and tools.**
 
----
+The owner-authorized application adds durable project records and useful exports to
+this repository's existing canon, prompts, templates and evaluation material.
 
-## Authority Chain
-
-```
-OKHP3/OverKill-Hill  (root governance)
-  └─ Glee-fullyTools-FoundRy  ◀ YOU ARE HERE
-       └─ glee-fully-gpt00-*  through  glee-fully-gpt07-*  (child repos)
+```bash
+python3 -m app.server
 ```
 
-## Ecosystem Map
+Open `http://127.0.0.1:8765`. Python 3.11 or newer is required; no package
+installation or build step is needed. See the [application guide](docs/application/README.md)
+for setup, persistence, backups, validation and limitations.
 
-| Layer | Location | Role |
-|-------|----------|------|
-| Root Governance | `OKHP3/OverKill-Hill-FoundRy` | Cross-ecosystem standards, parent authority |
-| **This Workbench** | `OKHP3/Glee-fullyTools-FoundRy` | Glee-fully fabrication line |
-| Public Storefront | `OKHP3/Glee-fullyTools` → [glee-fully.tools](https://glee-fully.tools) | Consumer-facing catalog and site |
-| Universe Overview | [overkillhill.com/universe](https://overkillhill.com/universe) | OKHP3 portfolio context |
+Create a Custom GPT, Agent Skill, workflow or web-tool project; define components
+and acceptance cases; attach pinned Skillz references; save evaluation evidence;
+and export Markdown, JSON or a ZIP package. Web-tool packages include a runnable
+record-management starter and the authored specification. Review-ready is a
+working-record check, not PME certification or permission to publish.
 
----
+## Universe and ownership
+
+AskJamie sits to the left, Glee-fully to the right, and OverKill at the connective
+center. **Skillz is shared by all three. Each region has its own FoundRy.**
+OverKill Found-Ry is exclusive to OverKill. Historical shared-parent references
+below and within sealed sources record the earlier model, not an application
+dependency or permission to share private records.
+
+| Element | Role |
+|---|---|
+| [OverKill Hill](https://overkillhill.com/) | Universe context, methodology and public research |
+| [Skillz](https://okhp3.github.io/skillz/) | Shared portable Agent Skill catalog |
+| [OverKill Found-Ry](https://okhp3.github.io/OverKill-Hill-FoundRy/) | OverKill's own builder |
+| [AskJamie](https://askjamie.bot/) and [AskJamie FoundRy](https://github.com/OKHP3/AskJamie-FoundRy) | Interpretive experiences and their regional workbench |
+| [Glee-fully Tools](https://glee-fully.tools/) | Public catalog and routing hub |
+| **Glee-fullyTools-FoundRy** | Glee-fully's application and canonical fabrication workspace |
+
+Read the [seven-element research report](docs/research/okhp3-universe-2026-09-07/report.html)
+and [implementation plan](docs/application/implementation-plan.md) for evidence,
+contradictions and verification boundaries.
+
+## Canonical workbench reference
+
+The following describes the preserved GPT-focused source workflow. It is historical
+and canonical working material, not a claim that the application automatically
+executes every ritual or that all external GPTs are deployed. Application drafts
+are separate from canon; promotion remains an explicit governed activity.
 
 ## What This FoundRy Produces
 

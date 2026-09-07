@@ -8,13 +8,15 @@ Git repositories or nested agent guides were found during the July 13, 2026 revi
 
 Confirmed by `manifest.yaml`, `README.md`, and the directory layout:
 
-- This is the private `foundry-relay` workbench for the Glee-fully Personalizable
-  Tools ecosystem.
+- This is the private Glee-fully FoundRy application and canonical workbench for
+  the Glee-fully Personalizable Tools ecosystem. The owner authorized the application
+  transition on September 7, 2026; historical no-runtime restrictions are superseded
+  for `app/`.
 - It is a Git repository with lifecycle status `active` and private visibility.
-- It is a documentation, governance, prompt, template, evaluation, and ledger
-  repository. It is not an application, service, package, or deployable website.
-- The repository contains no package manifest, build system, test suite, or runtime
-  service configuration.
+- It combines preserved documentation, governance, prompts, templates, evaluations
+  and ledgers with an owner-local Python/SQLite application under `app/`.
+- The application uses the Python standard library and static browser JavaScript.
+  It has an application test suite and needs no package installation or build step.
 - The public storefront and child repositories are external consumers of material
   produced here. `web-templates/` contains source assets only and must not be served
   from this workbench.
@@ -34,15 +36,19 @@ Unknown from this checkout:
 
 ## Authority and scope
 
-The authority chain is:
+The owner-defined universe has AskJamie on the left, Glee-fully on the right,
+and OverKill at the connective center. Skillz is shared across all three.
+OverKill-Hill-FoundRy belongs exclusively to OverKill; it is not a shared
+application, ledger service or runtime dependency. Historical parent references
+record lineage. Universe context and common principles come from OverKill Hill.
 
 ```text
-OKHP3/OverKill-Hill-FoundRy
-  -> Glee-fullyTools-FoundRy (this repository)
+OverKill Hill universe context + shared Skillz references
+  -> Glee-fullyTools-FoundRy (Glee-fully application and canon)
        -> glee-fully-gpt00-* through glee-fully-gpt07-* child repositories
 ```
 
-Follow parent governance when it is available. Within this repository:
+Within this repository:
 
 1. `canon/dataledger_*_v3.md` is the data authority.
 2. `governance/` defines the rules applied to the canon and build workflow.
@@ -50,10 +56,20 @@ Follow parent governance when it is available. Within this repository:
    `docs/` provide governed working material and explanations.
 4. GPT-local or ad hoc instructions do not override canon.
 
-This repository is a workbench and relay. Do not add web servers, deployment
-workflows, hosted-service configuration, or application infrastructure here.
+The owner-local application is authorized under `app/`. Keep server binding
+restricted to loopback, user data outside tracked source, and all static/source
+serving allowlisted. Public or multiuser hosting requires a separate architecture
+and release decision; the private repository root must never be served. Do not
+add hosted deployment workflows as a side effect.
 
 ## Repository map
+
+- `app/`: owner-local project workspace, SQLite persistence, validation, export
+  generators, static frontend and tests. `app/data/skills.json` pins selected public
+  Skillz references. `.foundry-data/` is ignored working data, not canon.
+- `docs/application/`: API contract, implementation plan and operating instructions.
+- `docs/research/okhp3-universe-2026-09-07/`: source-bounded universe research and
+  access limitations supporting the application transition.
 
 - `canon/`: nine canonical ledgers. The registry, persona, parameters, system,
   hydration, narrative, ideation, archive, and legacy processing ledgers live here.
@@ -137,7 +153,9 @@ reference before an entity is treated as PME-ready in the documented workflow.
   through the persona ledger using the repository's `!DRIFT_EVENT` convention.
 - Suffix law: `-R` and `-Ry` are reserved to OverKill Hill P3 and The GPT Found-Ry.
   Glee-fully GPTs are exempt. Do not introduce those suffixes into Glee-fully names.
-- No prompt-local memory: use the hydration ledger for continuity and handoff state.
+- No prompt-local canonical memory: use the hydration ledger for canonical
+  continuity. Application drafts and revision history are non-canonical working
+  records in SQLite. They must not impersonate ledger registration or PME approval.
 - Brand rules: do not use em dashes in generated content, preserve standalone punchy
   lines, and keep verbosity proportional to understanding produced.
 - Do not put secrets, credentials, personal data, or machine-specific paths into
@@ -197,10 +215,12 @@ repository:
 - `sync-report.py` runs and reports the same absent inherited-baseline paths; it is
   a report, not proof of repository compliance.
 
-No build, test, package-install, local-server, or deployment command is defined or
-verified for this workbench. Do not invent one. The repository's meaningful checks
-are documentation review, canon-preservation review, and the read-only maintenance
-audits above.
+Application commands from the root are `python3 -m app.server` and
+`python3 -m unittest discover -s app/tests -v`. See `docs/application/README.md`
+for the runtime boundary, backups and verification. There is no package-install
+or build step. Documentation review, canon-preservation review and the read-only
+maintenance audits above remain relevant to the historical workbench. Those
+legacy audit assumptions are not application health gates.
 
 ## Known gaps and stale claims
 
@@ -223,6 +243,10 @@ audits above.
   the current 52-package local skill catalog, and the `skills/` publication mirror
   for `okhp3-skill-promotion`. Re-check this list against `git log` before relying
   on it after substantial structural changes.
+
+The application additions and universe boundary above were reconciled on
+September 7, 2026. The preceding August inventory remains historical and should
+be rechecked before relying on exact skill counts.
 
 ## Keeping this guide current
 

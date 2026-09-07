@@ -51,10 +51,26 @@ def now() -> str:
 
 
 def template(kind: str, name: str, description: str) -> dict:
+    guidance = {
+        "custom-gpt": ("Conversation", "Clarify the request, use the supplied context and produce the agreed output.",
+                       "1. Establish the user's objective and available source material.\n2. Ask for essential missing inputs.\n3. Work within the declared constraints.\n4. Distinguish source facts, assumptions and unknowns.\n5. Return the specified output with a useful next step."),
+        "agent-skill": ("Skill workflow", "Carry out a bounded reusable method and leave an inspectable artifact.",
+                        "Trigger: describe when this skill applies.\nInputs: check the required material before acting.\nProcedure: perform the bounded task using the declared sources.\nVerification: check the acceptance cases.\nHandoff: report the artifact, evidence and remaining limitations."),
+        "workflow": ("Process", "Transform a defined input into an output with an explicit completion check.",
+                     "1. Confirm scope and prerequisites.\n2. Name the responsible role for each step.\n3. Record decisions and exception paths.\n4. Check the output against acceptance criteria.\n5. Package the result and any unresolved work."),
+        "web-tool": ("Record workspace", "Add records, mark them complete, reopen them and filter the list.",
+                     "Use the exported record-management starter as an editable baseline.\nDefine the domain-specific record and user needs in this brief.\nAdapt the starter code to the specification, then run the acceptance cases.\nDo not treat the generic starter as an implementation of every authored requirement.")
+    }
+    component_name, purpose, instructions = guidance[kind]
     return {"id": kind, "name": name, "description": description,
             "project": {"name": "Untitled " + name, "kind": kind,
                         "description": "", "audience": "", "inputs": "", "outputs": "",
-                        "constraints": "", "instructions": "", "components": [], "tests": [], "skillIds": []}}
+                        "constraints": "Working draft. Preserve source provenance and label unknowns. Evaluate before publication.",
+                        "instructions": instructions,
+                        "components": [{"id": "core", "name": component_name, "purpose": purpose, "dependsOn": []}],
+                        "tests": [{"id": "expected-use", "name": "Expected use", "expected": "The agreed output is produced from valid inputs.", "actual": "", "status": "not-run"},
+                                  {"id": "missing-input", "name": "Missing input", "expected": "Missing essential input is identified without inventing its value.", "actual": "", "status": "not-run"}],
+                        "skillIds": []}}
 
 
 TEMPLATES = [
@@ -83,7 +99,7 @@ def validate_project(payload: object, *, creating: bool = False, importing: bool
         raise ValidationError("name is required")
     if not isinstance(result["kind"], str) or result["kind"] not in KINDS:
         raise ValidationError("kind is invalid")
-    if result["status"] in ([], ""):
+    if "status" not in payload:
         result["status"] = "draft"
     if not isinstance(result["status"], str) or result["status"] not in STATUSES:
         raise ValidationError("status is invalid")
@@ -140,8 +156,9 @@ def validate_project(payload: object, *, creating: bool = False, importing: bool
 
 class Store:
     def __init__(self, directory: Path):
-        directory.mkdir(parents=True, exist_ok=True)
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.conn = sqlite3.connect(directory / "foundry.sqlite3", check_same_thread=False)
+        (directory / "foundry.sqlite3").chmod(0o600)
         self.conn.row_factory = sqlite3.Row
         self.lock = threading.Lock()
         with self.conn:
@@ -167,8 +184,10 @@ class Store:
             if not row: return None
             if row["revision"] != revision: raise RuntimeError("revision conflict")
             old = json.loads(row["data"])
-            material = {"kind", "description", "audience", "inputs", "outputs", "constraints", "instructions", "components"}
-            if any(old[field] != editable[field] for field in material):
+            material = {"kind", "description", "audience", "inputs", "outputs", "constraints", "instructions", "components", "skillIds"}
+            test_contract = lambda cases: [(c["id"], c["name"], c["expected"]) for c in cases]
+            if (any(old[field] != editable[field] for field in material) or
+                    test_contract(old["tests"]) != test_contract(editable["tests"])):
                 editable = {**editable, "tests": [{**case, "actual": "", "status": "not-run"} for case in editable["tests"]]}
             project = {**old, **editable, "revision": revision + 1, "updatedAt": now()}
             self.conn.execute("UPDATE projects SET revision=?,data=? WHERE id=?", (project["revision"], json.dumps(project, separators=(",", ":")), project_id))
@@ -217,6 +236,8 @@ class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Content-Security-Policy", "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
         super().end_headers()
     def log_message(self, format, *args): pass
     @property
@@ -255,7 +276,7 @@ class Handler(SimpleHTTPRequestHandler):
         except ValueError: raise ValidationError("invalid Content-Length")
         if length < 0 or length > MAX_BODY: raise ValidationError("JSON body exceeds 1 MB")
         try: return json.loads(self.rfile.read(length))
-        except (UnicodeDecodeError, json.JSONDecodeError): raise ValidationError("invalid JSON")
+        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError): raise ValidationError("invalid or excessively nested JSON")
     def do_GET(self):
         if not self.valid_request(): return self.error_json(HTTPStatus.FORBIDDEN, "foreign Host or Origin")
         path=urlparse(self.path).path
@@ -290,9 +311,12 @@ class Handler(SimpleHTTPRequestHandler):
         if fmt != "zip": return self.error_json(400,"format must be json, markdown, or zip")
         report=readiness(project,self.app.skills())
         skill_map={item["id"]:item for item in self.app.skills()}
-        skills=[skill_map[item] for item in project["skillIds"]]
+        skills=[skill_map[item] for item in project["skillIds"] if item in skill_map]
+        missing_skills=[item for item in project["skillIds"] if item not in skill_map]
         evidence="\n".join(f"- {case['name']}: expected {case['expected']}; status `{case['status']}`; actual {case['actual'] or 'not recorded'}" for case in project["tests"]) or "- No acceptance cases recorded."
         refs="\n".join(f"- [{item['name']}]({item['url']}) (`{item['id']}`, revision `{item['revision']}`, source `{item['sourcePath']}`): {item['description']}" for item in skills) or "No Skillz references attached."
+        if missing_skills:
+            refs += "\nUnavailable references: " + ", ".join(missing_skills) + ". Recover their recorded source before review."
         checks="\n".join(f"- {check['label']}: `{check['status']}`. {check['detail']}" for check in report["checks"])
         contents={"project.json":json.dumps(project,indent=2),"README.md":markdown(project),"specification.md":markdown(project),"evaluation.md":f"# Evaluation for {project['name']}\n\nProject status: `{project['status']}`.\n\n## Observed acceptance evidence\n{evidence}\n\n## Readiness observations\n{checks}\n\n{report['summary']}\n", "skill-references.md":"# Skill references\n\n"+refs+"\n", "handoff.md":f"# Handoff: {project['name']}\n\nThis package is a `{project['status']}` working record at revision {project['revision']}. It does not certify PME readiness, publication readiness, deployment, or automatic behavioral validation.\n\n## Continue from here\n\n1. Review `specification.md` and the recorded acceptance evidence.\n2. Add or revise observed evidence in the FoundRy application, then export a new revision.\n3. For a web-tool package, open `index.html` in a modern browser and exercise add, complete, reopen, and filters.\n4. Treat attached Skillz references as pinned provenance, not executable dependencies.\n"}
         if project["kind"] == "custom-gpt": contents.update({"instructions.md":project["instructions"]+"\n", "starters.md":f"# Conversation starters for {project['name']}\n\n- Help me with: {project['description'] or 'this project'}\n- My input is: {project['inputs'] or 'not yet specified'}\n- What output should I expect? {project['outputs'] or 'not yet specified'}\n"})
@@ -324,6 +348,7 @@ class Handler(SimpleHTTPRequestHandler):
                 editable=validate_project(source,importing=True)
                 self.app.validate_skill_ids(editable)
                 editable["tests"]=[{**case,"actual":"","status":"not-run"} for case in editable["tests"]]
+                editable["status"]="draft"
                 origin = source.get("id", "unidentified source") if isinstance(source.get("id"), str) else "unidentified source"
                 return self.json(201,self.app.store.create(editable,"imported",f"Imported from {origin} with fresh identity and reset evidence"))
             return self.error_json(404,"not found")
@@ -346,6 +371,11 @@ class FoundryServer(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self,address,root,data_dir):
         super().__init__(address,Handler); self.root=Path(root).resolve();self.static=self.root/"app"/"static";self.data_dir=Path(data_dir);self.store=Store(self.data_dir)
+    def server_close(self):
+        super().server_close()
+        if hasattr(self, "store"):
+            self.store.conn.close()
+
     def skills(self):
         file=self.root/"app"/"data"/"skills.json"
         if not file.is_file(): return []

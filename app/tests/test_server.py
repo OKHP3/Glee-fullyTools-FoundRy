@@ -128,4 +128,48 @@ class ServiceTests(unittest.TestCase):
         status, headers, _ = self.request("GET","/api/health"); self.assertEqual(status,200); self.assertIn("default-src 'self'",headers["Content-Security-Policy"])
 
 
+    def test_all_package_kinds_preserve_specification_and_provenance(self):
+        paths = {"custom-gpt": "instructions.md", "agent-skill": "SKILL.md", "workflow": "workflow.json", "web-tool": "index.html"}
+        for kind, expected_path in paths.items():
+            with self.subTest(kind=kind):
+                item = self.create(kind=kind, components=[{"id":"entry","name":"Capture","purpose":"Keep a record","dependsOn":[]}], tests=[{"id":"case","name":"Add a record","expected":"Record persists","actual":"Saved and reopened","status":"pass"}])
+                status, _, raw = self.request("GET", f"/api/projects/{item['id']}/export?format=zip")
+                self.assertEqual(status, 200)
+                with zipfile.ZipFile(BytesIO(raw)) as bundle:
+                    self.assertIn(expected_path, bundle.namelist())
+                    for text in ("Beds", "Tasks", "Capture", "Record persists"):
+                        self.assertIn(text, bundle.read("specification.md").decode())
+                    self.assertIn("Saved and reopened", bundle.read("evaluation.md").decode())
+                    self.assertIn("not certify", bundle.read("handoff.md").decode())
+                    self.assertEqual(json.loads(bundle.read("project.json")), item)
+
+    def test_changed_acceptance_contract_invalidates_old_pass(self):
+        item = self.create(tests=[{"id":"case","name":"Check","expected":"Original outcome","actual":"Saw original outcome","status":"pass"}])
+        update = self.project(revision=item["revision"], tests=[{**item["tests"][0], "expected":"Different outcome"}])
+        status, _, saved = self.request("PUT", f"/api/projects/{item['id']}", update)
+        self.assertEqual(status, 200)
+        self.assertEqual(saved["tests"][0]["status"], "not-run")
+        self.assertEqual(saved["tests"][0]["actual"], "")
+
+    def test_missing_reference_does_not_destroy_export(self):
+        item = self.create()
+        item["skillIds"] = ["retired-reference"]
+        # A later curated-shelf change must not crash export of an older record.
+        editable = {k: v for k, v in item.items() if k not in {"id","revision","schemaVersion","createdAt","updatedAt"}}
+        self.server.store.update(item["id"], editable, item["revision"])
+        status, _, raw = self.request("GET", f"/api/projects/{item['id']}/export?format=zip")
+        self.assertEqual(status, 200)
+        with zipfile.ZipFile(BytesIO(raw)) as bundle:
+            self.assertIn("Unavailable references", bundle.read("skill-references.md").decode())
+
+    def test_every_reference_and_exact_universe_are_available(self):
+        _, _, boot = self.request("GET", "/api/bootstrap")
+        self.assertEqual({u["id"] for u in boot["universe"]}, {"askjamie","overkill","gleefully","skillz","askjamie-foundry","overkill-foundry","gleefully-foundry"})
+        self.assertEqual([u["id"] for u in boot["universe"] if u["shared"]], ["skillz"])
+        for source in boot["sources"]:
+            status, _, result = self.request("GET", "/api/sources/" + source["id"])
+            self.assertEqual(status, 200)
+            self.assertTrue(result["content"].strip())
+
+
 if __name__ == "__main__": unittest.main()

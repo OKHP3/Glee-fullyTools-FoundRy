@@ -1,0 +1,32 @@
+name: FoundRy application checks
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/foundry-app.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/foundry-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Exercise the application and exported packages
+        run: python -m unittest discover -s app/tests -v
+      - name: Check source syntax and whitespace
+        run: |
+          python -m py_compile app/server.py
+          node --check app/static/app.js
+          git diff --check

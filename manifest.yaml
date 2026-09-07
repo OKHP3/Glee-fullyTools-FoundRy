@@ -3,13 +3,12 @@ schema_version: "2.0"
 repo:
   name: Glee-fullyTools-FoundRy
   display_name: "Glee-fully Tools FoundRy"
-  type: foundry-relay
+  type: foundry-application
   lifecycle_status: active
   visibility: private
   description: >
-    Private workbench and relay FoundRy for the Glee-fully Personalizable Tools™
-    ecosystem. Source of governance schemas, canonical ledgers, GPT instruction
-    templates, tone frameworks, and evaluation tools for 40+ Custom GPTs.
+    Private owner-local application and canonical workbench for designing,
+    evaluating and packaging Glee-fully systems, tools, GPTs and Agent Skills.
 
 brand:
   domain: gleefully
@@ -24,7 +23,10 @@ ecosystem:
   universe_site: https://overkillhill.com/universe
 
 authority_chain:
-  parent_foundry: OKHP3/OverKill-Hill-FoundRy
+  universe_context: OKHP3/OverKill-Hill
+  historical_parent_foundry: OKHP3/OverKill-Hill-FoundRy
+  shared_skill_catalog: OKHP3/skillz
+  regional_boundary: gleefully-only
   this_foundry: OKHP3/Glee-fullyTools-FoundRy
   public_repo: OKHP3/Glee-fullyTools
   child_families:
@@ -98,3 +100,11 @@ required_child_files:
 author: Jamie Hill
 organization: OverKill Hill P³ (OKHP3)
 contact: contact@glee-fully.tools
+
+application:
+  entrypoint: "python3 -m app.server"
+  runtime: "Python 3.11+ standard library"
+  exposure: owner-local-loopback
+  working_data: ".foundry-data/"
+  canonical_writes: false
+  tests: "python3 -m unittest discover -s app/tests -v"

@@ -1,0 +1,61 @@
+# Seven elements, three regions, one shared skill library
+
+**Research date:** September 7, 2026. **Audience:** the owner and implementers of Glee-fullyTools-FoundRy. **Decision:** how to turn this repository into a useful builder application while retaining its identity and source lineage.
+
+## Direct answer
+
+The seven elements form three regional pairs plus one shared catalog. AskJamie and its FoundRy form the interpretive/helpdesk pair; Glee-fully Tools and its FoundRy form the personal-tool pair; OverKill Hill and its Found-Ry form the central methodology/experimental-building pair. Skillz belongs within OverKill's connective region and is available to all three. It is the shared distribution route for reusable skills. OverKill Found-Ry is not a cross-region runtime or inherited application dependency.
+
+This relationship is the owner's explicit September 7 direction. It supersedes older site and workbench language describing AskJamie as a layer above the others or OverKill Found-Ry as a universal parent. Common origin and reusable methods do not make the applications, private content, brands or databases interchangeable.
+
+The evidence supports building a **Glee-fully design, evaluation and package-building workspace**. Existing local ledgers, prompts, scaffolds, tone profiles and evaluations provide its reference materials. They do not already constitute a running application. The storefront remains a separate discovery and publication surface. Skillz remains a separate catalog, referenced by pinned source contracts rather than copied wholesale.
+
+## The seven elements
+
+| Element | Purpose and actual surface | Relationship and ownership |
+|---|---|---|
+| [OverKill Hill](https://overkillhill.com/) / [repository](https://github.com/OKHP3/OverKill-Hill) | Central public methodology, project and writing site. Static HTML/CSS/JS, search and diagrams are implemented. Site descriptions of AI systems do not prove each linked system's runtime. | Connective center and universe context; retains its own brand and research portfolio. |
+| [Skillz Forge](https://okhp3.github.io/skillz/) / [repository](https://github.com/OKHP3/skillz) | Public portable Agent Skill distribution plus a React/Vite discovery and composition frontend. Source supports inspection, comparison, compositions, evidence labels and exports. | Shared by AskJamie, Glee-fully and OverKill. It distributes contracts; attaching a contract does not execute an agent. |
+| [OverKill Hill Found-Ry](https://okhp3.github.io/OverKill-Hill-FoundRy/) / [repository](https://github.com/OKHP3/OverKill-Hill-FoundRy) | Historical tools-for-building-tools workbench and a deployed browser-local Custom GPT Creator. Current artifact contains a nine-stage creator, local persistence, audit/platform comparison and export functions. | OverKill-only under the owner's direction. Its content and state are not Glee-fully application dependencies. |
+| [Glee-fully Tools](https://glee-fully.tools/) / [repository](https://github.com/OKHP3/Glee-fullyTools) | Public warm, structured catalog and routing site for a Toolbox, seven branch hubs and 42 authored Tool-ette pages. Its current publication register reports one live, 24 beta and 17 unavailable. | Glee-fully public presentation and external-tool routing. It does not own every external GPT's behavior or data. |
+| [Glee-fullyTools-FoundRy](https://github.com/OKHP3/Glee-fullyTools-FoundRy) | At research baseline, a private documentation and governance workbench: nine ledgers, PromptChain, GPT scaffolds, template variants, PulseBook and skill packages. No application runtime existed in the baseline. | Glee-fully's own fabrication workspace, now authorized to become an application. Its canonical source survives the transition. |
+| [AskJamie](https://askjamie.bot/) / [repository](https://github.com/OKHP3/AskJamie) | Public static helpdesk-persona and Lens System site: guided explanations, lens descriptions, diagrams, search and external experience links. Its source expressly distinguishes the site from a backend/chat service. | AskJamie region, on the left of the owner's map. Its interpretive focus is distinct from Glee-fully's personal tooling. |
+| [AskJamie-FoundRy](https://github.com/OKHP3/AskJamie-FoundRy) | Private governance/scaffold workbench with schemas, registries, staged capability assets and client-overlay rules. Baseline source has no deployed app or child implementation. | AskJamie's own building workspace. Client-specific and private material stays within its documented boundaries. |
+
+The Glee-fully counts are publication labels in the [current suite contract](https://github.com/OKHP3/Glee-fullyTools/blob/4cc42218a32d154c513ffbf80d102f767015a4f4/docs/suite-promise.md), corroborated by the homepage. A live label is not a certification of external GPT behavior. Skillz counts are intentionally omitted from the application contract because generated and current source metadata differ.
+
+## Function and distinctness
+
+The storefronts answer where a visitor should go and what a tool is intended to do. The FoundRys answer how an owner designs, evaluates, packages and maintains tools in that region. Skillz answers which reusable instruction contract might help with that work. These are different jobs even when the same author and vocabulary appear throughout.
+
+Glee-fully's existing tool taxonomy is a Toolbox with Tools, Tool-ettes, Functions and Function-ettes. Its [ecosystem page](https://glee-fully.tools/ecosystem/) makes that navigable. Its FoundRy describes a six-stage PromptChain, from ignition and ingestion through identity, registry, role and fusion checks. These are source workflows and governance intentions, not evidence that an automated pipeline is already enforcing them. The current [PulseBook v1.7](https://github.com/OKHP3/Glee-fullyTools-FoundRy/blob/a190c026cf9e910fc843eb14562f22c51278947f/evaluation/gpt-pulsebook-evaluation-v1-7.md) is a review prompt/template. A simple application checklist must not impersonate a completed PulseBook review.
+
+AskJamie supplies a useful pattern of bounded context, lens selection, interpretation and usable output. Its [how-it-works source](https://github.com/OKHP3/AskJamie/blob/7de1472025b38d7d763a9e5696b7118b482b2fad/how-askjamie-works/index.html) explicitly denies a hidden shared memory pipeline. This supports inspectable project records and explicit handoffs rather than implied cross-brand state.
+
+OverKill Found-Ry's public creator already has authored build steps, local persistence and export machinery. Source and deployed-bundle inspection establish implemented code, but this research did not execute every user journey in that application. Its existence is a useful comparison, not a requirement to clone its UI, share its private ledgers or adopt its runtime.
+
+## Contradictions and their disposition
+
+1. **Shared FoundRy authority:** this repository's baseline README, manifest and AGENTS call OverKill Found-Ry the parent. Older sealed content also contains cross-ecosystem lineage. Resolution: preserve sealed lineage, mark historical parent metadata as provenance, and document the owner's new application boundary in active guidance. No cross-brand runtime inheritance is introduced.
+2. **Vertical versus overlapping universe:** AskJamie's live homepage describes itself above both other regions. Resolution: use the owner's overlapping-ring model in the new application and record the stale public description. Sibling sites are not edited by this task.
+3. **Private description versus public exposure:** OverKill Found-Ry local documentation describes permanent privacy, but current GitHub metadata reports public and its Pages creator returns HTTP 200. Resolution: record the inconsistency; do not change visibility, assume private-source disclosure is authorized, or import those internals.
+4. **Generated Skillz provenance:** current main was `7616ccd7c92b65dafc936f744208ba62507b3c5c`; its generated catalog embeds `sourceRef: codex/universe-loose-ends` and `sourceCommit: e3f4559`. A merge can preserve a legitimate earlier generation, so this discrepancy alone does not prove wrong entries. It does mean the artifact is not evidence of an exact current-main scan. Resolution: verify and pin selected distribution files directly, display their revision, and avoid an automatic sync/runtime catalog dependency.
+5. **Documentation versus deployed GPTs:** older Glee ledgers and READMEs say 40+ deployed entities; the storefront has more specific state labels. Resolution: preserve source text and explicitly separate canonical authorship, public-page state and unverified external behavior.
+
+## Source coverage and missing evidence
+
+All seven supplied GitHub repositories were inspected through local source plus authenticated metadata; current baselines are recorded in the companion claim ledger. Public pages were fetched through web tools and direct first-party HTTP retrieval where web extraction was unavailable. Two bounded research lanes examined OverKill/Skillz and AskJamie; the coordinator inspected Glee-fully and rechecked consequential identity and revision facts.
+
+All seven supplied Replit names were attempted through the exact-name connector. Each returned the same reauthentication failure. The current thread's browser reached a login page for Glee-fullyTools-FoundRy. An independently coordinated authenticated browser initially reported Page not found for the FoundRy URL, then a later AskJamie coordinator refresh resolved the route: Glee-fullyTools-FoundRy showed its workspace, branch main, no changes and an agent waiting for input. Glee-fullyTools showed an editor and running storefront preview. These are attributed UI observations; the initial route failure was transient. Exact commit parity, private runtime behavior and deployment state remain unverified in this thread.
+
+The research stops at a bounded, decision-sufficient model. A full external GPT audit, private Replit forensic inspection, every skill's behavioral validation and reconciliation of all sibling documentation would not change the selected local application boundary and remain outside this implementation's evidence. No full understanding of inaccessible state is claimed.
+
+## Build decision
+
+Implement the new runtime under `app/`, with an owner-local Python standard-library server, SQLite working records and a branded vanilla frontend. This is an implementation choice, not a finding about the old workbench. It avoids recurring service/model costs and provides durable project records rather than relying on a browser profile. An alternative browser-only design could be hosted statically, but backup and multi-tab persistence semantics would depend on browser storage. A hosted AI builder would need provider, cost, authentication and deployment decisions not yet specified.
+
+Support Custom GPT, Agent Skill, workflow and web-tool projects. Make specifications, component dependencies, attached skill provenance, acceptance evidence and export packages explicit. JSON imports receive new identities and unevaluated test states. The web-tool output is a runnable record-management starter with project-specific specification, not a claim that arbitrary requirements have been automatically implemented. Review-ready means the saved record has the required fields and recorded evidence; it is neither PME certification nor approval to publish.
+
+Existing canon, governance and snapshots remain unchanged. The application reads only an allowlist of local source references, saves draft records separately, and exports draft packages with provenance. The shared Skillz integration is seven pinned public distribution references. No sibling data, secrets, automatic code execution or paid AI calls are part of the application.
+
+The [implementation plan](../../application/implementation-plan.md) and [API contract](../../application/api-contract.md) define the concrete acceptance boundary, delegated file ownership, verification and PR delivery.

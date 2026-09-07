@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This repository is content-first: there are no runtime dependencies,
-# migrations, or build artifacts to install after a task merge. Keep the
-# automatic hook fast and deterministic by validating the checkout instead.
+# The owner-local application uses the Python standard library; no package
+# installation or build is required after merging. Keep this hook limited to
+# checkout validation. Run application tests explicitly per AGENTS.md.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 

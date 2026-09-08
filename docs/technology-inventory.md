@@ -1,17 +1,19 @@
 # Technology Inventory and Version Policy
 
-> Review date: 2026-09-01
+> Review date: 2026-09-08
 
-This workbench is not a Vite, TypeScript, Tailwind, React, Node.js, or npm
-application. It is a documentation and governance repository with static web
-template assets and Python maintenance scripts.
+This repository combines the canonical documentation workbench with an owner-local
+loopback application under `app/`. The application uses Python's standard library,
+SQLite, and vanilla browser JavaScript/CSS. The separate `web-templates/` folder
+remains source material for child repositories.
 
 ## Technologies found
 
 | Technology | In-place use | In-place version | Latest stable checked | Update posture |
 |---|---|---:|---:|---|
-| Python | Six repository maintenance scripts use the Python standard library. | `Python 3`, exact interpreter not declared | `3.14.6` | CI uses `3.x`, and the scheduled audit checks the current Python 3 release. |
-| JavaScript | Browser-side behavior in `web-templates/assets/js/app.js` and an ES module import in `web-templates/index.html`. | Unpinned language/runtime; browser supplied | ECMAScript 2026, ECMA-262 17th edition | Track the browser platform. Do not add a Node toolchain unless the repository becomes an application. |
+| Python | `app/server.py`, application tests, and maintenance scripts use the Python standard library. | Application requires Python `3.11+`; app CI pins `3.11`; audit CI selects `3.x` | `3.14.6` | Keep the application floor at 3.11 until compatibility is deliberately raised; CI follows the latest stable line for the audit. |
+| SQLite | Durable owner-local working records through Python's `sqlite3` module. | Bundled with the selected Python interpreter; no separate version pin | Python 3.14.6 ships SQLite 3.50.4 | Track through the Python runtime; do not add a separate database service. |
+| JavaScript | Vanilla browser behavior in `app/static/app.js` and `web-templates/assets/js/app.js`. | Unpinned language/runtime; browser supplied | ECMAScript 2026, ECMA-262 17th edition | Track the browser platform. No Node/npm toolchain is used to build the app. |
 | HTML | Static page template in `web-templates/index.html`. | HTML Living Standard, no repository pin | Living standard | Validate in the consuming child repository when a page is deployed. |
 | CSS | Hand-authored stylesheets in `web-templates/theme.css` and `web-templates/assets/css/theme.css`. | No framework or version pin | CSS Snapshot 2025 | Continue using standards-based CSS. Tailwind and PostCSS are not present. |
 | Mermaid | CDN ES module loaded by `web-templates/index.html`. | `11.17.2` | `11.17.2` | Review the pinned release when Mermaid publishes a newer version. |
@@ -20,15 +22,16 @@ template assets and Python maintenance scripts.
 | YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | YAML 1.2-style usage, no parser dependency | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. Python scripts do not require PyYAML. |
 | Markdown | Canon, governance, prompts, inventory, and documentation. | No renderer pin | CommonMark has no single runtime release | Render in the consuming platform. |
 | Git | Repository version control. | Not pinned by this repository | `2.55.0` | Developer-machine tooling; document only, do not install or upgrade from CI. |
-| GitHub Actions | Added by this maintenance change for scheduled version auditing. | `actions/checkout@v6`, `actions/setup-python@v6` | `v6` / `v6` | Dependabot monitors action references monthly. |
+| GitHub Actions | Application checks and scheduled technology auditing. | `actions/checkout@v7`, `actions/setup-python@v7` | `v7` / `v7` | Dependabot monitors action references monthly. |
 
 ## Explicitly absent
 
 The repository has no `package.json`, lockfile, `requirements.txt`,
 `pyproject.toml`, `tsconfig.json`, Vite configuration, Tailwind configuration,
-React source, Node/npm runtime declaration, build system, or existing GitHub
-Actions workflow. References to Vite/TypeScript in planning documents describe a
-possible future application architecture, not the current solution.
+React source, or Node/npm runtime declaration. GitHub Actions workflows are now
+present for application checks and technology auditing. References to Vite,
+TypeScript, and Tailwind in planning documents describe possible architectures,
+not technologies used by the current solution.
 
 ## Update plan
 

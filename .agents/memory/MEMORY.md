@@ -5,5 +5,6 @@
 - [Glee-fully child repo standard](glee-fully-child-repo-standard.md) — 17 files / 9 dirs for toolette, 16/8 for tool; fill order: instructions → description → starters → docs → canon → pulsebook → manifest pme_ready:true
 - [Phase 5 Agent Skill conversion strategy](phase5-agent-skill-conversion.md) — 50 GPTs → 7-10 domain Agent Skills; SKILL.md is discovery layer (lean), scripts carry functional payload; hierarchy was a workaround for 8k GPT limit not a domain requirement
 - [GitHub sync authentication](github-sync-auth.md) — keep origin credential-free and use a temporary secret-backed helper when connection binding is unavailable
+- [Python package installation](python-package-installation.md) — local system Python is PEP 668 managed; use package-management tooling instead of direct pip installs
 - [Post-merge hook configuration](post-merge-hook.md) — track the idempotent script while keeping the ignored Replit configuration platform-managed
 - [Agent collaboration](../../docs/agent-collaboration.md) — task ownership, token economy, Git reconciliation and compact handoffs across ChatGPT/Codex, Replit, Claude and Copilot.

@@ -17,6 +17,8 @@ Confirmed by `manifest.yaml`, `README.md`, and the directory layout:
   and ledgers with an owner-local Python/SQLite application under `app/`.
 - The application uses the Python standard library and static browser JavaScript.
   It has an application test suite and needs no package installation or build step.
+  The manifest validators are separate maintenance tooling with dependencies
+  declared in `requirements.txt`.
 - The public storefront and child repositories are external consumers of material
   produced here. `web-templates/` contains source assets only and must not be served
   from this workbench.
@@ -204,6 +206,8 @@ available, with their present limitations:
 git status --short --branch
 git diff --check
 python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
+python3 -m pip install -r requirements.txt
+python3 scripts/validate-manifest.py
 python3 scripts/manifest-audit.py .
 python3 scripts/registry-audit.py .
 python3 scripts/foundry-sync.py
@@ -224,8 +228,6 @@ explicit request because the current dry run proposes 12 renames, including a
 The other audits are useful evidence, but they are not currently clean for this
 repository:
 
-- `manifest-audit.py` expects a top-level `brand_domain:` field, while the current
-  manifest stores it as `brand.domain`.
 - `registry-audit.py` checks for `registry/index.yaml`, which is absent. The actual
   canonical registry is `canon/dataledger-registry-v3.md`.
 - `foundry-sync.py` checks for `_template/`, `registry/`, `schemas/`, and `.github/`

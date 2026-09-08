@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""
-validate-manifest.py
-AskJamie FoundRy — Manifest validation utility
+"""Validate the repository's current manifest schema.
 
 Usage:
     python3 scripts/validate-manifest.py path/to/manifest.yaml
     python3 scripts/validate-manifest.py  # validates ./manifest.yaml
 
 Validates a manifest.yaml against schemas/manifest.schema.yaml.
-Exits 0 on success, 1 on failure. No external dependencies beyond
-the standard library + pyyaml + jsonschema (pip install pyyaml jsonschema).
-
-For environments without jsonschema, falls back to structural checks only.
+PyYAML and jsonschema are declared in requirements.txt. If jsonschema is
+unavailable, the current-manifest structural checks still provide a useful
+fallback after PyYAML loads the document.
 """
 
 import sys
-import os
 import re
 from pathlib import Path
 
@@ -46,64 +42,50 @@ def validate_with_jsonschema(manifest: dict, schema: dict, manifest_path: str) -
 
 
 def structural_checks(manifest: dict, manifest_path: str) -> list[str]:
-    """Lightweight structural checks — no jsonschema required."""
+    """Lightweight checks for environments without jsonschema."""
     errors = []
 
-    required_top = ["schema_version", "identity", "brand", "lineage",
-                    "governance", "visibility_control", "maintainers",
-                    "created", "updated"]
+    required_top = [
+        "schema_version",
+        "repo",
+        "brand",
+        "ecosystem",
+        "authority_chain",
+        "governance",
+        "toolbox_structure",
+        "tone_overlays",
+        "required_child_files",
+        "author",
+        "organization",
+        "contact",
+        "application",
+    ]
     for field in required_top:
         if field not in manifest:
             errors.append(f"  Missing required field: {field}")
 
-    identity = manifest.get("identity", {})
-    for field in ["repo", "display_name", "slug", "type", "status"]:
-        if field not in identity:
-            errors.append(f"  identity.{field} is missing")
+    repo = manifest.get("repo", {})
+    for field in ["name", "display_name", "type", "lifecycle_status", "visibility", "description"]:
+        if field not in repo:
+            errors.append(f"  repo.{field} is missing")
 
-    repo = identity.get("repo", "")
-    if repo and not repo.startswith("OKHP3/"):
-        errors.append(f"  identity.repo must start with 'OKHP3/' — got: {repo!r}")
+    brand = manifest.get("brand", {})
+    for field in ["domain", "display_name", "public_site", "tagline", "tone_default", "muse"]:
+        if field not in brand:
+            errors.append(f"  brand.{field} is missing")
 
-    slug = identity.get("slug", "")
-    if slug and not re.match(r"^[a-z0-9-]+$", slug):
-        errors.append(f"  identity.slug must be lowercase alphanumeric+hyphens — got: {slug!r}")
+    authority_chain = manifest.get("authority_chain", {})
+    child_families = authority_chain.get("child_families", [])
+    if not child_families:
+        errors.append("  authority_chain.child_families must have at least one entry")
 
-    valid_types = {"core-capability", "brandguard", "enterprise-sleuth",
-                   "client-overlay", "conversation-design", "rag-experiment", "foundry-relay"}
-    t = identity.get("type", "")
-    if t and t not in valid_types:
-        errors.append(f"  identity.type invalid: {t!r} (valid: {sorted(valid_types)})")
+    tones = manifest.get("tone_overlays", [])
+    if not tones:
+        errors.append("  tone_overlays must have at least one entry")
 
-    valid_statuses = {"draft", "active", "deprecated", "archived"}
-    s = identity.get("status", "")
-    if s and s not in valid_statuses:
-        errors.append(f"  identity.status invalid: {s!r} (valid: {sorted(valid_statuses)})")
-
-    lineage = manifest.get("lineage", {})
-    parent = lineage.get("parent_foundry", "")
-    repo_type = identity.get("type", "")
-    if parent and repo_type != "foundry-relay" and parent != "OKHP3/AskJamie-FoundRy":
-        errors.append(f"  lineage.parent_foundry must be 'OKHP3/AskJamie-FoundRy' — got: {parent!r}")
-    elif parent and repo_type == "foundry-relay" and not parent.startswith("OKHP3/"):
-        errors.append(f"  lineage.parent_foundry must start with 'OKHP3/' — got: {parent!r}")
-
-    vc = manifest.get("visibility_control", {})
-    visibility_lock = vc.get("visibility_lock", "")
-    graduation_allowed = vc.get("public_graduation_allowed", None)
-    if visibility_lock == "permanent-private" and graduation_allowed is not False:
-        errors.append("  visibility_control: if visibility_lock is 'permanent-private', "
-                       "public_graduation_allowed must be false")
-
-    date_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-    for date_field in ["created", "updated"]:
-        val = manifest.get(date_field, "")
-        if val and not date_pattern.match(str(val)):
-            errors.append(f"  {date_field} must be ISO 8601 (YYYY-MM-DD) — got: {val!r}")
-
-    maintainers = manifest.get("maintainers", [])
-    if not maintainers:
-        errors.append("  maintainers must have at least one entry")
+    required_child_files = manifest.get("required_child_files", [])
+    if not required_child_files:
+        errors.append("  required_child_files must have at least one entry")
 
     return errors
 
@@ -130,7 +112,7 @@ def main():
     manifest = load_yaml(manifest_path)
     errors = []
 
-    # Try jsonschema first
+    # Use the checked-in schema when the optional validator is installed.
     if schema_path.exists():
         schema = load_yaml(schema_path)
         errors = validate_with_jsonschema(manifest, schema, str(manifest_path))

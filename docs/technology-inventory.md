@@ -17,15 +17,16 @@ template assets and Python maintenance scripts.
 | Mermaid | CDN ES module loaded by `web-templates/index.html`. | `11.17.2` | `11.17.2` | Review the pinned release when Mermaid publishes a newer version. |
 | Google Fonts | Remote font stylesheet for Fredoka, Open Sans, Poppins, and DM Sans. | No semantic package version | Service-managed | Check URL availability; font families and weights are the meaningful contract. |
 | Ko-fi widget | Remote script loaded by the HTML template. | No public version pin | Service-managed | Check URL availability; update only when Ko-fi changes the integration contract. |
-| YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | YAML 1.2-style usage, no parser dependency | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. Python scripts do not require PyYAML. |
+| YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | PyYAML declared in `requirements.txt` for manifest validation | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. |
+| JSON Schema | `schemas/manifest.schema.yaml` validates the current root manifest. | jsonschema declared in `requirements.txt` | Draft 2020-12 | Keep the schema aligned with the current manifest shape. |
 | Markdown | Canon, governance, prompts, inventory, and documentation. | No renderer pin | CommonMark has no single runtime release | Render in the consuming platform. |
 | Git | Repository version control. | Not pinned by this repository | `2.55.0` | Developer-machine tooling; document only, do not install or upgrade from CI. |
 | GitHub Actions | Added by this maintenance change for scheduled version auditing. | `actions/checkout@v6`, `actions/setup-python@v6` | `v6` / `v6` | Dependabot monitors action references monthly. |
 
 ## Explicitly absent
 
-The repository has no `package.json`, lockfile, `requirements.txt`,
-`pyproject.toml`, `tsconfig.json`, Vite configuration, Tailwind configuration,
+The repository has no `package.json`, lockfile, `pyproject.toml`,
+`tsconfig.json`, Vite configuration, Tailwind configuration,
 React source, Node/npm runtime declaration, build system, or existing GitHub
 Actions workflow. References to Vite/TypeScript in planning documents describe a
 possible future application architecture, not the current solution.

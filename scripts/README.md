@@ -69,16 +69,19 @@ python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
 
 ### `manifest-audit.py`
 
-Validates `manifest.yaml` for the presence of required governance fields and
-a recognized `lifecycle_status` value.
+Validates `manifest.yaml` for the current repository manifest schema and a
+recognized `lifecycle_status` value. Install the declared validator dependencies
+once from the repository root before running the full check:
 
 ```bash
+python3 -m pip install -r requirements.txt
+python3 scripts/validate-manifest.py
 python3 scripts/manifest-audit.py .
 # Output: OK or FAIL with missing fields listed
 ```
 
 **Required fields:** `schema_version`, `repo`, `name`, `display_name`, `type`,
-`lifecycle_status`, `visibility`, `brand_domain`, `author`
+`lifecycle_status`, `visibility`, `brand.domain`, `author`
 
 **Valid lifecycle statuses:** `spark`, `research`, `concept`, `prototype`,
 `capability`, `productizing`, `product`, `active`, `archived`, `deprecated`
@@ -134,6 +137,8 @@ To verify the repo is in clean compliance across all dimensions:
 python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
 
 # 2. Manifest validation
+python3 -m pip install -r requirements.txt
+python3 scripts/validate-manifest.py
 python3 scripts/manifest-audit.py .
 
 # 3. Registry integrity

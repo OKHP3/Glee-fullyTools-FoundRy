@@ -44,7 +44,7 @@ if (playwright) {
     upstream.on('error', error => { res.writeHead(502); res.end(String(error)); }); req.pipe(upstream);
   });
   const proxyPort = await listen(proxy);
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await playwright.chromium.launch({ executablePath, headless: true });
   const page = await browser.newPage();
   try {
     await page.goto(`http://127.0.0.1:${proxyPort}/`, { waitUntil: 'domcontentloaded' });

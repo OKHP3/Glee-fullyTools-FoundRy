@@ -1,5 +1,16 @@
 # Current state and maturation roadmap
 
+## September 8 closeout update
+
+The assessment and staged roadmap below preserve the original baseline and
+proposals. The application and all 26 coop-pertition deliverables are now merged.
+The current service suite passes 72 tests; backup-test connection cleanup,
+TRACE/CONNECT JSON errors and browser-QA unavailable-prerequisite exit statuses
+were corrected. See the [closeout audit](../delegation/2026-09-07-coop-pertition/cleanup-2026-09-08.md#follow-up-closeout-verification)
+for source revisions, validation, delivered proposals and the unresolved worker-file
+preservation incident. Replit parity and later maturation stages remain unverified.
+
+
 Current visibility update, September 7, 2026: the owner confirms all three
 FoundRy repositories are intentionally public, corroborated by GitHub API
 metadata. This application remains locally run; public source availability does

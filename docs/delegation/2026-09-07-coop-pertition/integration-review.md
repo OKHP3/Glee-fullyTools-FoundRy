@@ -87,3 +87,11 @@ commit where a worker tip was absent or could not be used unchanged.
 | F15-F20 | `422b030`, `48f73b5`, `1dfc574`, `7def02e`, `1d59080`, `816f460` | FoundRy PR #9 |
 | W01-W05 | `449b047`, `dbfcccff`, `c6a1228` plus `8f5fdcf`, `8256e8c`, `51444d0` | Website PR #35 |
 | W06 | Original `647af1f` preserved; reclassified runner integrated on Website PR #35 | Website PR #35 |
+
+## Cleanup audit correction, September 8, 2026
+
+The [subsequent cleanup audit](cleanup-2026-09-08.md) records completed branch,
+worktree and thread cleanup, plus a preservation failure during thread archiving.
+Its exception supersedes the pre-cleanup statement above about preserving the
+W03 uncommitted generated audit report. Accepted committed deliverables remain
+on main; two uncommitted worker artifacts have no verified exact-byte recovery.

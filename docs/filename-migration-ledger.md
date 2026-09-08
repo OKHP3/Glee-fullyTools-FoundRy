@@ -1,6 +1,8 @@
 # Filename Migration Ledger
 
-**Status:** Plan only — no files have been moved or renamed.  
+**Status:** B1 and B2 executed — five approved files renamed on 2026-09-07.
+ B4 and B5 were subsequently approved and executed as one coordinated cutover
+ — twelve authority files renamed on 2026-09-07.
 **Inventory date:** 2026-09-07  
 **Scope:** `canon/`, `docs/`, `governance/`, `inventory/`, `prompts/`, and
 `docs/source-material/`
@@ -47,19 +49,19 @@ owner-approved migration may still be useful.
 | ID | Legacy path | Signals | Classification | Candidate target | Disposition |
 |---|---|---|---|---|---|
 | C-01 | `canon/README.md` | uppercase | required name | `canon/README.md` | **Retain** — ecosystem exception |
-| C-02 | `canon/dataledger_archive_v3.md` | underscore | authority anchor | `canon/dataledger-archive-v3.md` | **Hold** — coordinated canon cutover |
-| C-03 | `canon/dataledger_hydration_v3.md` | underscore | authority anchor | `canon/dataledger-hydration-v3.md` | **Hold** — coordinated canon cutover |
-| C-04 | `canon/dataledger_ideation_v3.md` | underscore | authority anchor | `canon/dataledger-ideation-v3.md` | **Hold** — coordinated canon cutover |
-| C-05 | `canon/dataledger_narrative_v3.md` | underscore | authority anchor | `canon/dataledger-narrative-v3.md` | **Hold** — coordinated canon cutover |
-| C-06 | `canon/dataledger_parameters_v3.md` | underscore | authority anchor | `canon/dataledger-parameters-v3.md` | **Hold** — coordinated canon cutover |
-| C-07 | `canon/dataledger_persona_v3.md` | underscore | authority anchor | `canon/dataledger-persona-v3.md` | **Hold** — coordinated canon cutover |
-| C-08 | `canon/dataledger_processing_v3.md` | underscore | authority anchor / legacy ledger | `canon/dataledger-processing-v3.md` | **Hold** — coordinated canon cutover |
-| C-09 | `canon/dataledger_registry_v3.md` | underscore | authority anchor / registry | `canon/dataledger-registry-v3.md` | **Hold** — highest-impact canon cutover |
-| C-10 | `canon/dataledger_system_v3.md` | underscore | authority anchor | `canon/dataledger-system-v3.md` | **Hold** — coordinated canon cutover |
+| C-02 | `canon/dataledger_archive_v3.md` | underscore | authority anchor | `canon/dataledger-archive-v3.md` | **Executed 2026-09-07** — B5 |
+| C-03 | `canon/dataledger_hydration_v3.md` | underscore | authority anchor | `canon/dataledger-hydration-v3.md` | **Executed 2026-09-07** — B5 |
+| C-04 | `canon/dataledger_ideation_v3.md` | underscore | authority anchor | `canon/dataledger-ideation-v3.md` | **Executed 2026-09-07** — B5 |
+| C-05 | `canon/dataledger_narrative_v3.md` | underscore | authority anchor | `canon/dataledger-narrative-v3.md` | **Executed 2026-09-07** — B5 |
+| C-06 | `canon/dataledger_parameters_v3.md` | underscore | authority anchor | `canon/dataledger-parameters-v3.md` | **Executed 2026-09-07** — B5 |
+| C-07 | `canon/dataledger_persona_v3.md` | underscore | authority anchor | `canon/dataledger-persona-v3.md` | **Executed 2026-09-07** — B5 |
+| C-08 | `canon/dataledger_processing_v3.md` | underscore | authority anchor / legacy ledger | `canon/dataledger-processing-v3.md` | **Executed 2026-09-07** — B5 |
+| C-09 | `canon/dataledger_registry_v3.md` | underscore | authority anchor / registry | `canon/dataledger-registry-v3.md` | **Executed 2026-09-07** — B5; registry references updated |
+| C-10 | `canon/dataledger_system_v3.md` | underscore | authority anchor | `canon/dataledger-system-v3.md` | **Executed 2026-09-07** — B5 |
 | D-01 | `docs/README.md` | uppercase | required name | `docs/README.md` | **Retain** — ecosystem exception |
 | D-02 | `docs/adr/README.md` | uppercase | required name | `docs/adr/README.md` | **Retain** — ecosystem exception |
-| D-03 | `docs/gleefully_narrative_overview.md` | underscore | ordinary canonical documentation | `docs/gleefully-narrative-overview.md` | **Candidate** — docs batch |
-| D-04 | `docs/gleefully_technical_overview.md` | underscore | ordinary canonical documentation | `docs/gleefully-technical-overview.md` | **Candidate** — docs batch |
+| D-03 | `docs/gleefully_narrative_overview.md` | underscore | ordinary canonical documentation | `docs/gleefully-narrative-overview.md` | **Executed 2026-09-07** — B1 |
+| D-04 | `docs/gleefully_technical_overview.md` | underscore | ordinary canonical documentation | `docs/gleefully-technical-overview.md` | **Executed 2026-09-07** — B1 |
 | S-01 | `docs/source-material/Pasted-I-agree-with-your-assessment-Yes-the-Gleefully-Tools-fo_1782330748956.txt` | uppercase, underscore, long path, long segment | historical/source material | `docs/source-material/pasted-agreement-gleefully-tools-1782330748956.txt` | **Retain by default** — provenance rename requires approval |
 | S-02 | `docs/source-material/Pasted-I-currently-have-ChatGPT-projects-for-every-one-of-the-_1782331669792.txt` | uppercase, underscore, long path, long segment | historical/source material | `docs/source-material/pasted-chatgpt-projects-1782331669792.txt` | **Retain by default** — provenance rename requires approval |
 | S-03 | `docs/source-material/Pasted-So-before-we-convert-from-think-and-plan-and-consider-a_1782340307856.txt` | uppercase, underscore, long path, long segment | historical/source material | `docs/source-material/pasted-conversion-timeline-1782340307856.txt` | **Retain by default** — provenance rename requires approval |
@@ -81,16 +83,16 @@ owner-approved migration may still be useful.
 | S-19 | `docs/source-material/okh_knowledgefile_playbook_v1.0.0_2026-01-11_1782332953493.md` | underscore | historical/source material | `docs/source-material/okh-knowledgefile-playbook-v1-0-0-2026-01-11-1782332953493.md` | **Retain by default** — preserve version/date tokens |
 | S-20 | `docs/source-material/operator’s-cathedral-layout_1782332849643.md` | underscore, non-ASCII | historical/source material | `docs/source-material/operators-cathedral-layout-1782332849643.md` | **Retain by default** — Unicode normalization requires approval |
 | S-21 | `docs/source-material/what-is-a-custom-gpt_1782332953494.docx` | underscore | historical/source material | `docs/source-material/what-is-a-custom-gpt-1782332953494.docx` | **Retain by default** — provenance rename requires approval |
-| G-01 | `governance/00-glee-fully-strategy-center_instructions.md` | underscore | authority anchor / system instructions | `governance/00-glee-fully-strategy-center-instructions.md` | **Hold** — update governance references as one batch |
+| G-01 | `governance/00-glee-fully-strategy-center_instructions.md` | underscore | authority anchor / system instructions | `governance/00-glee-fully-strategy-center-instructions.md` | **Executed 2026-09-07** — B4 |
 | G-02 | `governance/README.md` | uppercase | required name | `governance/README.md` | **Retain** — ecosystem exception |
-| G-03 | `governance/glee-fully_project_governance_v3-0-1.md` | underscore | authority anchor / CanonSeal directive | `governance/glee-fully-project-governance-v3-0-1.md` | **Hold** — authority and CanonSeal dependency |
-| G-04 | `governance/glee-fully_project_instructions.md` | underscore | authority anchor / project instructions | `governance/glee-fully-project-instructions.md` | **Hold** — update governance references as one batch |
+| G-03 | `governance/glee-fully_project_governance_v3-0-1.md` | underscore | authority anchor / CanonSeal directive | `governance/glee-fully-project-governance-v3-0-1.md` | **Executed 2026-09-07** — B4; CanonSeal preserved |
+| G-04 | `governance/glee-fully_project_instructions.md` | underscore | authority anchor / project instructions | `governance/glee-fully-project-instructions.md` | **Executed 2026-09-07** — B4 |
 | I-01 | `inventory/README.md` | uppercase | required name | `inventory/README.md` | **Retain** — ecosystem exception |
 | I-02 | `inventory/inventory_of_toolbox_tools_and_tool-ettes.md` | underscore | ordinary content / catalog source | `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` | **Candidate** — catalog/tooling batch |
 | P-01 | `prompts/README.md` | uppercase | required name | `prompts/README.md` | **Retain** — ecosystem exception |
-| P-02 | `prompts/custom_gpt_hybrid_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-hybrid-scaffold.md` | **Candidate** — template batch |
-| P-03 | `prompts/custom_gpt_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-scaffold.md` | **Candidate** — template batch |
-| P-04 | `prompts/glee-fully_tools_megaprompt.md` | underscore | intentional template / synthesis prompt | `prompts/glee-fully-tools-megaprompt.md` | **Candidate** — template batch |
+| P-02 | `prompts/custom_gpt_hybrid_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-hybrid-scaffold.md` | **Executed 2026-09-07** — B2 |
+| P-03 | `prompts/custom_gpt_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-scaffold.md` | **Executed 2026-09-07** — B2 |
+| P-04 | `prompts/glee-fully_tools_megaprompt.md` | underscore | intentional template / synthesis prompt | `prompts/glee-fully-tools-megaprompt.md` | **Executed 2026-09-07** — B2 |
 
 ## Reference and impact audit
 
@@ -242,6 +244,19 @@ For each approved batch:
 
 ## Current decision
 
-**Explicit approval is still required.** This task creates the inventory,
-mapping, dependency audit, and batch plan only. No rename, compatibility stub,
-redirect, or content rewrite should be performed from this ledger alone.
+**B1 and B2 were approved by the owner and executed on 2026-09-07.** The five
+renamed files retain their contents; tracked README, application, and CI
+references now point to the new paths.
+
+**B4 and B5 were approved as a coordinated authority-path cutover and executed
+on 2026-09-07.** All three governance anchors and all nine canonical ledgers
+were renamed together. Tracked relative references were updated in the same
+change, CanonSeal contents were preserved, and historical copies under
+`snapshots/` were not renamed or edited. The tracked repository audit found no
+GitHub blob/raw URL dependency on a legacy governance or canon path. External
+bookmarks and downstream clones remain compatibility risks because they are not
+discoverable from this checkout.
+
+Legacy paths remain documented in the mapping table for auditability. B3 remains
+recorded separately until its completed catalog rename is reconciled in the
+follow-up ledger task.

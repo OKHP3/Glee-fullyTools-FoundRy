@@ -22,7 +22,7 @@ Options:
     --inventory     Path to the canonical inventory file for auto-population.
                     Matches by --id or --name; pre-fills description, overview,
                     functions, and §1 of instructions from authoritative source.
-                    Example: --inventory /path/to/FoundRy/inventory/inventory_of_toolbox_tools_and_tool-ettes.md
+                    Example: --inventory /path/to/FoundRy/inventory/inventory-of-toolbox-tools-and-tool-ettes.md
     --dry-run       Show what would be created without writing files
     --audit         Show missing files/folders in existing repo, do not write
     --overwrite     Overwrite existing files (default: skip existing)
@@ -75,7 +75,7 @@ def parse_inventory(
     Parse the canonical Glee-fully inventory file and return data for one entity.
     Matches by entity ID (e.g. '01a') or display name (e.g. 'Resume Builder').
 
-    Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md
+    Source: inventory/inventory-of-toolbox-tools-and-tool-ettes.md
     """
     if not inventory_path.exists():
         return None
@@ -422,7 +422,7 @@ OKHP3/Glee-fullyTools-FoundRy/canon/ > governance/ > GPT-local logic
 
 ### 4. No Prompt-Local Memory
 Runtime state must not be stored in GPT-local logic or prompt context.
-All continuity uses `canon/dataledger_hydration_v3.md` in the FoundRy.
+All continuity uses `canon/dataledger-hydration-v3.md` in the FoundRy.
 
 ### 5. Tone Default
 This entity uses **{tone}**. Threads without an explicit overlay default to
@@ -877,7 +877,7 @@ def build_gpt_description(args, inv: InventoryEntry | None = None) -> str:
         return f"""{inv.full_description}
 
 [← FROM INVENTORY — verify this is under 300 characters before deploying to Builder]
-[Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md]
+[Source: inventory/inventory-of-toolbox-tools-and-tool-ettes.md]
 """
     return f"""{name} — {placeholder("One punchy sentence describing what this GPT does. 300 characters MAX including this entity name. Count carefully.")}
 
@@ -1129,7 +1129,7 @@ def build_canon_registry_entry(args) -> str:
     return f"""# Canon Registry Entry — {name}
 
 > This file declares {name} in the Glee-fully canon system.
-> It is the entity's !CLAUSE block for `canon/dataledger_registry_v3.md`.
+> It is the entity's !CLAUSE block for `canon/dataledger-registry-v3.md`.
 > Copy the YAML block below into the FoundRy registry when this entity reaches 1.0.
 
 ---
@@ -1177,7 +1177,7 @@ Before copying this declaration to the FoundRy registry:
 - [ ] `pulsebook/pulsebook-v1-7.md` is filled and passes all checks
 - [ ] `manifest.yaml` has `lifecycle_status: active` and `pme_ready: true`
 - [ ] CanonSeal tag has been assigned and added above
-- [ ] Entry has been added to `canon/dataledger_registry_v3.md` in the FoundRy
+- [ ] Entry has been added to `canon/dataledger-registry-v3.md` in the FoundRy
 """
 
 
@@ -1474,7 +1474,7 @@ def main():
         help=(
             "Path to the canonical inventory file for auto-population. "
             "Example: /path/to/Glee-fullyTools-FoundRy/inventory/"
-            "inventory_of_toolbox_tools_and_tool-ettes.md"
+            "inventory-of-toolbox-tools-and-tool-ettes.md"
         ),
     )
 

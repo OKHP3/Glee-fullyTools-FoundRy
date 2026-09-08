@@ -87,7 +87,7 @@ and lineage preservation across 40+ GPTs.
 |-----------|------|
 | **Expansion-Only Discipline** | Never simplify or remove — only elaborate and expand |
 | **Canon Authority** | `canon/` files override GPT-local logic and legacy schema |
-| **Hydration-First Runtime** | All continuity flows through `dataledger_hydration_v3.md` |
+| **Hydration-First Runtime** | All continuity flows through `dataledger-hydration-v3.md` |
 | **CanonSeal Integrity** | `::CanonSeal[...]::` tags must not be removed or altered |
 | **Suffix Law** | `-R` / `-Rᵧ` suffixes are exclusive to OverKill Hill P³ and Found-Rᵧ |
 | **Tone Default** | Untagged threads default to `GleeTone.A1` (uplifting, whimsical, clear) |
@@ -133,15 +133,15 @@ all other sources. Files are sealed with `::CanonSeal[...]::` tags and grow only
 
 | Ledger | Purpose |
 |--------|---------|
-| `dataledger_registry_v3.md` | All registered Tools, Tool-ettes, Functions — with IDs, links, and lifecycle tags |
-| `dataledger_persona_v3.md` | Tone overlay definitions and drift event logs |
-| `dataledger_parameters_v3.md` | Runtime flags, execution toggles, suffix law rules |
-| `dataledger_system_v3.md` | PME/CME engine schemas and lifecycle control |
-| `dataledger_hydration_v3.md` | Runtime snapshots and cross-GPT session handoff |
-| `dataledger_narrative_v3.md` | Finalized brand essays and canonical copy |
-| `dataledger_ideation_v3.md` | Raw idea seeds and candidate entity stubs |
-| `dataledger_archive_v3.md` | Retired logic — preserved, never deleted |
-| `dataledger_processing_v3.md` | Legacy scaffolds — deprioritized as of v3.0.1 |
+| `dataledger-registry-v3.md` | All registered Tools, Tool-ettes, Functions — with IDs, links, and lifecycle tags |
+| `dataledger-persona-v3.md` | Tone overlay definitions and drift event logs |
+| `dataledger-parameters-v3.md` | Runtime flags, execution toggles, suffix law rules |
+| `dataledger-system-v3.md` | PME/CME engine schemas and lifecycle control |
+| `dataledger-hydration-v3.md` | Runtime snapshots and cross-GPT session handoff |
+| `dataledger-narrative-v3.md` | Finalized brand essays and canonical copy |
+| `dataledger-ideation-v3.md` | Raw idea seeds and candidate entity stubs |
+| `dataledger-archive-v3.md` | Retired logic — preserved, never deleted |
+| `dataledger-processing-v3.md` | Legacy scaffolds — deprioritized as of v3.0.1 |
 
 → **[Full canon/ README](canon/README.md)**
 
@@ -160,9 +160,9 @@ tone rule, and governance protocol across the entire system.
 
 | File | Purpose |
 |------|---------|
-| `glee-fully_project_governance_v3-0-1.md` | Primary governance directive — CanonSealed |
-| `glee-fully_project_instructions.md` | Operating instructions for project sessions |
-| `00-glee-fully-strategy-center_instructions.md` | Strategy Center GPT system instructions |
+| `glee-fully-project-governance-v3-0-1.md` | Primary governance directive — CanonSealed |
+| `glee-fully-project-instructions.md` | Operating instructions for project sessions |
+| `00-glee-fully-strategy-center-instructions.md` | Strategy Center GPT system instructions |
 | `operators-cathedral-layout.md` | Master 20K-line architectural blueprint |
 
 → **[Full governance/ README](governance/README.md)**
@@ -181,9 +181,9 @@ scaffold templates and a content synthesis megaprompt for website generation.
 | File | Purpose |
 |------|---------|
 | `glee-fully-builder-ready-promptchain-v2-0.md` | The primary creation engine — PROMPT00–PROMPT05+ |
-| `custom_gpt_scaffold.md` | Single-GPT canonical field template |
-| `custom_gpt_hybrid_scaffold.md` | Dual-tone / multi-role hybrid scaffold |
-| `glee-fully_tools_megaprompt.md` | Multi-pass website content synthesis prompt |
+| `custom-gpt-scaffold.md` | Single-GPT canonical field template |
+| `custom-gpt-hybrid-scaffold.md` | Dual-tone / multi-role hybrid scaffold |
+| `glee-fully-tools-megaprompt.md` | Multi-pass website content synthesis prompt |
 
 → **[Full prompts/ README](prompts/README.md)**
 
@@ -248,7 +248,7 @@ and the pop-culture reference library (*Schitt's Creek*, *Friends*, *Practical M
 A single ~1,272-line markdown file listing all 40+ deployed entities: the Toolbox,
 all 7 Tools, and every Tool-ette — with live ChatGPT links, full descriptions, primary
 function listings, and ~200-word elevator pitches for each. The human-readable companion
-to `canon/dataledger_registry_v3.md` (which is the machine-readable authority). Used
+to `canon/dataledger-registry-v3.md` (which is the machine-readable authority). Used
 for reference, onboarding, and as a content source for web page generation.
 
 → **[Full inventory/ README](inventory/README.md)**
@@ -267,8 +267,8 @@ stop for anyone needing orientation before working in this repo.
 
 | File | Purpose |
 |------|---------|
-| `gleefully_technical_overview.md` | Architecture, PromptChain, canon system |
-| `gleefully_narrative_overview.md` | Brand philosophy, emotional design, ecosystem story |
+| `gleefully-technical-overview.md` | Architecture, PromptChain, canon system |
+| `gleefully-narrative-overview.md` | Brand philosophy, emotional design, ecosystem story |
 | `structure-and-ordering-for-custom-gpt-instruction-blocks.md` | Canonical instruction block ordering |
 
 → **[Full docs/ README](docs/README.md)**
@@ -343,29 +343,29 @@ Glee-fullyTools-FoundRy/
 │
 ├── canon/                 ← 🔴 THE 9 CANONICAL DATALEDGER FILES (authoritative)
 │   ├── README.md
-│   ├── dataledger_registry_v3.md      ← All registered GPT entities
-│   ├── dataledger_persona_v3.md       ← Tone overlays and persona schema
-│   ├── dataledger_parameters_v3.md    ← Runtime flags and toggles
-│   ├── dataledger_system_v3.md        ← PME/CME engine schemas
-│   ├── dataledger_hydration_v3.md     ← Runtime snapshots and handoff
-│   ├── dataledger_narrative_v3.md     ← Finalized narrative clauses
-│   ├── dataledger_ideation_v3.md      ← Idea seeds and stubs
-│   ├── dataledger_archive_v3.md       ← Retired / deprecated logic
-│   └── dataledger_processing_v3.md    ← Legacy only (deprioritized)
+│   ├── dataledger-registry-v3.md      ← All registered GPT entities
+│   ├── dataledger-persona-v3.md       ← Tone overlays and persona schema
+│   ├── dataledger-parameters-v3.md    ← Runtime flags and toggles
+│   ├── dataledger-system-v3.md        ← PME/CME engine schemas
+│   ├── dataledger-hydration-v3.md     ← Runtime snapshots and handoff
+│   ├── dataledger-narrative-v3.md     ← Finalized narrative clauses
+│   ├── dataledger-ideation-v3.md      ← Idea seeds and stubs
+│   ├── dataledger-archive-v3.md       ← Retired / deprecated logic
+│   └── dataledger-processing-v3.md    ← Legacy only (deprioritized)
 │
 ├── governance/            ← 🟠 Project directives and cathedral blueprint
 │   ├── README.md
-│   ├── glee-fully_project_governance_v3-0-1.md  ← Primary directive (CanonSealed)
-│   ├── glee-fully_project_instructions.md
-│   ├── 00-glee-fully-strategy-center_instructions.md
+│   ├── glee-fully-project-governance-v3-0-1.md  ← Primary directive (CanonSealed)
+│   ├── glee-fully-project-instructions.md
+│   ├── 00-glee-fully-strategy-center-instructions.md
 │   └── operators-cathedral-layout.md             ← Master 20K-line blueprint
 │
 ├── prompts/               ← 🟡 GPT forge engine — PromptChain and scaffolds
 │   ├── README.md
 │   ├── glee-fully-builder-ready-promptchain-v2-0.md  ← Primary build engine
-│   ├── custom_gpt_scaffold.md
-│   ├── custom_gpt_hybrid_scaffold.md
-│   └── glee-fully_tools_megaprompt.md
+│   ├── custom-gpt-scaffold.md
+│   ├── custom-gpt-hybrid-scaffold.md
+│   └── glee-fully-tools-megaprompt.md
 │
 ├── templates/             ← 🟢 FrankenTemplate instruction variants (a–ae)
 │   ├── README.md
@@ -384,13 +384,13 @@ Glee-fullyTools-FoundRy/
 │
 ├── inventory/             ← 🟤 Full entity catalog — all Tools and Tool-ettes
 │   ├── README.md
-│   └── inventory_of_toolbox_tools_and_tool-ettes.md
+│   └── inventory-of-toolbox-tools-and-tool-ettes.md
 │
 ├── docs/                  ← ⚫ Human-readable ecosystem documentation
 │   ├── README.md
 │   ├── source-material/   ← Imported research, drafts, and non-canonical references
-│   ├── gleefully_narrative_overview.md
-│   ├── gleefully_technical_overview.md
+│   ├── gleefully-narrative-overview.md
+│   ├── gleefully-technical-overview.md
 │   ├── structure-and-ordering-for-custom-gpt-instruction-blocks.md
 │   └── [source .docx and .pdf files]
 │
@@ -435,16 +435,16 @@ Every repository governed by this FoundRy must include:
 
 | I need to… | Go to |
 |------------|-------|
-| Find a deployed GPT's ChatGPT link | `inventory/` or `canon/dataledger_registry_v3.md` |
+| Find a deployed GPT's ChatGPT link | `inventory/` or `canon/dataledger-registry-v3.md` |
 | Check what tone rules apply to a Tool-ette | `vernacular/` |
 | Build a new Tool-ette from scratch | `prompts/glee-fully-builder-ready-promptchain-v2-0.md` |
 | Get a scaffold to fill in | `templates/glee-fully_frankentemplate_ae.md` |
 | Evaluate a GPT before deployment | `evaluation/gpt-pulsebook-evaluation-v1-7.md` |
-| Check what canonical rules apply | `governance/glee-fully_project_governance_v3-0-1.md` |
+| Check what canonical rules apply | `governance/glee-fully-project-governance-v3-0-1.md` |
 | Understand the full architecture | `governance/operators-cathedral-layout.md` |
-| Read a plain-language explainer | `docs/gleefully_technical_overview.md` |
+| Read a plain-language explainer | `docs/gleefully-technical-overview.md` |
 | Find a past version of a ledger file | `snapshots/2025-09-14/` |
-| Generate website content | `prompts/glee-fully_tools_megaprompt.md` |
+| Generate website content | `prompts/glee-fully-tools-megaprompt.md` |
 | Fix or check filenames | `python3 scripts/normalize_filenames.py .` |
 | Understand who built what & when | `CHANGELOG.md` + `manifest.yaml` |
 

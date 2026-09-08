@@ -50,7 +50,7 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 
 ## Inventory Pre-Population (v1.1.0)
 
-Pass `--inventory /path/to/inventory_of_toolbox_tools_and_tool-ettes.md` and the
+Pass `--inventory /path/to/inventory-of-toolbox-tools-and-tool-ettes.md` and the
 script will parse the canonical inventory file and auto-fill:
 - `gpt/description.md` ← Full Description
 - `docs/overview.md` ← Elevator Pitch (in "What It Is" section)
@@ -58,7 +58,7 @@ script will parse the canonical inventory file and auto-fill:
 - `gpt/instructions.md §1` ← Full Description + parent link + ChatGPT URL
 
 Match is by `--id` first, then `--name`. Uses FoundRy inventory at
-`inventory/inventory_of_toolbox_tools_and_tool-ettes.md`.
+`inventory/inventory-of-toolbox-tools-and-tool-ettes.md`.
 
 ## Design Decisions
 

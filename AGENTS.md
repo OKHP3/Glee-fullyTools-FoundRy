@@ -154,8 +154,8 @@ ideation -> registry / persona / parameters -> narrative -> archive
 ```
 
 `processing` is legacy and deprioritized. Runtime continuity belongs in
-`dataledger_hydration_v3.md`, not in prompt-local memory. Canonical outputs must
-carry a `!CLAUSE` identifier declared in `canon/dataledger_registry_v3.md`.
+`dataledger-hydration-v3.md`, not in prompt-local memory. Canonical outputs must
+carry a `!CLAUSE` identifier declared in `canon/dataledger-registry-v3.md`.
 
 The Builder-Ready PromptChain in `prompts/` describes the PROMPT00 through PROMPT05
 creation flow. The PulseBook rubric in `evaluation/` is the local evaluation
@@ -227,7 +227,7 @@ repository:
 - `manifest-audit.py` expects a top-level `brand_domain:` field, while the current
   manifest stores it as `brand.domain`.
 - `registry-audit.py` checks for `registry/index.yaml`, which is absent. The actual
-  canonical registry is `canon/dataledger_registry_v3.md`.
+  canonical registry is `canon/dataledger-registry-v3.md`.
 - `foundry-sync.py` checks for `_template/`, `registry/`, `schemas/`, and `.github/`
   paths that are absent from this workbench. Its strict baseline appears to target a
   different FoundRy layout.

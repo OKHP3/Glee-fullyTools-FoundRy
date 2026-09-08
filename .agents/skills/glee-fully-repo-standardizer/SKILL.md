@@ -269,7 +269,7 @@ python3 $SCRIPT --tier toolette --name NAME --id ID --json
 - `assets/glee-fully-brand.json` — canonical brand/tone/persona payload
 - `OKHP3/Glee-fullyTools-FoundRy/vernacular/` — full vernacular reference
 - `OKHP3/Glee-fullyTools-FoundRy/evaluation/gpt-pulsebook-evaluation-v1-7.md` — PulseBook
-- `OKHP3/Glee-fullyTools-FoundRy/governance/glee-fully_project_governance_v3-0-1.md` — Governance Directive
+- `OKHP3/Glee-fullyTools-FoundRy/governance/glee-fully-project-governance-v3-0-1.md` — Governance Directive
 
 ---
 

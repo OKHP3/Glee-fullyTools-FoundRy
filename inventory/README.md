@@ -10,7 +10,7 @@
 ## Purpose
 
 `inventory/` is the browsable, linkable master catalog of the deployed ecosystem.
-Where `canon/dataledger_registry_v3.md` is the machine-readable authority (YAML schema
+Where `canon/dataledger-registry-v3.md` is the machine-readable authority (YAML schema
 blocks, clause IDs, governance tags), the inventory is its human-readable companion —
 suitable for reference, onboarding, and web content generation.
 
@@ -22,7 +22,7 @@ It answers: *what exists in this ecosystem right now, and how do I reach it?*
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| [`inventory_of_toolbox_tools_and_tool-ettes.md`](inventory_of_toolbox_tools_and_tool-ettes.md) | ~1,272 | Complete entity catalog — Toolbox + 7 Tools + 40+ Tool-ettes with descriptions, functions, elevator pitches, and live ChatGPT links |
+| [`inventory-of-toolbox-tools-and-tool-ettes.md`](inventory-of-toolbox-tools-and-tool-ettes.md) | ~1,272 | Complete entity catalog — Toolbox + 7 Tools + 40+ Tool-ettes with descriptions, functions, elevator pitches, and live ChatGPT links |
 
 ---
 
@@ -57,7 +57,7 @@ The ecosystem uses a living-tree metaphor. Every entity has a defined role and p
 | #07 | Identity Known | See inventory |
 
 For complete Tool-ette listings with individual links, see the full catalog:
-→ [`inventory_of_toolbox_tools_and_tool-ettes.md`](inventory_of_toolbox_tools_and_tool-ettes.md)
+→ [`inventory-of-toolbox-tools-and-tool-ettes.md`](inventory-of-toolbox-tools-and-tool-ettes.md)
 
 ---
 
@@ -74,7 +74,7 @@ For complete Tool-ette listings with individual links, see the full catalog:
 
 ## Relationship to Canon
 
-| Inventory | `canon/dataledger_registry_v3.md` |
+| Inventory | `canon/dataledger-registry-v3.md` |
 |-----------|-----------------------------------|
 | Human-readable Markdown | YAML schema + clause IDs |
 | Descriptions and elevator pitches | PME tags and compliance data |
@@ -98,7 +98,7 @@ but is subordinate to it as an authoritative source.
 ## Relationship to Other Folders
 
 ```
-inventory/    <-- tracks deployed entities from --> canon/dataledger_registry_v3.md
+inventory/    <-- tracks deployed entities from --> canon/dataledger-registry-v3.md
 inventory/    <-- describes entities built via  --> prompts/ (PromptChain + templates)
 inventory/    <-- confirmed compliant by        --> evaluation/ (PulseBook)
 inventory/    <-- content source for            --> web-templates/ (public site pages)

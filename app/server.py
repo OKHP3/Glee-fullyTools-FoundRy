@@ -30,7 +30,7 @@ SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
 SOURCES = {
     "promptchain": ("Builder-Ready PromptChain", "prompts/glee-fully-builder-ready-promptchain-v2-0.md"),
-    "gpt-scaffold": ("Custom GPT scaffold", "prompts/custom_gpt_scaffold.md"),
+    "gpt-scaffold": ("Custom GPT scaffold", "prompts/custom-gpt-scaffold.md"),
     "pulsebook": ("GPT PulseBook v1.7", "evaluation/gpt-pulsebook-evaluation-v1-7.md"),
     "vernacular": ("Glee-fully vernacular", "vernacular/glee-fully-vernacular-lite.md"),
     "canon-overview": ("Canon overview", "canon/README.md"),

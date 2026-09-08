@@ -22,16 +22,16 @@ This folder answers the question: *what are the inviolable rules of this ecosyst
 
 | File | Purpose | Scope |
 |------|---------|-------|
-| [`glee-fully_project_governance_v3-0-1.md`](glee-fully_project_governance_v3-0-1.md) | Primary governance directive — ledger routing, suffix law, clause lifecycle, overlay enforcement, output signature requirements | All Projects within the Glee-fully ecosystem |
-| [`glee-fully_project_instructions.md`](glee-fully_project_instructions.md) | Project-level operating instructions — how to run a Glee-fully project session | Operators and AI agents |
-| [`00-glee-fully-strategy-center_instructions.md`](00-glee-fully-strategy-center_instructions.md) | Strategy Center GPT instructions — the meta-governance entity that coordinates ecosystem-level decision making | Strategy Center GPT |
+| [`glee-fully-project-governance-v3-0-1.md`](glee-fully-project-governance-v3-0-1.md) | Primary governance directive — ledger routing, suffix law, clause lifecycle, overlay enforcement, output signature requirements | All Projects within the Glee-fully ecosystem |
+| [`glee-fully-project-instructions.md`](glee-fully-project-instructions.md) | Project-level operating instructions — how to run a Glee-fully project session | Operators and AI agents |
+| [`00-glee-fully-strategy-center-instructions.md`](00-glee-fully-strategy-center-instructions.md) | Strategy Center GPT instructions — the meta-governance entity that coordinates ecosystem-level decision making | Strategy Center GPT |
 | [`operators-cathedral-layout.md`](operators-cathedral-layout.md) | Master architectural reference (~20,000 lines) — the complete structural blueprint of every section, block, tone layer, and governance rule across the entire ecosystem | All builders and entities |
 
 ---
 
 ## Document Summaries
 
-### Governance Directive v3.0.1 (`glee-fully_project_governance_v3-0-1.md`)
+### Governance Directive v3.0.1 (`glee-fully-project-governance-v3-0-1.md`)
 
 The constitutional document of the Glee-fully ecosystem. Canonically sealed
 (`::CanonSeal[GleeCoreDirective.v3.0.1.locked]::`). Contains:
@@ -54,7 +54,7 @@ declared in `registry_v3.md`. No anonymous or unregistered output is canon-valid
 (uplifting, whimsical, clear, articulate). Drift events are logged via `!DRIFT_EVENT`.
 
 **Runtime Preservation** — no GPT may simulate memory. All continuity must flow through
-`dataledger_hydration_v3.md`. Prompt-embedded toggles are prohibited.
+`dataledger-hydration-v3.md`. Prompt-embedded toggles are prohibited.
 
 **Project Initialization Protocol** — new Projects must declare a PhaseScope, register
 all logic in the registry, declare overlays, and use hydration for continuity.
@@ -86,7 +86,7 @@ by section, not read end-to-end. Use keyword search to navigate it.
 | **CanonSeal Inviolability** | `::CanonSeal[...]::` tags must never be altered or removed |
 | **No Prompt-Local Memory** | Runtime state is never stored in prompts — hydration only |
 | **Tone Enforcement** | All GPTs must declare an overlay; untagged output defaults to GleeTone.A1 |
-| **Registration Requirement** | Every entity must be declared in `dataledger_registry_v3.md` before deployment |
+| **Registration Requirement** | Every entity must be declared in `dataledger-registry-v3.md` before deployment |
 | **Forward-Only Lifecycle** | Clauses move ideation → registry → narrative → archive; never backwards except via hydration |
 
 ---
@@ -122,8 +122,8 @@ All 40+ Glee-fully GPTs       (entities — governed by canon)
 | Actor | How They Use It |
 |-------|----------------|
 | **Operators / Builders** | Reference governance directive before starting any build session |
-| **AI agents** | Read `glee-fully_project_governance_v3-0-1.md` to understand current rules before taking action |
-| **Strategy Center GPT** | Executes using `00-glee-fully-strategy-center_instructions.md` as system instructions |
+| **AI agents** | Read `glee-fully-project-governance-v3-0-1.md` to understand current rules before taking action |
+| **Strategy Center GPT** | Executes using `00-glee-fully-strategy-center-instructions.md` as system instructions |
 | **PromptChain** | PROMPT00 (Ignition Ritual) invokes governance clauses at chain initialization |
 | **Cathedral Layout** | Referenced throughout the PromptChain and evaluation process |
 

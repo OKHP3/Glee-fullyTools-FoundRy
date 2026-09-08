@@ -2,7 +2,7 @@
   "_meta": {
     "schema_version": "1.0.0",
     "source": "OKHP3/Glee-fullyTools-FoundRy",
-    "canon_authority": "canon/dataledger_persona_v3.md",
+    "canon_authority": "canon/dataledger-persona-v3.md",
     "vernacular_authority": "vernacular/glee-fully-vernacular-complete.md",
     "description": "Canonical Glee-fully brand, tone, persona, and governance payload. Include in every child repo at assets/glee-fully-brand.json. Referenced by gpt/instructions.md and docs/ files for tonal consistency.",
     "last_updated": "2026-06-24",
@@ -234,18 +234,18 @@
     "principles": {
       "expansion_only": "Never delete, simplify, or reduce existing content. All edits add detail, specificity, or capability. Existing clauses are never removed.",
       "canon_authority": "canon/ dataledger_* files override governance/ directives, which override GPT-local logic.",
-      "hydration_first": "No runtime state in GPT-local logic or prompt context. All continuity uses dataledger_hydration_v3.md.",
+      "hydration_first": "No runtime state in GPT-local logic or prompt context. All continuity uses dataledger-hydration-v3.md.",
       "canon_seal_integrity": "::CanonSeal[...]:: tags must never be removed or altered.",
       "suffix_law": "-R and -Ry suffixes are exclusive to OverKill Hill P3 and The GPT Found-Ry. Glee-fully GPTs are exempt.",
       "tone_default": "Threads without an explicit overlay default to GleeTone.A1 (uplifting, whimsical, clear).",
-      "registration_required": "Every entity must be declared in canon/dataledger_registry_v3.md before deployment.",
+      "registration_required": "Every entity must be declared in canon/dataledger-registry-v3.md before deployment.",
       "output_signature": "All outputs from canonical logic must carry a !CLAUSE ID declared in the registry."
     },
     "clause_lifecycle": [
-      "dataledger_ideation_v3.md (spark)",
-      "dataledger_registry_v3.md / persona_v3.md / parameters_v3.md (active)",
-      "dataledger_narrative_v3.md (finalized)",
-      "dataledger_archive_v3.md (retired)"
+      "dataledger-ideation-v3.md (spark)",
+      "dataledger-registry-v3.md / persona_v3.md / parameters_v3.md (active)",
+      "dataledger-narrative-v3.md (finalized)",
+      "dataledger-archive-v3.md (retired)"
     ],
     "pme_ready_checklist": [
       "gpt/instructions.md is finalized and deployed to ChatGPT Builder",

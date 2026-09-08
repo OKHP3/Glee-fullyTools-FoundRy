@@ -25,9 +25,9 @@ canonical discipline is applied to raw creative material.
 | File | Lines | Role |
 |------|-------|------|
 | [`glee-fully-builder-ready-promptchain-v2-0.md`](glee-fully-builder-ready-promptchain-v2-0.md) | ~5,077 | **The primary creation tool** — full PromptChain PROMPT00–PROMPT05+ with all governance clauses, stage instructions, and expansion logic |
-| [`custom_gpt_scaffold.md`](custom_gpt_scaffold.md) | ~281 | Reusable single-GPT field scaffold — name, description, system instructions template with canonical block structure |
-| [`custom_gpt_hybrid_scaffold.md`](custom_gpt_hybrid_scaffold.md) | ~320 | Hybrid variant scaffold — supports dual-tone or multi-role GPT construction |
-| [`glee-fully_tools_megaprompt.md`](glee-fully_tools_megaprompt.md) | ~318 | Content synthesis megaprompt — multi-pass reconciliation of all canonical sources to generate web content for glee-fully.tools |
+| [`custom-gpt-scaffold.md`](custom-gpt-scaffold.md) | ~281 | Reusable single-GPT field scaffold — name, description, system instructions template with canonical block structure |
+| [`custom-gpt-hybrid-scaffold.md`](custom-gpt-hybrid-scaffold.md) | ~320 | Hybrid variant scaffold — supports dual-tone or multi-role GPT construction |
+| [`glee-fully-tools-megaprompt.md`](glee-fully-tools-megaprompt.md) | ~318 | Content synthesis megaprompt — multi-pass reconciliation of all canonical sources to generate web content for glee-fully.tools |
 
 ---
 
@@ -43,7 +43,7 @@ complete before the next is initiated. The chain cannot be reversed.
 | **PROMPT00** | Gleefully Chain Ignition Ritual | Declares chain governance (`!EXPANSION_ONLY`, `!APPLY_ALL_CHANGES_NOW`, `!FORGEMODE`). Sets PhaseScope. Requests payload from operator. |
 | **PROMPT01** | Payload Ingestion & Tool Canonization | Receives GPT payload (draft, YAML, notes, or brainstorm). Validates against canonical structure. Assigns entity role (Toolbox/Tool/Tool-ette). Binds to ledger schema. |
 | **PROMPT02** | Icon Forge & Canon Gate | Creates or validates visual identity — retro 80s icon with Glee butterfly on a symbolic object. Icon is canon-locked as metadata. |
-| **PROMPT03** | Registry Upload & Canon Validation | Scans all ledger entries for ID conflicts. Expands missing branches. Creates or updates `dataledger_registry_v3.md` entry with full YAML block. |
+| **PROMPT03** | Registry Upload & Canon Validation | Scans all ledger entries for ID conflicts. Expands missing branches. Creates or updates `dataledger-registry-v3.md` entry with full YAML block. |
 | **PROMPT04** | Team Role Enforcement | Assigns discipline metaphors. Confirms routing logic: Toolbox = Coach, Tool = Quarterback, Tool-ette = Specialist, Function = Core Skill, Function-ette = Kicker. |
 | **PROMPT05** | Fusion Checkpoint & Personality Infusion | Final tone calibration. Assigns correct overlay (Bleeds GLEE, ForgeDialect.A1, or Watchkeeper.Core). Runs fusion checkpoint. Marks entity PME-ready. |
 | **PROMPT06+** | Optional Expansion | Post-PME elaboration, integration, or cross-linking to sibling entities. |
@@ -60,7 +60,7 @@ complete before the next is initiated. The chain cannot be reversed.
 
 ---
 
-## The Custom GPT Scaffold (`custom_gpt_scaffold.md`)
+## The Custom GPT Scaffold (`custom-gpt-scaffold.md`)
 
 A reusable fill-in-the-blank template for building GPT instruction blocks. Contains
 canonical section ordering:
@@ -80,7 +80,7 @@ section architecture.
 
 ---
 
-## The Megaprompt (`glee-fully_tools_megaprompt.md`)
+## The Megaprompt (`glee-fully-tools-megaprompt.md`)
 
 A specialized synthesis prompt that reads the four primary canonical sources and
 generates comprehensive content for all pages of the `glee-fully.tools` website:
@@ -89,7 +89,7 @@ generates comprehensive content for all pages of the `glee-fully.tools` website:
 |--------|---------------|
 | `vernacular/glee-fully-vernacular-complete.md` | Tone rules, Glee-isms, overlay modes |
 | `docs/gleefully-narrative-overview.docx` | Philosophy, emotional positioning |
-| `inventory/inventory_of_toolbox_tools_and_tool-ettes.md` | Entity descriptions, functions |
+| `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` | Entity descriptions, functions |
 | `docs/gleefully-technical-overview.docx` | Architecture, PromptChain, canon system |
 
 Output: a multi-pass synthesized Markdown document covering all website sections,
@@ -102,9 +102,9 @@ leaving clearly-marked gaps for operator-specific content ("Jamie flair" stubs).
 | Scenario | Use This |
 |----------|----------|
 | Forging a new Tool-ette from scratch | `glee-fully-builder-ready-promptchain-v2-0.md` |
-| Rapid single-GPT structure scaffold | `custom_gpt_scaffold.md` |
-| Dual-tone or complex hybrid entity | `custom_gpt_hybrid_scaffold.md` |
-| Generating or refreshing website content | `glee-fully_tools_megaprompt.md` |
+| Rapid single-GPT structure scaffold | `custom-gpt-scaffold.md` |
+| Dual-tone or complex hybrid entity | `custom-gpt-hybrid-scaffold.md` |
+| Generating or refreshing website content | `glee-fully-tools-megaprompt.md` |
 
 ---
 
@@ -114,7 +114,7 @@ leaving clearly-marked gaps for operator-specific content ("Jamie flair" stubs).
 prompts/    <-- governed by        --> governance/ (chain invokes governance clauses at PROMPT00)
 prompts/    <-- validates against  --> canon/ (PROMPT03 checks registry, PROMPT05 checks persona)
 prompts/    <-- uses scaffolds from --> templates/ (PROMPT01 accepts FrankenTemplate as payload)
-prompts/    <-- produces output for --> canon/dataledger_registry_v3.md (PROMPT03 registry entry)
+prompts/    <-- produces output for --> canon/dataledger-registry-v3.md (PROMPT03 registry entry)
 prompts/    <-- triggers           --> evaluation/ (PROMPT05 triggers PulseBook review)
 prompts/    <-- synthesizes        --> docs/ (megaprompt reads narrative + technical overviews)
 ```

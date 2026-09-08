@@ -26,12 +26,13 @@ as a canonical source.
 |--------|---------|-------------|
 | [`normalize_filenames.py`](normalize_filenames.py) | Renames files to lowercase-kebab-case ASCII — strips emoji, non-breaking hyphens, version dots, camelCase, and other non-standard characters | After adding or renaming any files |
 | [`manifest-audit.py`](manifest-audit.py) | Validates `manifest.yaml` for required governance fields (`schema_version`, `repo`, `lifecycle_status`, etc.) | After editing `manifest.yaml` |
-| [`registry-audit.py`](registry-audit.py) | Checks `canon/dataledger_registry_v3.md` for required structural markers | After editing the registry ledger |
+| [`registry-audit.py`](registry-audit.py) | Checks `canon/dataledger-registry-v3.md` for required structural markers | After editing the registry ledger |
 | [`foundry-sync.py`](foundry-sync.py) | Audits this repo against the OKHP3 Tier 0→1→2 governance model — checks for required baseline paths | Periodically, or after restructuring |
 | [`check-registry.py`](check-registry.py) | Lightweight registry file presence check | Quick integrity check |
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
+| [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained README, docs index, and prompts index | Before merging documentation or prompt changes |
 
 ---
 
@@ -56,7 +57,7 @@ python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
 |-------|---------|--------|
 | Emoji in filename | `🦋-vernacular.md` | `vernacular.md` |
 | Non-breaking hyphen | `glee‑fully.md` | `glee-fully.md` |
-| camelCase dataLedger prefix | `dataLedger_registry_v3.md` | `dataledger_registry_v3.md` |
+| camelCase dataLedger prefix | `dataLedger_registry_v3.md` | `dataledger-registry-v3.md` |
 | Version dots | `template-v1.5.md` | `template-v1-5.md` |
 | Apostrophes | `operator's-layout.md` | `operators-layout.md` |
 | Uppercase non-standard names | Any file not in PRESERVE_NAMES list | lowercased |
@@ -98,12 +99,29 @@ python3 scripts/foundry-sync.py --strict  # also checks recommended paths
 
 ### `registry-audit.py`
 
-Validates that `canon/dataledger_registry_v3.md` contains the required structural
+Validates that `canon/dataledger-registry-v3.md` contains the required structural
 markers for a well-formed registry file.
 
 ```bash
 python3 scripts/registry-audit.py .
 ```
+
+---
+
+### `check-markdown-links.py`
+
+Checks the maintained Markdown indexes for broken relative links without making
+network requests. External URLs, anchor-only links, and explicit placeholder
+tokens (`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`,
+`your-path`, `your-url`, `your-link`, or `...`) are reported as skipped
+categories rather than treated as repository paths.
+
+```bash
+python3 scripts/check-markdown-links.py .
+```
+
+Pass one or more `--document PATH` options to check a different set of
+Markdown files relative to the repository root.
 
 ---
 
@@ -126,6 +144,9 @@ python3 scripts/foundry-sync.py
 
 # 5. Sync report
 python3 scripts/sync-report.py
+
+# 6. Maintained Markdown links
+python3 scripts/check-markdown-links.py .
 ```
 
 ---
@@ -146,6 +167,6 @@ python3 scripts/sync-report.py
 ```
 scripts/    <-- enforces conventions on  --> all folders (filename normalization)
 scripts/    <-- validates structure of   --> manifest.yaml (manifest-audit)
-scripts/    <-- audits integrity of      --> canon/dataledger_registry_v3.md (registry-audit)
+scripts/    <-- audits integrity of      --> canon/dataledger-registry-v3.md (registry-audit)
 scripts/    <-- checks compliance with   --> governance/ (foundry-sync checks baseline paths)
 ```

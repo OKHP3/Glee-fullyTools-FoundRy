@@ -214,15 +214,15 @@ Constraints:
 - Final starter must = “How can I leave feedback or support this project?”
 
 ### 🧠 Knowledge Files
-* `dataledger_narrative_v3.md`  
-* `dataledger_persona_v3.md`  
-* `dataledger_parameters_v3.md`  
-* `dataledger_processing_v3.md`  
-* `dataledger_hydration_v3.md`  
-* `dataledger_registry_v3.md`  
-* `dataledger_system_v3.md`  
-* `dataledger_archive_v3.md`  
-* `dataledger_ideation_v3.md`  
+* `dataledger-narrative-v3.md`
+* `dataledger-persona-v3.md`
+* `dataledger-parameters-v3.md`
+* `dataledger-processing-v3.md`
+* `dataledger-hydration-v3.md`
+* `dataledger-registry-v3.md`
+* `dataledger-system-v3.md`
+* `dataledger-archive-v3.md`
+* `dataledger-ideation-v3.md`
 
 ### ⚙️ Capabilities
 * [ ] Web Browsing  

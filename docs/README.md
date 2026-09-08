@@ -25,6 +25,12 @@ above.
 
 ---
 
+## Agent collaboration
+
+[The collaboration protocol](agent-collaboration.md) defines task ownership,
+provider roles, Git reconciliation, small handoff packets and completion evidence.
+It applies to this repository and preserves the existing runtime and canon boundaries.
+
 ## Application and research
 
 The [application guide](application/README.md), [implementation plan](application/implementation-plan.md)

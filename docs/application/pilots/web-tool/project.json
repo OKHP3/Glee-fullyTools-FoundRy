@@ -1,0 +1,66 @@
+{
+  "id": "web-tool-pilot-record-brief",
+  "schemaVersion": 1,
+  "revision": 1,
+  "createdAt": "2026-09-07T00:00:00Z",
+  "updatedAt": "2026-09-07T00:00:00Z",
+  "name": "Incident Intake Log",
+  "kind": "web-tool",
+  "description": "A domain-specific record-management brief for logging small operational incidents, tracking review status, and adapting the exported starter to a regulated intake workflow.",
+  "audience": "Operations coordinators and reviewers who need a simple local log for intake, triage, follow-up, and closure.",
+  "inputs": "Incident title, reporter, date, category, summary, review owner, follow-up notes, and closure outcome.",
+  "outputs": "A searchable local record list, a clear open-versus-closed view, and a reviewable package that documents what has been adapted from the starter.",
+  "constraints": "Keep the app local, browser-only, and loopback-bound. Preserve draft records between reloads. Do not claim the starter already satisfies the domain workflow. Acceptance observations remain not-run until they are actually tested.",
+  "instructions": "Use the exported record-management starter as the baseline implementation. Keep the generic add, complete, reopen, and filter behavior intact, then adapt the labels, record fields, and copy to the incident intake domain. Add the domain-specific status flow, document any remaining starter gaps, and validate the adapted workflow with real browser checks before treating it as ready.",
+  "components": [
+    {
+      "id": "starter-core",
+      "name": "Generic starter core",
+      "purpose": "Provides local record entry, completion toggles, reopen behavior, filtering, and browser persistence as the existing baseline.",
+      "dependsOn": []
+    },
+    {
+      "id": "incident-record-model",
+      "name": "Incident record model",
+      "purpose": "Defines the fields the domain needs: incident title, reporter, category, date, summary, owner, and closure outcome.",
+      "dependsOn": ["starter-core"]
+    },
+    {
+      "id": "intake-workflow",
+      "name": "Intake workflow copy",
+      "purpose": "Renames the starter language so the interface reflects intake, triage, follow-up, and closure instead of generic to-dos.",
+      "dependsOn": ["starter-core", "incident-record-model"]
+    },
+    {
+      "id": "review-checks",
+      "name": "Review checklist",
+      "purpose": "Records the not-run acceptance cases and the evidence needed to verify the adapted workflow later.",
+      "dependsOn": ["starter-core", "incident-record-model", "intake-workflow"]
+    }
+  ],
+  "tests": [
+    {
+      "id": "starter-behavior",
+      "name": "Confirm generic starter behavior",
+      "expected": "The exported baseline still adds records, marks them complete, reopens them, filters them, and persists them locally.",
+      "actual": "",
+      "status": "not-run"
+    },
+    {
+      "id": "domain-adaptation",
+      "name": "Confirm domain adaptation",
+      "expected": "The starter language and record fields reflect incident intake without claiming the generic baseline already knows the domain.",
+      "actual": "",
+      "status": "not-run"
+    },
+    {
+      "id": "review-evidence",
+      "name": "Confirm review evidence capture",
+      "expected": "Observed browser checks are captured with precise outcomes rather than invented readiness.",
+      "actual": "",
+      "status": "not-run"
+    }
+  ],
+  "skillIds": [],
+  "status": "draft"
+}

@@ -3,7 +3,15 @@ name: Glee-fully FoundRy Structure
 description: Key decisions about what this repo is, what it is not, and how it is organized.
 ---
 
-## What This Repo Is
+## Current direction, September 7, 2026
+
+This is now an intentionally public repository with an owner-local application
+under `app/`, alongside preserved canon. Read `AGENTS.md` and
+`docs/agent-collaboration.md` for current authority and agent coordination.
+SQLite working data remains private and ignored; the server remains loopback-only.
+The earlier no-application description below is historical and superseded for `app/`.
+
+## Historical description before the application transition
 
 Private workbench (NOT a web app). Do not configure web server workflows or deployment targets.
 The `web-templates/` folder holds webpage template source assets for child repos only.

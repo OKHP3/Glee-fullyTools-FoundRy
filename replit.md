@@ -12,6 +12,19 @@ A hosted preview or deployment requires authentication and an explicit hosting
 boundary before adapting the loopback service. The GitHub source repository is intentionally public. Serve only the application
 allowlist; keep the repository root and local working data outside that boundary.
 
+## Shared agent work
+
+Read `AGENTS.md` and [the collaboration protocol](docs/agent-collaboration.md).
+Finish the current Git synchronization directive before accepting overlapping
+work. Report the fetched SHA, local-only work, branch and validation to the
+coordinator. Receive code through a reviewed branch/PR or an attributable owner
+handoff; do not assume another host shares this checkout or chat context.
+
+Use this Repl for its environment-specific execution. Route substantial research
+and implementation to the assigned ChatGPT/Codex worker when that saves the
+owner's limited Replit allocation. Claude and Copilot can contribute focused
+reviews or bounded tasks. Do not change paid settings or launch duplicate jobs.
+
 ## Authority Chain
 
 ```

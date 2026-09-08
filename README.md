@@ -19,6 +19,13 @@ and export Markdown, JSON or a ZIP package. Web-tool packages include a runnable
 record-management starter and the authored specification. Review-ready is a
 working-record check, not PME certification or permission to publish.
 
+## Working across agent hosts
+
+Use the [collaboration protocol](docs/agent-collaboration.md) to coordinate
+ChatGPT/Codex, Replit, Claude and GitHub Copilot with clear task ownership,
+compact handoffs and validation evidence. Cost efficiency takes priority over
+speed. `AGENTS.md` remains the canonical repository guide.
+
 ## Universe and ownership
 
 AskJamie sits to the left, Glee-fully to the right, and OverKill at the connective

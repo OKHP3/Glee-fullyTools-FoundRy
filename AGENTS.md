@@ -66,6 +66,21 @@ serving allowlisted. Public or multiuser hosting requires a separate architectur
 and release decision; the repository root and local working data must never be served. Do not
 add hosted deployment workflows as a side effect.
 
+## Collaboration and token economy
+
+Follow [the shared collaboration protocol](docs/agent-collaboration.md) when work
+crosses ChatGPT/Codex, Replit, Claude or GitHub Copilot. Prefer useful results per
+token over speed: ChatGPT/Codex carries substantial reasoning and implementation,
+Replit owns its workspace execution, and Claude/Copilot receive bounded specialist
+or review tasks within available capacity. Do not assume credits are transferable.
+
+Use one coordinator, one writer per owned scope, separate branches/checkouts and
+small task packets with exact source revisions. Honor already-running Replit sync
+assignments. Fetch and preserve local work before integration; reuse valid evidence
+instead of repeating unchanged research and checks. No host is synchronized merely
+because another host pushed. Skillz is context only, not an assigned seventh Repl.
+The protocol does not launch agents, expand repository scope or authorize charges.
+
 ## Repository map
 
 - `app/`: owner-local project workspace, SQLite persistence, validation, export

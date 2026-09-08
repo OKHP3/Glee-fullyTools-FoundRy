@@ -1,4 +1,4 @@
-- [Glee-fully FoundRy structure](gleefully-foundry-structure.md) — Private workbench repo: no web server, no deployment; all content in canon/, governance/, docs/, prompts/, etc.
+- [Glee-fully FoundRy structure](gleefully-foundry-structure.md) — Public repository with owner-local app/ and preserved canon; earlier no-application notes are historical.
 - [Filename normalization rules](filename-normalization.md) — lowercase-kebab-case ASCII only; run scripts/normalize_filenames.py --recursive --ascii-only --include-dirs; never touch ::CanonSeal[...]:: tags
 - [Folder catalog and READMEs](folder-readmes.md) — All 11 folders have PRD-style READMEs; root README has full catalog with links; web-templates/ .docx files moved to docs/
 - [glee-fully-repo-standardizer skill](glee-fully-repo-standardizer.md) — scaffold.py + brand JSON + SKILL.md; run from child repo root with --tier/--name/--id/--parent args; brand JSON auto-copied to assets/
@@ -6,3 +6,5 @@
 - [Phase 5 Agent Skill conversion strategy](phase5-agent-skill-conversion.md) — 50 GPTs → 7-10 domain Agent Skills; SKILL.md is discovery layer (lean), scripts carry functional payload; hierarchy was a workaround for 8k GPT limit not a domain requirement
 - [GitHub sync authentication](github-sync-auth.md) — keep origin credential-free and use a temporary secret-backed helper when connection binding is unavailable
 - [Post-merge hook configuration](post-merge-hook.md) — track the idempotent script while keeping the ignored Replit configuration platform-managed
+
+- [Agent collaboration](../../docs/agent-collaboration.md) - task ownership, token economy, Git reconciliation and compact handoffs across ChatGPT/Codex, Replit, Claude and Copilot.

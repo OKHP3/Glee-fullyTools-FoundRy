@@ -14,8 +14,9 @@ The runner creates a temporary SQLite data directory, starts the Python service
 on an ephemeral loopback port, places a small loopback proxy in front of it to
 inject one failed save, and removes the temporary data when it exits. It uses
 the installed Playwright Chromium driver when available. If the driver cannot
-be imported, it reports `NOT RUN` and exits successfully so a missing tool is
-not mistaken for a passing browser check.
+be imported or its browser executable is unavailable, it reports `NOT RUN` and
+exits with status 2 so a missing tool is not mistaken for a passing browser
+check.
 
 The browser assertions verify that:
 

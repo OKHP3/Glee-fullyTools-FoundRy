@@ -85,6 +85,7 @@ function expect(value, message) {
 async function run() {
   if (!chrome) {
     console.log('NOT RUN browser assertions: no Chromium/Chrome binary found; set CHROME_BIN to run them');
+    process.exitCode = 2;
     return;
   }
   const temp = await mkdtemp(join(tmpdir(), 'foundry-starter-qa-'));

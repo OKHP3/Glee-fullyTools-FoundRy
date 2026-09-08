@@ -72,4 +72,3 @@ class SourceShelfEdgeTests(unittest.TestCase):
                 encoded_status, encoded_body = self.request(f"/api/sources/%2e%2e%2f{source_id}")
                 self.assertEqual(encoded_status, 404)
                 self.assertEqual(encoded_body["error"], "source not found")
-

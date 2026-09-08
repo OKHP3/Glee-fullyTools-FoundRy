@@ -157,3 +157,7 @@ record or inspecting that host directly.
 Current assignment state is not inferred from these instructions. The owner has
 reported Replit sync activity; this document does not independently verify its
 completion or assign new work to any external host.
+
+The owner subsequently authorized the [September 7 coop-pertition program](delegation/2026-09-07-coop-pertition/README.md).
+Its register records 20 FoundRy and six website assignments to isolated ChatGPT/Codex
+threads. Consult that dated record for actual ownership and dispatch evidence.

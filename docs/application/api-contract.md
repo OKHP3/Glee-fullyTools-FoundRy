@@ -20,7 +20,7 @@ Server assigns IDs, revisions and timestamps. PUT requires current `revision`, r
 
 ## Endpoints
 
-All JSON errors: `{error: string}` with correct 4xx/5xx. JSON body <= 1 MB. Mutations require `Content-Type: application/json`, header `X-Foundry-Request: 1`, validated Host and same Origin if present. Bind only loopback. No CORS. Foreign hosts/origins rejected. HTML CSP restricts all requests/assets to self and outbound links use safe HTTPS URLs.
+All JSON errors: `{error: string}` with correct 4xx/5xx, including unsupported TRACE and CONNECT requests. JSON body <= 1 MB. Mutations require `Content-Type: application/json`, header `X-Foundry-Request: 1`, validated Host and same Origin if present. Bind only loopback. No CORS. Foreign hosts/origins rejected. HTML CSP restricts all requests/assets to self and outbound links use safe HTTPS URLs.
 
 - GET `/api/bootstrap`: `{templates: [{id, name, description, project: partialProject}], skills: [{id,name,description,url,sourcePath,revision}], sources: [{id,title,path,url,description}], universe: [{id,name,region,role,url,shared: boolean}]}`. Templates exactly four kinds. Coordinator supplies optional `app/data/skills.json`; engine handles its absence as an empty list during development. Sources allowlist includes PromptChain, GPT scaffold, PulseBook current, brand vernacular and canon overview. These are local read-only reference text, no automatic execution/adoption.
 - GET `/api/projects`: `{projects: [project]}` includes archives.

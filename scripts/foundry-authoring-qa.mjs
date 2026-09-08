@@ -53,12 +53,14 @@ async function main() {
   const playwright = loadPlaywright();
   if (!playwright) {
     console.log("NOT RUN: installed playwright-core driver was not found; no browser proof claimed.");
+    process.exitCode = 2;
     return;
   }
   const executablePath = playwright.chromium.executablePath();
   const { access } = await import("node:fs/promises");
   try { await access(executablePath); } catch (_) {
     console.log(`NOT RUN: browser binary was not found at ${executablePath}; no browser proof claimed.`);
+    process.exitCode = 2;
     return;
   }
 

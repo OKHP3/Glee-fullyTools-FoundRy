@@ -24,8 +24,12 @@ class BackupRehearsalTests(unittest.TestCase):
             data_dir = Path(temporary) / "data"
             expected_projects, expected_histories = MODULE.create_expected_state(Path(__file__).resolve().parents[2], data_dir)
             database = data_dir / "foundry.sqlite3"
-            with sqlite3.connect(database) as connection:
+            connection = sqlite3.connect(database)
+            try:
                 connection.execute("DELETE FROM history WHERE revision = 2")
+                connection.commit()
+            finally:
+                connection.close()
             with self.assertRaises(MODULE.RecoveryError):
                 MODULE.verify_recovery(data_dir, expected_projects, expected_histories)
 

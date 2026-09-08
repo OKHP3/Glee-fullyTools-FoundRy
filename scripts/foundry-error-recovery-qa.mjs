@@ -20,7 +20,7 @@ const listen = server => new Promise((resolve, reject) => { server.once('error',
 
 let playwright;
 try { playwright = await import('playwright'); }
-catch (_) { console.log('NOT RUN  Browser driver unavailable: install/use an installed Playwright driver to execute browser assertions.'); process.exitCode = 0; }
+catch (_) { console.log('NOT RUN  Browser driver unavailable: install/use an installed Playwright driver to execute browser assertions.'); process.exitCode = 2; }
 
 if (playwright) {
   const root = fileURLToPath(new URL('..', import.meta.url));

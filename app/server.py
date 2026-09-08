@@ -273,6 +273,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(HTTPStatus.METHOD_NOT_ALLOWED)
         self.send_header("Allow", "GET, POST, PUT")
         self.end_headers()
+    def do_TRACE(self): self.error_json(HTTPStatus.NOT_IMPLEMENTED, "method not implemented")
+    def do_CONNECT(self): self.error_json(HTTPStatus.NOT_IMPLEMENTED, "method not implemented")
     def do_DELETE(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_PATCH(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_OPTIONS(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")

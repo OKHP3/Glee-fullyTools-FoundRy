@@ -1,0 +1,30 @@
+{
+  "id": "workflow-pilot-intake-review",
+  "schemaVersion": 1,
+  "revision": 1,
+  "createdAt": "2026-09-07T00:00:00Z",
+  "updatedAt": "2026-09-07T00:00:00Z",
+  "name": "Small Request Intake and Review",
+  "kind": "workflow",
+  "description": "A synthetic, reviewable workflow draft for receiving a small request, clarifying it, recording an exception, and preparing a handoff.",
+  "audience": "A local owner or reviewer preparing a bounded work request.",
+  "inputs": "Request summary, intended outcome, constraints, and any missing detail.",
+  "outputs": "A clarified request, exception note when needed, and review handoff.",
+  "constraints": "This is a draft, not a workflow engine. Keep all observations not-run until a person records evidence.",
+  "instructions": "Capture the request, ask only for material missing detail, check scope, record an exception instead of silently expanding scope, prepare the draft, perform a review, and hand off the result with unresolved questions.",
+  "components": [
+    {"id":"intake","name":"Request intake","purpose":"Record the supplied request and stated outcome.","dependsOn":[]},
+    {"id":"clarify","name":"Clarification","purpose":"Identify material missing information.","dependsOn":["intake"]},
+    {"id":"scope","name":"Scope check","purpose":"Confirm the request remains bounded.","dependsOn":["clarify"]},
+    {"id":"exception","name":"Exception path","purpose":"Record a scope or evidence exception for review.","dependsOn":["scope"]},
+    {"id":"draft","name":"Draft preparation","purpose":"Prepare the bounded result and open questions.","dependsOn":["scope","exception"]},
+    {"id":"handoff","name":"Review handoff","purpose":"Deliver the draft with evidence status and next action.","dependsOn":["draft"]}
+  ],
+  "tests": [
+    {"id":"missing-input","name":"Missing input handling","expected":"The workflow asks for material missing detail without inventing it.","actual":"","status":"not-run"},
+    {"id":"exception-path","name":"Exception handling","expected":"An out-of-scope request is recorded for review rather than silently expanded.","actual":"","status":"not-run"},
+    {"id":"handoff","name":"Reviewable handoff","expected":"The handoff states evidence status and unresolved questions.","actual":"","status":"not-run"}
+  ],
+  "skillIds": [],
+  "status": "draft"
+}

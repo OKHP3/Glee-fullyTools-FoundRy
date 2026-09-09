@@ -88,7 +88,7 @@ owner-approved migration may still be useful.
 | G-03 | `governance/glee-fully_project_governance_v3-0-1.md` | underscore | authority anchor / CanonSeal directive | `governance/glee-fully-project-governance-v3-0-1.md` | **Executed 2026-09-07** — B4; CanonSeal preserved |
 | G-04 | `governance/glee-fully_project_instructions.md` | underscore | authority anchor / project instructions | `governance/glee-fully-project-instructions.md` | **Executed 2026-09-07** — B4 |
 | I-01 | `inventory/README.md` | uppercase | required name | `inventory/README.md` | **Retain** — ecosystem exception |
-| I-02 | `inventory/inventory_of_toolbox_tools_and_tool-ettes.md` | underscore | ordinary content / catalog source | `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` | **Candidate** — catalog/tooling batch |
+| I-02 | `inventory/inventory_of_toolbox_tools_and_tool-ettes.md` | underscore | ordinary content / catalog source | `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` | **Executed 2026-09-07** — B3; catalog and tooling references updated |
 | P-01 | `prompts/README.md` | uppercase | required name | `prompts/README.md` | **Retain** — ecosystem exception |
 | P-02 | `prompts/custom_gpt_hybrid_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-hybrid-scaffold.md` | **Executed 2026-09-07** — B2 |
 | P-03 | `prompts/custom_gpt_scaffold.md` | underscore | intentional template | `prompts/custom-gpt-scaffold.md` | **Executed 2026-09-07** — B2 |
@@ -257,6 +257,16 @@ GitHub blob/raw URL dependency on a legacy governance or canon path. External
 bookmarks and downstream clones remain compatibility risks because they are not
 discoverable from this checkout.
 
+**B3 was approved and executed on 2026-09-07.** The I-02 mapping above was
+completed, and all seven maintained catalog references plus the scaffold
+tooling references were updated. Validation passed: the catalog contract check
+verified seven documented references, scaffold help, and catalog
+pre-population; the maintained Markdown link check found 45 valid links; both
+manifest validators passed; and the focused script test suite passed all nine
+tests. The mapping table intentionally retains the ledger's historical legacy
+spelling in its `Legacy path` column for auditability; this record is not
+rewritten to erase the pre-migration name.
+
 Legacy paths remain documented in the mapping table for auditability. B3 remains
-recorded separately until its completed catalog rename is reconciled in the
-follow-up ledger task.
+recorded above as completed; the ledger's historical mapping remains the
+compatibility anchor for the rename.

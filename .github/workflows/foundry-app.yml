@@ -8,7 +8,10 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'scripts/check-markdown-links.py'
+      - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**'
+      - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
+      - 'inventory/**'
       - 'prompts/glee-fully-builder-ready-promptchain-v2-0.md'
       - 'prompts/custom-gpt-scaffold.md'
       - 'prompts/**'
@@ -23,7 +26,10 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'scripts/check-markdown-links.py'
+      - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**'
+      - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
+      - 'inventory/**'
       - 'prompts/glee-fully-builder-ready-promptchain-v2-0.md'
       - 'prompts/custom-gpt-scaffold.md'
       - 'prompts/**'
@@ -45,6 +51,8 @@ jobs:
           python-version: '3.11'
       - name: Check maintained Markdown links
         run: python scripts/check-markdown-links.py .
+      - name: Check inventory catalog integration
+        run: python scripts/check-inventory-catalog.py .
       - name: Test Markdown link checker
         run: python -m unittest discover -s scripts/tests -v
       - name: Exercise the application and exported packages

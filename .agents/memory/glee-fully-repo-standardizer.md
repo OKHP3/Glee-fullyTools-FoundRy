@@ -91,3 +91,16 @@ Procedures, Templates, Good/Bad Examples, FAQ) per OKH KF Playbook v1.0.
   → strip with `re.sub(r"^📒\s*(?:\*+[^*]+\*+\s*)?", "", pitch)` to get clean text
 - Tool display name in inventory includes "Glee-fully " prefix (e.g., "Glee-fully Discovered Careers")
   → match by `--id` is more reliable than `--name` for Tool tier entities
+
+The canonical inventory currently begins with a UTF-8 BOM, so the first Toolbox
+heading is not matched by the parser's anchored header regex while later Tool and
+Tool-ette entries are. Until the parser normalizes the BOM, regression checks
+should exercise a later known entry rather than treating the first Toolbox entry
+as proof of importer health.
+
+**Why:** This is an input-format edge case that is not obvious from the rendered
+Markdown and can make a seemingly valid catalog appear empty to the importer.
+
+**How to apply:** Normalize leading BOM characters when improving the parser; keep
+the catalog contract check focused on a known entry that the current parser can
+actually import.

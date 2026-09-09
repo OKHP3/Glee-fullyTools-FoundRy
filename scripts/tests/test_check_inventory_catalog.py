@@ -14,16 +14,16 @@ SPEC.loader.exec_module(CHECKER)
 
 
 CATALOG_TEXT = """\
-# TOOL-ETTE 🔩 (Twig🌿): \\#01a – Example Tool-ette
+\ufeff# TOOLBOX 🧰 (Trunk🌳) \\#00 – Example Toolbox
 
 ### Full Description:
-An example tool-ette used by the regression check.
+An example toolbox used by the regression check.
 
 ### Primary Functions:
-🔩FUNCTION⚙️ (🍃Leaf): Perform the example action
+🧰FUNCTION⚙️ (🌳Branch): Perform the example action
 
 ### Elevator Pitch:
-📒 A complete example tool-ette for exercising catalog imports.
+📒 A complete example toolbox for exercising catalog imports.
 """
 
 
@@ -56,6 +56,21 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, directory)
 
         self.assertEqual([], CHECKER.check(directory))
+
+    def test_toolbox_entry_imports_by_id_with_leading_bom(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+        entry = scaffold.parse_inventory(
+            directory / CHECKER.CATALOG_PATH,
+            target_id="00",
+        )
+
+        self.assertIsNotNone(entry)
+        assert entry is not None
+        self.assertEqual("00", entry.entity_id)
+        self.assertEqual("Example Toolbox", entry.name)
 
     def test_missing_documented_reference_is_reported(self):
         directory = self._make_repository()

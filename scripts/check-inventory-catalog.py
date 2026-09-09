@@ -116,14 +116,14 @@ def check(root: Path) -> list[str]:
     try:
         scaffold_module = _load_scaffold(scaffold)
         parse_inventory = scaffold_module.parse_inventory
-        entry = parse_inventory(catalog, target_id="01a")
+        entry = parse_inventory(catalog, target_id="00")
     except (AttributeError, ImportError, OSError, SyntaxError, TypeError, ValueError) as exc:
         issues.append(f"scaffold inventory importer could not be exercised: {exc}")
         return issues
 
     if entry is None:
         issues.append(
-            "scaffold inventory importer could not pre-populate catalog entity #01a"
+            "scaffold inventory importer could not pre-populate catalog entity #00"
         )
     else:
         missing_fields = [
@@ -138,7 +138,7 @@ def check(root: Path) -> list[str]:
         ]
         if missing_fields:
             issues.append(
-                "scaffold inventory importer did not pre-populate entity #01a "
+                "scaffold inventory importer did not pre-populate entity #00 "
                 f"fields: {', '.join(missing_fields)}"
             )
 

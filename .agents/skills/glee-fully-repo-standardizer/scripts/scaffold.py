@@ -80,7 +80,9 @@ def parse_inventory(
     if not inventory_path.exists():
         return None
 
-    text = inventory_path.read_text(encoding="utf-8")
+    # The canonical inventory is UTF-8 and may begin with a byte-order mark.
+    # Decode it without letting the BOM become part of the first heading.
+    text = inventory_path.read_text(encoding="utf-8-sig")
 
     # Match section headers: # TOOL-ETTE ...: #01a – Resume Builder
     header_re = re.compile(

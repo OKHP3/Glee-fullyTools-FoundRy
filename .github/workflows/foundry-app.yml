@@ -7,7 +7,7 @@ on:
       - '.github/workflows/foundry-app.yml'
       - 'README.md'
       - 'canon/**'
-      - 'docs/**'
+      - 'docs/**' # Includes maintained application and ADR indexes.
       - 'evaluation/**'
       - 'governance/**'
       - 'inventory/**'
@@ -17,7 +17,7 @@ on:
       - 'web-templates/**'
       - 'scripts/check-markdown-links.py'
       - 'scripts/check-inventory-catalog.py'
-      - 'scripts/tests/**'
+      - 'scripts/tests/**' # Includes the maintained test-suite README.
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
   push:
     branches: [main]
@@ -26,7 +26,7 @@ on:
       - '.github/workflows/foundry-app.yml'
       - 'README.md'
       - 'canon/**'
-      - 'docs/**'
+      - 'docs/**' # Includes maintained application and ADR indexes.
       - 'evaluation/**'
       - 'governance/**'
       - 'inventory/**'
@@ -36,7 +36,7 @@ on:
       - 'web-templates/**'
       - 'scripts/check-markdown-links.py'
       - 'scripts/check-inventory-catalog.py'
-      - 'scripts/tests/**'
+      - 'scripts/tests/**' # Includes the maintained test-suite README.
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
   workflow_dispatch:
 

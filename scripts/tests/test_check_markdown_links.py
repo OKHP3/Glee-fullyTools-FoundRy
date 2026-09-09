@@ -18,6 +18,8 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             (
                 "README.md",
                 "docs/README.md",
+                "docs/application/README.md",
+                "docs/adr/README.md",
                 "prompts/README.md",
                 "canon/README.md",
                 "evaluation/README.md",
@@ -26,10 +28,19 @@ class CheckMarkdownLinksTests(unittest.TestCase):
                 "templates/README.md",
                 "vernacular/README.md",
                 "web-templates/README.md",
+                "scripts/tests/README.md",
             ),
             CHECKER.DEFAULT_DOCUMENTS,
         )
         self.assertNotIn("snapshots/README.md", CHECKER.DEFAULT_DOCUMENTS)
+        self.assertNotIn(
+            "docs/application/pilots/custom-gpt/README.md",
+            CHECKER.DEFAULT_DOCUMENTS,
+        )
+        self.assertNotIn(
+            "docs/delegation/2026-09-07-coop-pertition/README.md",
+            CHECKER.DEFAULT_DOCUMENTS,
+        )
 
     def test_supported_non_repository_links_are_skipped(self):
         with tempfile.TemporaryDirectory() as directory:

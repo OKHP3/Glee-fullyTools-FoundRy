@@ -115,12 +115,22 @@ python3 scripts/registry-audit.py .
 
 Checks the maintained Markdown indexes for broken relative links without making
 network requests. By default it checks `README.md`, `docs/README.md`,
-`prompts/README.md`, and the active governed indexes:
+the maintained nested hubs `docs/application/README.md`,
+`docs/adr/README.md`, and `scripts/tests/README.md`, `prompts/README.md`, and
+the active governed indexes:
 `canon/README.md`, `evaluation/README.md`, `governance/README.md`,
 `inventory/README.md`, `templates/README.md`, `vernacular/README.md`, and
-`web-templates/README.md`. `snapshots/README.md` is intentionally excluded
-because dated snapshots are read-only historical records; the generated
-`.agents/skills/README.md` catalog is maintained by its own catalog tooling.
+`web-templates/README.md`.
+
+Nested scope is deliberate: the application and ADR READMEs are maintained
+indexes, while `docs/application/pilots/*/README.md` are package handoff notes,
+`docs/delegation/2026-09-07-coop-pertition/README.md` is dated delegation
+lineage, and `snapshots/README.md` contains read-only historical records. Those
+documents are intentionally excluded from this affordable default scan. The
+generated `.agents/skills/README.md` catalog is maintained by its own catalog
+tooling. The `docs/**` and `scripts/tests/**` workflow filters include every
+maintained nested index listed above.
+
 External URLs, anchor-only links, and explicit placeholder tokens
 (`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`, `your-path`,
 `your-url`, `your-link`, or `...`) are reported as skipped categories rather

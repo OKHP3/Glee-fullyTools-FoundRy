@@ -10,12 +10,17 @@ from collections.abc import Iterable
 from urllib.parse import unquote, urlsplit
 
 
-# These are the active, maintained indexes. snapshots/README.md is intentionally
-# excluded because dated snapshots are read-only lineage evidence, not a live
-# maintenance surface. The generated .agents/skills catalog has its own checker.
+# These are the active, maintained indexes. The nested application and ADR hubs
+# have their own local maintenance contexts but are still part of the default
+# repository check. The test-suite README documents the adjacent test surface.
+# Pilot-package READMEs are handoff notes, not indexes; dated delegation and
+# snapshot READMEs are historical lineage. The generated .agents/skills catalog
+# has its own checker.
 DEFAULT_DOCUMENTS = (
     "README.md",
     "docs/README.md",
+    "docs/application/README.md",
+    "docs/adr/README.md",
     "prompts/README.md",
     "canon/README.md",
     "evaluation/README.md",
@@ -24,6 +29,7 @@ DEFAULT_DOCUMENTS = (
     "templates/README.md",
     "vernacular/README.md",
     "web-templates/README.md",
+    "scripts/tests/README.md",
 )
 
 # This intentionally handles inline Markdown links, which are the link form used

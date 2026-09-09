@@ -66,7 +66,7 @@ family files or metadata.
 
 | Flag | Reads/discovers | Validates | Previews | Writes/deletes |
 |---|---:|---:|---:|---:|
-| `--check` | yes | yes | no | no |
+| `--check` | yes | metadata and generated catalog links | no | no |
 | `--dry-run` | yes | yes | yes | no |
 | `--json` | yes | discovery only | JSON stdout | no |
 | no safety flag | yes | yes | no | yes, after validation |
@@ -75,6 +75,11 @@ In full mode, the normal write path may absorb a family `README.md` into a new
 `FAMILY.md` and delete the original. Preview this with `--dry-run`; preserve the
 source by passing `--no-absorb-readme`. `--no-family-md` skips all family-file
 generation. Neither safety flag changes the discovered skill set.
+
+Catalog validation is intentionally separate from the repository's maintained
+index link scan. It checks the links emitted inside the `SKILLS_CATALOG_START`
+and `SKILLS_CATALOG_END` markers, reports the source README, line, and broken
+destination, and does not scan other repository documentation.
 
 ## Choosing a mode
 

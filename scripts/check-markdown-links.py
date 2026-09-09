@@ -10,7 +10,21 @@ from collections.abc import Iterable
 from urllib.parse import unquote, urlsplit
 
 
-DEFAULT_DOCUMENTS = ("README.md", "docs/README.md", "prompts/README.md")
+# These are the active, maintained indexes. snapshots/README.md is intentionally
+# excluded because dated snapshots are read-only lineage evidence, not a live
+# maintenance surface. The generated .agents/skills catalog has its own checker.
+DEFAULT_DOCUMENTS = (
+    "README.md",
+    "docs/README.md",
+    "prompts/README.md",
+    "canon/README.md",
+    "evaluation/README.md",
+    "governance/README.md",
+    "inventory/README.md",
+    "templates/README.md",
+    "vernacular/README.md",
+    "web-templates/README.md",
+)
 
 # This intentionally handles inline Markdown links, which are the link form used
 # by the maintained indexes. Links inside fenced code blocks are not prose links.

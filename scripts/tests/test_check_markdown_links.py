@@ -13,6 +13,24 @@ SPEC.loader.exec_module(CHECKER)
 
 
 class CheckMarkdownLinksTests(unittest.TestCase):
+    def test_default_documents_cover_active_governed_indexes(self):
+        self.assertEqual(
+            (
+                "README.md",
+                "docs/README.md",
+                "prompts/README.md",
+                "canon/README.md",
+                "evaluation/README.md",
+                "governance/README.md",
+                "inventory/README.md",
+                "templates/README.md",
+                "vernacular/README.md",
+                "web-templates/README.md",
+            ),
+            CHECKER.DEFAULT_DOCUMENTS,
+        )
+        self.assertNotIn("snapshots/README.md", CHECKER.DEFAULT_DOCUMENTS)
+
     def test_supported_non_repository_links_are_skipped(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

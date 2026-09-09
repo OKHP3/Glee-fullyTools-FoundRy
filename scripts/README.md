@@ -32,7 +32,7 @@ as a canonical source.
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
-| [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained README, docs index, and prompts index | Before merging documentation or prompt changes |
+| [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
 
 ---
 
@@ -114,10 +114,17 @@ python3 scripts/registry-audit.py .
 ### `check-markdown-links.py`
 
 Checks the maintained Markdown indexes for broken relative links without making
-network requests. External URLs, anchor-only links, and explicit placeholder
-tokens (`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`,
-`your-path`, `your-url`, `your-link`, or `...`) are reported as skipped
-categories rather than treated as repository paths.
+network requests. By default it checks `README.md`, `docs/README.md`,
+`prompts/README.md`, and the active governed indexes:
+`canon/README.md`, `evaluation/README.md`, `governance/README.md`,
+`inventory/README.md`, `templates/README.md`, `vernacular/README.md`, and
+`web-templates/README.md`. `snapshots/README.md` is intentionally excluded
+because dated snapshots are read-only historical records; the generated
+`.agents/skills/README.md` catalog is maintained by its own catalog tooling.
+External URLs, anchor-only links, and explicit placeholder tokens
+(`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`, `your-path`,
+`your-url`, `your-link`, or `...`) are reported as skipped categories rather
+than treated as repository paths.
 
 ```bash
 python3 scripts/check-markdown-links.py .

@@ -123,6 +123,11 @@ python3 $SCRIPT \
   --chatgpt-url "https://chatgpt.com/g/g-6855e58bf8d48191bf27795f6d5ec23c-resume-builder-by-glee-fully"
 ```
 
+The scaffold automatically reads the canonical catalog from the standardizer
+repository's `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` path.
+Use `--inventory /path/to/another/catalog.md` only when intentionally choosing
+a different catalog; an explicit path overrides the default.
+
 **Preview only (dry run):**
 
 ```bash
@@ -216,6 +221,7 @@ Same as Tool structure, with `gpt/instructions.md` using the trunk/concierge pat
 # Full scaffold with all options
 python3 $SCRIPT --tier toolette|tool|toolbox --name NAME --id ID \
   [--parent NAME] [--parent-url URL] [--chatgpt-url URL] \
+  [--inventory PATH] \
   [--tone OVERLAY] [--dry-run] [--overwrite] [--quiet]
 
 # Audit only — show missing structure, do not write
@@ -231,6 +237,10 @@ python3 $SCRIPT --tier toolette --name NAME --id ID --json
 
 - **Run from the repo root.** The script writes relative to `cwd`. Running
   from inside a subfolder will create structure in the wrong place.
+
+- **Inventory defaults to the canonical catalog.** The default is resolved
+  relative to the standardizer script's repository, so callers do not need a
+  repository-specific absolute path. Pass `--inventory PATH` to override it.
 
 - **Existing files are skipped by default.** Pass `--overwrite` only when you
   want to reset a stub. Content you have already added will be lost.

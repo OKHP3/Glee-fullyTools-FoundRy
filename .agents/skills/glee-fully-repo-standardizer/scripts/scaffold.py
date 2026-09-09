@@ -22,6 +22,7 @@ Options:
     --inventory     Path to the canonical inventory file for auto-population.
                     Matches by --id or --name; pre-fills description, overview,
                     functions, and §1 of instructions from authoritative source.
+                    Defaults to the canonical catalog in this repository.
                     Example: --inventory /path/to/FoundRy/inventory/inventory-of-toolbox-tools-and-tool-ettes.md
     --dry-run       Show what would be created without writing files
     --audit         Show missing files/folders in existing repo, do not write
@@ -42,6 +43,30 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 SCRIPT_VERSION = "1.1.0"
+CANONICAL_INVENTORY_PATH = Path(
+    "inventory/inventory-of-toolbox-tools-and-tool-ettes.md"
+)
+
+
+def default_inventory_path(script_path: Path | None = None) -> Path:
+    """Return the canonical catalog path owned by the scaffold repository.
+
+    The standardizer is nested four directories below the repository root:
+    ``.agents/skills/glee-fully-repo-standardizer/scripts``. Deriving the
+    default from the script location keeps it stable when the scaffold is run
+    from a child repository instead of requiring a caller-specific absolute
+    path.
+    """
+    script = (script_path or Path(__file__)).resolve()
+    repository_root = script.parents[4]
+    return repository_root / CANONICAL_INVENTORY_PATH
+
+
+def resolve_inventory_path(explicit_path: str = "") -> Path:
+    """Use an explicit inventory path, or the repository's canonical default."""
+    if explicit_path:
+        return Path(explicit_path)
+    return default_inventory_path()
 
 # ---------------------------------------------------------------------------
 # Inventory data structures and parser
@@ -1474,7 +1499,8 @@ def main():
         dest="inventory_path",
         default="",
         help=(
-            "Path to the canonical inventory file for auto-population. "
+            "Path to the inventory file for auto-population "
+            "(default: canonical catalog in the scaffold repository). "
             "Example: /path/to/Glee-fullyTools-FoundRy/inventory/"
             "inventory-of-toolbox-tools-and-tool-ettes.md"
         ),
@@ -1509,27 +1535,26 @@ def main():
     if not args.parent:
         args.parent = ""
 
-    # Inventory pre-population: parse if --inventory path is given
+    # Inventory pre-population: use the repository catalog unless overridden.
     inv: InventoryEntry | None = None
-    if args.inventory_path:
-        inv_path = Path(args.inventory_path)
-        inv = parse_inventory(
-            inv_path,
-            target_id=getattr(args, "id", "") or "",
-            target_name=args.name or "",
-        )
-        if not args.quiet and not args.as_json:
-            if inv:
-                print(f"Inventory match: #{inv.entity_id} — {inv.name}")
-                print(f"  Pre-filling: description, overview, functions, instructions")
-                if inv.chatgpt_url and not args.chatgpt_url:
-                    args.chatgpt_url = inv.chatgpt_url
-                if inv.parent_name and not args.parent:
-                    args.parent = inv.parent_name
-                if inv.parent_url and not args.parent_url:
-                    args.parent_url = inv.parent_url
-            else:
-                print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
+    inv_path = resolve_inventory_path(args.inventory_path)
+    inv = parse_inventory(
+        inv_path,
+        target_id=getattr(args, "id", "") or "",
+        target_name=args.name or "",
+    )
+    if not args.quiet and not args.as_json:
+        if inv:
+            print(f"Inventory match: #{inv.entity_id} — {inv.name}")
+            print(f"  Pre-filling: description, overview, functions, instructions")
+            if inv.chatgpt_url and not args.chatgpt_url:
+                args.chatgpt_url = inv.chatgpt_url
+            if inv.parent_name and not args.parent:
+                args.parent = inv.parent_name
+            if inv.parent_url and not args.parent_url:
+                args.parent_url = inv.parent_url
+        elif args.inventory_path:
+            print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
 
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
                  quiet=args.quiet, as_json=args.as_json, inv=inv)

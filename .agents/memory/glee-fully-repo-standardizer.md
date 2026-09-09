@@ -37,7 +37,7 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 | `--parent-url` | No | empty |
 | `--chatgpt-url` | No | empty |
 | `--tone` | No | tier default (toolbox=BledsGLEE, tool=GleeRich, toolette=GleeLite) |
-| `--inventory` | No | if given, pre-populates description/overview/functions/instructions from the canonical inventory file |
+| `--inventory` | No | canonical catalog is used automatically; an explicit path overrides it |
 | `--dry-run` | — | preview without writing |
 | `--audit` | — | show missing files only, do not write |
 | `--overwrite` | — | overwrite existing files (default: skip) |
@@ -50,8 +50,10 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 
 ## Inventory Pre-Population (v1.1.0)
 
-Pass `--inventory /path/to/inventory-of-toolbox-tools-and-tool-ettes.md` and the
-script will parse the canonical inventory file and auto-fill:
+The scaffold automatically resolves
+`inventory/inventory-of-toolbox-tools-and-tool-ettes.md` relative to the
+standardizer repository. Pass `--inventory /path/to/inventory-of-toolbox-tools-and-tool-ettes.md`
+to intentionally override the catalog. The importer auto-fills:
 - `gpt/description.md` ← Full Description
 - `docs/overview.md` ← Elevator Pitch (in "What It Is" section)
 - `docs/functions.md` ← Primary Functions (each with stub Trigger/Output/Notes)

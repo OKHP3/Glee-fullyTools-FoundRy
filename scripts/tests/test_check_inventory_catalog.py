@@ -72,6 +72,27 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         self.assertEqual("00", entry.entity_id)
         self.assertEqual("Example Toolbox", entry.name)
 
+    def test_scaffold_defaults_to_catalog_in_its_repository(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+
+        self.assertEqual(
+            directory / CHECKER.CATALOG_PATH,
+            scaffold.default_inventory_path(),
+        )
+
+    def test_explicit_inventory_path_overrides_catalog_default(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        explicit = directory / "alternate-catalog.md"
+        explicit.write_text(CATALOG_TEXT, encoding="utf-8")
+
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+
+        self.assertEqual(explicit, scaffold.resolve_inventory_path(str(explicit)))
+
     def test_missing_documented_reference_is_reported(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

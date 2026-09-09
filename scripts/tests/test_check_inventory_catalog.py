@@ -26,6 +26,12 @@ An example toolbox used by the regression check.
 📒 A complete example toolbox for exercising catalog imports.
 """
 
+EXECUTED_LEDGER = """\
+| ID | Legacy path | Signals | Classification | Candidate target | Disposition |
+|---|---|---|---|---|---|
+| X-01 | `legacy/example.md` | underscore | ordinary documentation | `docs/example.md` | **Executed 2026-09-09** |
+"""
+
 
 class CheckInventoryCatalogTests(unittest.TestCase):
     def _make_repository(self) -> Path:
@@ -50,6 +56,11 @@ class CheckInventoryCatalogTests(unittest.TestCase):
             scaffold,
         )
         return directory
+
+    def _set_ledger(self, directory: Path, text: str = EXECUTED_LEDGER) -> None:
+        ledger = directory / CHECKER.MIGRATION_LEDGER_PATH
+        ledger.parent.mkdir(parents=True, exist_ok=True)
+        ledger.write_text(text, encoding="utf-8")
 
     def test_current_contract_passes(self):
         directory = self._make_repository()
@@ -113,6 +124,79 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         issues = CHECKER.check(directory)
 
         self.assertTrue(any("pre-populate" in issue for issue in issues))
+
+    def test_executed_move_passes_when_target_exists_and_legacy_is_absent(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(directory)
+        (directory / "docs/example.md").parent.mkdir(parents=True, exist_ok=True)
+        (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_executed_move_reports_missing_candidate(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(directory)
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(any("candidate path to exist" in issue for issue in issues))
+
+    def test_executed_move_reports_legacy_path_that_remains(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(directory)
+        (directory / "docs/example.md").parent.mkdir(parents=True, exist_ok=True)
+        (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
+        (directory / "legacy/example.md").parent.mkdir(parents=True)
+        (directory / "legacy/example.md").write_text("old\n", encoding="utf-8")
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(any("still has the legacy path" in issue for issue in issues))
+
+    def test_intentional_legacy_retention_is_allowed(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            EXECUTED_LEDGER.replace(
+                "**Executed 2026-09-09**",
+                "**Executed 2026-09-09** — intentional retention",
+            ),
+        )
+        (directory / "docs/example.md").parent.mkdir(parents=True, exist_ok=True)
+        (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
+        (directory / "legacy/example.md").parent.mkdir(parents=True)
+        (directory / "legacy/example.md").write_text("retained source\n", encoding="utf-8")
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_non_executed_source_retention_is_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            EXECUTED_LEDGER.replace(
+                "`legacy/example.md`",
+                "`docs/source-material/original.md`",
+            ).replace(
+                "`docs/example.md`",
+                "`docs/source-material/renamed.md`",
+            ).replace(
+                "**Executed 2026-09-09**",
+                "**Retain by default** — provenance rename requires approval",
+            ),
+        )
+        (directory / "docs/source-material/original.md").parent.mkdir(
+            parents=True
+        )
+        (directory / "docs/source-material/original.md").write_text(
+            "source\n", encoding="utf-8"
+        )
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
 
 
 if __name__ == "__main__":

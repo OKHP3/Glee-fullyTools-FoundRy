@@ -270,3 +270,10 @@ rewritten to erase the pre-migration name.
 Legacy paths remain documented in the mapping table for auditability. B3 remains
 recorded above as completed; the ledger's historical mapping remains the
 compatibility anchor for the rename.
+
+The inventory catalog contract check also treats this table as an execution
+record: every row marked **Executed** must have an existing candidate target and
+an absent legacy path. A row may keep its legacy path only when its disposition
+explicitly documents intentional retention. Non-executed `Retain by default`
+source-material rows and the historical legacy-path column are not treated as
+completed moves.

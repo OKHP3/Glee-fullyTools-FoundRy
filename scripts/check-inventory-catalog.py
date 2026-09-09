@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 
 CATALOG_PATH = Path("inventory/inventory-of-toolbox-tools-and-tool-ettes.md")
+MIGRATION_LEDGER_PATH = Path("docs/filename-migration-ledger.md")
 SCAFFOLD_PATH = Path(
     ".agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py"
 )
@@ -27,6 +29,16 @@ DOCUMENTED_REFERENCES = {
 }
 DOCUMENTED_REFERENCE_COUNT = sum(
     expected_count for _, expected_count in DOCUMENTED_REFERENCES.values()
+)
+EXECUTED_MARKER = re.compile(r"\bexecuted\b", re.IGNORECASE)
+INTENTIONAL_RETENTION_MARKERS = (
+    "intentional retention",
+    "intentionally retained",
+    "legacy path retained",
+    "old path retained",
+    "retain legacy path",
+    "retain the legacy path",
+    "source-material retention",
 )
 
 
@@ -46,6 +58,62 @@ def _load_scaffold(path: Path):
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _backtick_path(cell: str) -> str | None:
+    match = re.fullmatch(r"\s*`([^`]+)`\s*", cell)
+    return match.group(1) if match else None
+
+
+def check_filename_migration_ledger(root: Path) -> list[str]:
+    """Verify filesystem state for rows marked Executed in the migration ledger."""
+    ledger = root / MIGRATION_LEDGER_PATH
+    ledger_text = _read_text(ledger)
+    if ledger_text is None:
+        return []
+
+    issues: list[str] = []
+    for line_number, line in enumerate(ledger_text.splitlines(), start=1):
+        if not line.lstrip().startswith("|"):
+            continue
+
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 6 or cells[0].lower() in {"id", "---"}:
+            continue
+
+        disposition = cells[5]
+        if not EXECUTED_MARKER.search(disposition):
+            continue
+
+        row_id = cells[0] or f"line {line_number}"
+        legacy_path = _backtick_path(cells[1])
+        candidate_path = _backtick_path(cells[4])
+        if legacy_path is None or candidate_path is None:
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has an Executed "
+                "mapping without a parseable legacy and candidate path"
+            )
+            continue
+
+        candidate = root / candidate_path
+        if not candidate.is_file():
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} expected candidate "
+                f"path to exist: {candidate_path}"
+            )
+
+        retains_legacy = any(
+            marker in disposition.lower()
+            for marker in INTENTIONAL_RETENTION_MARKERS
+        )
+        legacy = root / legacy_path
+        if legacy.exists() and not retains_legacy:
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} still has the legacy "
+                f"path after execution: {legacy_path}"
+            )
+
+    return issues
 
 
 def check(root: Path) -> list[str]:
@@ -74,6 +142,8 @@ def check(root: Path) -> list[str]:
                 f"{relative_path} contains {actual_count} references to "
                 f"{reference}; expected {expected_count}"
             )
+
+    issues.extend(check_filename_migration_ledger(root))
 
     scaffold_text = _read_text(scaffold)
     if scaffold_text is None:

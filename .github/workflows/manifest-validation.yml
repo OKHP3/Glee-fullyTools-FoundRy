@@ -25,6 +25,8 @@ jobs:
           python-version: '3.11'
       - name: Install manifest validation dependencies
         run: python -m pip install -r requirements.txt
+      - name: Check manifest validation requirements
+        run: python -m unittest discover -s scripts/tests -p 'test_manifest_validators.py' -v
       - name: Validate manifest schema
         run: python scripts/validate-manifest.py
       - name: Audit manifest governance fields

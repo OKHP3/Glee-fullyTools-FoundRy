@@ -6,6 +6,7 @@ import argparse
 import dataclasses
 import pathlib
 import re
+from collections.abc import Iterable
 from urllib.parse import unquote, urlsplit
 
 
@@ -17,6 +18,13 @@ LINK_RE = re.compile(
     r"(?<!!)\[[^\]\n]*\]\(\s*(?P<destination><[^>\n]*>|[^)\s]+)"
 )
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+ATX_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}(?:[ \t]+(.*?)\s*|[ \t]*)$")
+SETEXT_HEADING_RE = re.compile(r"^\s{0,3}(?:=+|-+)\s*$")
+HTML_TAG_RE = re.compile(r"<[^>\n]*>")
+INLINE_LINK_RE = re.compile(r"!?\[([^\]\n]+)\]\([^)\n]*\)")
+GITHUB_PUNCTUATION_RE = re.compile(
+    r"[\u2000-\u206F\u2E00-\u2E7F\\'!\"#$%&()*+,./:;<=>?@[\]^`{|}~]"
+)
 
 # These are the only placeholder forms ignored by this check. A placeholder is
 # not a license to hide an arbitrary missing path: use a recognizable token.
@@ -78,12 +86,70 @@ def _relative_path(destination: str) -> str:
     return unquote(urlsplit(destination).path)
 
 
+def _github_heading_slug(heading: str) -> str:
+    """Return the GitHub-compatible slug for a rendered Markdown heading."""
+    heading = HTML_TAG_RE.sub("", heading)
+    heading = INLINE_LINK_RE.sub(r"\1", heading)
+    heading = heading.strip().lower()
+    heading = GITHUB_PUNCTUATION_RE.sub("", heading)
+    return re.sub(r"\s", "-", heading)
+
+
+def _heading_texts(text: str) -> Iterable[str]:
+    """Yield Markdown heading text while ignoring fenced-code examples."""
+    lines = text.splitlines()
+    fence: str | None = None
+    for index, line in enumerate(lines):
+        changed, fence = _is_fenced(line, fence)
+        if changed or fence is not None:
+            continue
+
+        match = ATX_HEADING_RE.match(line)
+        if match:
+            heading = match.group(1) or ""
+            heading = re.sub(r"[ \t]+#+[ \t]*$", "", heading)
+            yield heading
+            continue
+
+        if (
+            line.strip()
+            and index + 1 < len(lines)
+            and SETEXT_HEADING_RE.match(lines[index + 1])
+        ):
+            yield line.strip()
+
+
+def _heading_ids(text: str) -> set[str]:
+    """Return the heading IDs GitHub would expose for a Markdown document."""
+    ids: set[str] = set()
+    next_suffix: dict[str, int] = {}
+    for heading in _heading_texts(text):
+        base = _github_heading_slug(heading)
+        if not base:
+            continue
+
+        heading_id = base
+        if heading_id in ids:
+            suffix = next_suffix.get(base, 1)
+            heading_id = f"{base}-{suffix}"
+            while heading_id in ids:
+                suffix += 1
+                heading_id = f"{base}-{suffix}"
+            next_suffix[base] = suffix + 1
+        else:
+            next_suffix.setdefault(base, 1)
+        ids.add(heading_id)
+    return ids
+
+
 def scan_file(path: pathlib.Path, root: pathlib.Path, result: ScanResult) -> None:
     """Scan one Markdown file and append any broken relative links."""
     text = path.read_text(encoding="utf-8", errors="replace")
     source = path.relative_to(root)
     result.files += 1
     fence: str | None = None
+    heading_ids = _heading_ids(text)
+    target_heading_ids: dict[pathlib.Path, set[str]] = {path: heading_ids}
 
     for line_number, line in enumerate(text.splitlines(), start=1):
         changed, fence = _is_fenced(line, fence)
@@ -105,9 +171,6 @@ def scan_file(path: pathlib.Path, root: pathlib.Path, result: ScanResult) -> Non
             if parsed.scheme or parsed.netloc or destination.startswith("//"):
                 result.external += 1
                 continue
-            if not parsed.path and parsed.fragment:
-                result.anchors += 1
-                continue
 
             relative_path = _relative_path(destination)
             target = (path.parent / relative_path).resolve()
@@ -123,6 +186,21 @@ def scan_file(path: pathlib.Path, root: pathlib.Path, result: ScanResult) -> Non
                 result.issues.append(
                     LinkIssue(source, line_number, destination, "target does not exist")
                 )
+                continue
+
+            if not parsed.path and parsed.fragment:
+                result.anchors += 1
+
+            if parsed.fragment and target.is_file() and target.suffix.lower() == ".md":
+                if target not in target_heading_ids:
+                    target_heading_ids[target] = _heading_ids(
+                        target.read_text(encoding="utf-8", errors="replace")
+                    )
+                fragment = unquote(parsed.fragment)
+                if fragment not in target_heading_ids[target]:
+                    result.issues.append(
+                        LinkIssue(source, line_number, destination, "heading does not exist")
+                    )
 
 
 def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:

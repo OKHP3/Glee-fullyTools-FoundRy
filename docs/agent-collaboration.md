@@ -140,6 +140,13 @@ After integration, the receiving Repl fetches and fast-forwards when safe, then
 reports its own HEAD, origin/main, ahead/behind counts, working-tree state and
 applicable validation. Delete a completed branch only after proving integration
 and checking for unique work; preserve application data before worktree cleanup.
+Before archiving a Codex thread, treat that operation as potential worktree
+removal: inventory dirty, untracked and ignored files; preserve required working
+data and unique commits; verify archive contents and integration; then archive
+the thread and prune its completed refs. Thread history and Git bundles do not
+preserve uncommitted databases. Check for remaining worktrees after archiving
+and report any preservation failure explicitly.
+
 Close the work item with evidence and remaining limitations. Only report another
 host as synchronized or verified after receiving its attributable completion
 record or inspecting that host directly.

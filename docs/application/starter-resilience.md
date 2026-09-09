@@ -18,7 +18,7 @@ node scripts/foundry-starter-qa.mjs
 
 The runner uses Node's built-in WebSocket support and an installed Chromium or
 Chrome binary. Set `CHROME_BIN` when the browser is installed at another path.
-If no browser is available, it reports `NOT RUN` and exits successfully. It
+If no browser is available, it reports `NOT RUN` and exits with status 2. It
 creates temporary data, uses ephemeral loopback ports, and does not add
 dependencies or retain the exported package.
 

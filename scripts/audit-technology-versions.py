@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit externally versioned technologies used by the static templates.
+"""Audit externally versioned technologies used by the current solution.
 
 This intentionally uses only the Python standard library. It reports drift and
 exits non-zero so a scheduled GitHub Actions run makes maintenance visible.
@@ -18,6 +18,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "web-templates" / "index.html"
+APP_WORKFLOW = ROOT / ".github" / "workflows" / "foundry-app.yml"
 MERMAID_PACKAGE = "https://registry.npmjs.org/mermaid/latest"
 
 
@@ -40,14 +41,21 @@ def main() -> int:
         lines.append(f"- Mermaid CDN: `{current_mermaid}`; npm latest: `{latest_mermaid}`")
         current_major = int(re.match(r"\d+", current_mermaid).group()) if re.match(r"\d+", current_mermaid) else -1
         latest_major = int(re.match(r"\d+", latest_mermaid).group())
-        if current_major < latest_major:
+        current_release = tuple(map(int, re.match(r"\d+(?:\.\d+){0,2}", current_mermaid).group().split("."))) if re.match(r"\d+(?:\.\d+){0,2}", current_mermaid) else (-1,)
+        latest_release = tuple(map(int, latest_mermaid.split(".")))
+        if current_release < latest_release:
             failures.append(
-                f"Mermaid CDN is pinned to major {current_major}, but stable major {latest_major} is available."
+                f"Mermaid CDN is pinned to {current_mermaid}, but stable {latest_mermaid} is available."
             )
     except (KeyError, json.JSONDecodeError, URLError, TimeoutError, ValueError) as error:
         failures.append(f"Could not read Mermaid release metadata: {error}")
 
     lines.append("- Python scripts: declared as `Python 3`; CI selects the latest stable `3.x`")
+
+    workflow = APP_WORKFLOW.read_text(encoding="utf-8")
+    if "python-version: '3.11'" not in workflow:
+        failures.append("Application CI no longer declares its supported Python 3.11 floor.")
+    lines.append("- Application runtime: Python `3.11+`; application CI floor: `3.11`")
 
     if failures:
         lines.extend(["", "### Review required", ""])

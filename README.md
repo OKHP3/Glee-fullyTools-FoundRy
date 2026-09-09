@@ -13,11 +13,14 @@ Open `http://127.0.0.1:8765`. Python 3.11 or newer is required; no package
 installation or build step is needed. See the [application guide](docs/application/README.md)
 for setup, persistence, backups, validation and limitations.
 
-Create a Custom GPT, Agent Skill, workflow or web-tool project; define components
-and acceptance cases; attach pinned Skillz references; save evaluation evidence;
-and export Markdown, JSON or a ZIP package. Web-tool packages include a runnable
-record-management starter and the authored specification. Review-ready is a
-working-record check, not PME certification or permission to publish.
+Create a Custom GPT, Agent Skill, workflow or web-tool project; record its owner,
+version and contract; define components and acceptance cases; attach pinned Skillz
+references; save evaluation evidence; inspect the generated manifest and files;
+and export Markdown, JSON or a ZIP package. The workbench also supports duplicate,
+archive/restore, confirmed delete, and validated whole-workspace backup/restore.
+Web-tool packages include a runnable record-management starter and the authored
+specification. Review-ready is a working-record check, not PME certification or
+permission to publish.
 
 ## Working across agent hosts
 

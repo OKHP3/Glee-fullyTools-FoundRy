@@ -29,14 +29,15 @@ reverse-proxy it onto a network or serve the repository root.
 ## Make a useful package
 
 1. Create a Custom GPT, Agent Skill, workflow or web-tool project.
-2. State its purpose, audience, inputs, outputs, constraints and instructions.
+2. Record the owner, version, purpose, audience, inputs, outputs, constraints and instructions.
 3. Define components and their dependencies. Give each acceptance case a clear
    expected result, then record what you actually observed when testing it.
 4. Attach relevant pinned Skillz references when useful. These are optional source
    links, not automatically installed or executed agents.
 5. Save and review the validation report. Unrun or failed cases are not evidence
    of readiness. Material specification changes invalidate earlier test results.
-6. Download JSON for portable backup/import, Markdown for review, or a ZIP package.
+6. Inspect the generated package files and manifest, then download JSON for portable
+   project import, Markdown for review, or a ZIP package.
 
 The web-tool ZIP contains a runnable record-management starter with add, complete,
 reopen and filter behavior. It also contains your complete specification and
@@ -44,21 +45,29 @@ handoff material. It is a starting implementation to adapt, not an AI-generated
 implementation of arbitrary requirements. Custom GPT/Skill/workflow exports are
 reviewable authored packages; platform publication remains a separate action.
 
-Import creates a new project identity, preserves the source identity in its
-history and resets evaluation results to unrun. Archive hides completed or
+Import and duplicate create a new project identity, preserve the source identity
+in history, and reset evaluation results to unrun. Archive hides completed or
 paused drafts from active work while keeping them recoverable.
 
-## Persistence and backup
+## Persistence, lifecycle and backup
 
 By default, private SQLite working data is stored in `.foundry-data/`, which is
 ignored by Git. It persists across browser reloads and server restarts. Worktree
-copies have independent data folders. Export JSON regularly and before moving
-or removing a worktree. For a full backup, stop the server, copy the entire
-`.foundry-data/` folder to your private backup location, then restart.
+copies have independent data folders. Use **Backup workspace** to download the
+projects and complete revision trails as one validated JSON snapshot. Use
+**Restore workspace** only after confirming replacement; the service validates
+every project and history entry before changing anything and leaves current data
+unchanged when the backup is malformed. The raw SQLite folder remains a useful
+private disaster-recovery copy, but it is not exposed by the application.
+
+Delete requires explicit confirmation and removes the saved project and its
+revision trail. Make a workspace backup first when deletion may need to be
+reversed.
 
 `--data-dir` accepts a private directory of your choice. Keep it out of source
-control. JSON exports may contain your authored private information; choose
-where to share them. The app makes no outbound model requests and has no telemetry.
+control. JSON exports and workspace backups may contain your authored private
+information; choose where to share them. The app makes no outbound model
+requests and has no telemetry.
 
 Revisions prevent a stale tab from silently overwriting a newer save. If a save
 conflicts, preserve your unsaved text, reopen the current project and reconcile
@@ -90,10 +99,20 @@ publishing repositories or invoking AI providers.
 python3 -m unittest discover -s app/tests -v
 python3 -m py_compile app/server.py
 node --check app/static/app.js
+python3 scripts/verify-foundry-backup.py
+python3 scripts/foundry-release-check.py
 git diff --check
 ```
 
-The service tests cover persistence, validation, request boundaries and exported
-packages. The dated [verification record](verification.md) distinguishes these
-checks from browser behavior and external-service evidence. Historical maintenance
-audits have documented baseline mismatches and do not establish application health.
+The service tests cover persistence, validation, request boundaries, lifecycle
+recovery and exported packages. The dated [verification record](verification.md)
+distinguishes these checks from browser behavior and external-service evidence.
+The browser journey is `scripts/foundry-authoring-qa.mjs`; if its driver or
+browser is unavailable it reports **NOT RUN** rather than claiming browser proof.
+Historical maintenance audits have documented baseline mismatches and do not
+establish application health.
+
+The release gate is a local check only. It does not publish the app, create a
+deployment, upload project data, or authorize publication of a generated
+capability. Any hosted builder or public Pages release requires a separate,
+owner-approved task and architecture decision.

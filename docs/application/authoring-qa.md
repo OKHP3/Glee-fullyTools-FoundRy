@@ -43,7 +43,8 @@ DOM simulation or direct API-only claim.
 ## Availability boundary
 
 If `playwright-core` or its browser binary is not installed, the runner reports
-`NOT RUN` and does not claim browser evidence. It does not install dependencies.
+`NOT RUN`, exits with status 2, and does not claim browser evidence. It does not
+install dependencies.
 The browser driver and binary are environment-provided prerequisites, not
 application dependencies. Their installation location is intentionally not
 encoded in this public repository.

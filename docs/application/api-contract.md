@@ -7,7 +7,8 @@ The owner-authorized application lives under `app/`. Python 3.11+ standard libra
 ```
 {id: UUID, schemaVersion: 1, revision: integer, name: string,
  kind: "custom-gpt"|"agent-skill"|"workflow"|"web-tool",
- description: string, audience: string, inputs: string, outputs: string,
+ owner: string, version: string, purpose: string, description: string,
+ audience: string, inputs: string, outputs: string,
  constraints: string, instructions: string,
  components: [{id: string, name: string, purpose: string, dependsOn: [component id]}],
  tests: [{id: string, name: string, expected: string, actual: string,
@@ -16,21 +17,26 @@ The owner-authorized application lives under `app/`. Python 3.11+ standard libra
  createdAt: ISO timestamp, updatedAt: ISO timestamp}
 ```
 
-Server assigns IDs, revisions and timestamps. PUT requires current `revision`, returns 409 on conflict. Imports get a fresh ID and reset evaluation evidence to not-run, keeping source identity in history. Unknown keys, malformed nested objects, oversized text, invalid enum values and missing references are rejected. `name` and `kind` required to create; other fields can be empty while drafting. All user text is untrusted and rendered as text. Component IDs unique, dependencies must exist, and cycles are flagged by validation. A pass without actual evidence is never a pass. Material specification, attached-skill or acceptance-contract changes reset evidence; save the specification before recording a new test run. No claim of automatic behavioral validation. Updates may retain unavailable skill IDs already stored on that project, so a shelf change cannot block editing, archive or restore. The UI shows those IDs for optional removal; readiness still fails until references are resolved. Creation, import and newly attached IDs require current registered references.
+Server assigns IDs, revisions and timestamps. PUT requires current `revision`, returns 409 on conflict. Imports and duplicates get a fresh ID and reset evaluation evidence to not-run, keeping source identity in history. Unknown keys, malformed nested objects, oversized text, invalid enum values and missing references are rejected. `name` and `kind` required to create; other fields can be empty while drafting. All user text is untrusted and rendered as text. Component IDs unique, dependencies must exist, and cycles are flagged by validation. A pass without actual evidence is never a pass. Material specification, attached-skill or acceptance-contract changes reset evidence; save the specification before recording a new test run. No claim of automatic behavioral validation. Updates may retain unavailable skill IDs already stored on that project, so a shelf change cannot block editing, archive or restore. The UI shows those IDs for optional removal; readiness still fails until references are resolved. Creation, import and newly attached IDs require current registered references.
 
 ## Endpoints
 
-All JSON errors: `{error: string}` with correct 4xx/5xx. JSON body <= 1 MB. Mutations require `Content-Type: application/json`, header `X-Foundry-Request: 1`, validated Host and same Origin if present. Bind only loopback. No CORS. Foreign hosts/origins rejected. HTML CSP restricts all requests/assets to self and outbound links use safe HTTPS URLs.
+All JSON errors: `{error: string}` with correct 4xx/5xx, including unsupported TRACE and CONNECT requests. JSON body <= 1 MB. Mutations require `Content-Type: application/json`, header `X-Foundry-Request: 1`, validated Host and same Origin if present. Bind only loopback. No CORS. Foreign hosts/origins rejected. HTML CSP restricts all requests/assets to self and outbound links use safe HTTPS URLs.
 
 - GET `/api/bootstrap`: `{templates: [{id, name, description, project: partialProject}], skills: [{id,name,description,url,sourcePath,revision}], sources: [{id,title,path,url,description}], universe: [{id,name,region,role,url,shared: boolean}]}`. Templates exactly four kinds. Coordinator supplies optional `app/data/skills.json`; engine handles its absence as an empty list during development. Sources allowlist includes PromptChain, GPT scaffold, PulseBook current, brand vernacular and canon overview. These are local read-only reference text, no automatic execution/adoption.
 - GET `/api/projects`: `{projects: [project]}` includes archives.
 - POST `/api/projects`: partial project, returns complete project, 201.
 - GET `/api/projects/{id}`: complete project.
 - PUT `/api/projects/{id}`: editable project plus revision, returns complete updated project.
+- POST `/api/projects/{id}/duplicate`: `{revision: integer}` creates a fresh draft identity with reset evidence.
+- DELETE `/api/projects/{id}`: `{confirm: true, revision: integer}` permanently removes the project and its revision trail. The confirmation is required.
 - GET `/api/projects/{id}/validation`: `{readyForReview: boolean, checks: [{id,label,status: "pass"|"fail"|"warning",detail}], summary: string}`. Check purpose, audience, interface, constraints, instructions, components/dependencies, acceptance evidence, and attached skill provenance. Review-ready does not imply PME or publication-ready.
 - GET `/api/projects/{id}/history`: `{history:[{revision,at,action,summary}]}`.
-- GET `/api/projects/{id}/export?format=json|markdown|zip`: attachment. JSON is complete project. ZIP contains project.json, README.md, specification.md, evaluation.md, skill-references.md, handoff.md and type-specific files. Custom GPT: instructions.md/starters.md; agent skill: a structurally valid SKILL.md; workflow: workflow.md and workflow.json; web tool: runnable HTML/CSS/JS starter with persisted record entry, completion, filtering and its own README. User fields must be safely encoded and cannot inject executable HTML/JS. Packages contain draft status and observed validation results, never fabricated certification, secrets, copied canon or claims of deployment.
+- GET `/api/projects/{id}/package`: inspectable `{manifest, files}` response for the exact generated text members.
+- GET `/api/projects/{id}/export?format=json|markdown|zip`: attachment. JSON is complete project. ZIP contains `manifest.json`, project.json, README.md, specification.md, evaluation.md, skill-references.md, build.md, handoff.md and type-specific files. Custom GPT: instructions.md/starters.md; agent skill: a structurally valid SKILL.md; workflow: workflow.md and workflow.json; web tool: runnable HTML/CSS/JS starter with persisted record entry, completion and filtering. User fields must be safely encoded and cannot inject executable HTML/JS. Packages contain draft status and observed validation results, never fabricated certification, secrets, copied canon or claims of deployment.
 - POST `/api/import`: `{project: object}` returns new project, 201. Invalid version rejects without changing existing projects.
+- GET `/api/workspace/backup`: downloads a complete `glee-fully-foundry-workspace` JSON snapshot containing projects and all revision history.
+- POST `/api/workspace/restore`: `{backup, confirm: true, mode: "replace"}` validates every project and history entry before atomically replacing the local workspace. A malformed backup leaves current data unchanged.
 - GET `/api/sources/{id}`: `{id,title,content,path,url}` from fixed allowlist; no arbitrary path or network fetching.
 - GET `/api/health`: `{status:"ok"}`.
 

@@ -33,6 +33,9 @@ as a canonical source.
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
 | [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
+| [`foundry-authoring-qa.mjs`](foundry-authoring-qa.mjs) | Runs the isolated browser journey for authoring, package inspection, recovery, themes and overflow | When a Playwright-compatible driver is installed |
+| [`foundry-release-check.py`](foundry-release-check.py) | Runs the owner-local application release gate without publishing or deploying | Before treating application changes as locally releasable |
+| [`verify-foundry-backup.py`](verify-foundry-backup.py) | Rehearses the workspace backup shape and revision-history preservation | After changing backup or restore behavior |
 
 ---
 

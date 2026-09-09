@@ -114,6 +114,14 @@ class HttpContractEdgeTests(unittest.TestCase):
                 self.assertTrue(content_type.startswith("application/json"))
                 self.assertEqual(json.loads(raw), {"error": "method not allowed"})
 
+    def test_trace_and_connect_return_json_501(self):
+        for method in ("TRACE", "CONNECT"):
+            with self.subTest(method=method):
+                status, content_type, raw = self.request(method, "/api/health")
+                self.assertEqual(status, 501)
+                self.assertTrue(content_type.startswith("application/json"))
+                self.assertEqual(json.loads(raw), {"error": "method not implemented"})
+
 
 if __name__ == "__main__":
     unittest.main()

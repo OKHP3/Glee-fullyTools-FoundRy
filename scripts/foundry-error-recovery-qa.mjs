@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* Focused browser regression runner for error and recovery states. */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,9 +21,14 @@ const listen = server => new Promise((resolve, reject) => { server.once('error',
 
 let playwright;
 try { playwright = await import('playwright'); }
-catch (_) { console.log('NOT RUN  Browser driver unavailable: install/use an installed Playwright driver to execute browser assertions.'); process.exitCode = 0; }
+catch (_) { console.log('NOT RUN  Browser driver unavailable: install/use an installed Playwright driver to execute browser assertions.'); process.exitCode = 2; }
 
 if (playwright) {
+  const executablePath = playwright.chromium.executablePath();
+  if (!existsSync(executablePath)) {
+    console.log(`NOT RUN  Browser executable unavailable at ${executablePath}; install/use an installed Playwright browser to execute browser assertions.`);
+    process.exitCode = 2;
+  } else {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const dataDir = await mkdtemp(join(tmpdir(), 'foundry-error-recovery-'));
   const appPortServer = createServer();
@@ -38,7 +44,7 @@ if (playwright) {
     upstream.on('error', error => { res.writeHead(502); res.end(String(error)); }); req.pipe(upstream);
   });
   const proxyPort = await listen(proxy);
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await playwright.chromium.launch({ executablePath, headless: true });
   const page = await browser.newPage();
   try {
     await page.goto(`http://127.0.0.1:${proxyPort}/`, { waitUntil: 'domcontentloaded' });
@@ -86,5 +92,6 @@ if (playwright) {
     process.exitCode = 1;
   } finally {
     await browser.close(); proxy.close(); app.kill('SIGTERM'); await rm(dataDir, { recursive: true, force: true });
+  }
   }
 }

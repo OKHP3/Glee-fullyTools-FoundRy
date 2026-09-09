@@ -4,15 +4,35 @@ Date: 2026-09-07. Scope: the new owner-local application and its exported packag
 Local environment: Python 3.14.5, Node 26.0.0 and the Codex Chromium browser.
 This is implementation evidence, not a certification of authored GPTs or skills.
 
+## Parity update, September 9, 2026
+
+The local workbench now carries the four target types through metadata capture,
+revisioned authoring, validation/evidence, package inspection, export, reopen,
+duplicate, archive/restore and confirmed delete. It also supports a complete
+workspace JSON backup with project history and an atomic, pre-validated restore.
+The generated ZIP contract includes `manifest.json`, README/specification,
+evaluation, Skillz provenance, build/handoff guidance and target-specific files.
+These files document limitations; they do not execute authored capabilities,
+certify behavior, grant publication permission or host a service.
+
+The current API suite passes with the lifecycle contract tests included. The
+browser acceptance runner was extended for package inspection, backup/restore,
+duplicate/archive/delete, themes and overflow checks. In this environment its
+Playwright driver was unavailable, so the runner reported **NOT RUN** and no
+browser proof is claimed for this update. The Python/API evidence remains valid.
+
 ## Automated checks
 
-- `python3 -m unittest discover -s app/tests -v`: **15 passed**. Covers durable
-  SQLite records, revision conflicts, archive preservation, import identity and
-  evidence reset, malformed inputs, dependency cycles, request/source boundaries,
-  all four package kinds and stale acceptance-contract invalidation.
+- `python3 -m unittest discover -s app/tests -v`: **109 passed** in the current
+  checkout. Covers durable SQLite records, revision conflicts, archive
+  preservation, import/duplicate identity and evidence reset, workspace backup
+  and restore atomicity, malformed inputs, dependency cycles, request/source
+  boundaries, all four package kinds and stale acceptance-contract invalidation.
 - `python3 -m py_compile app/server.py`: passed.
 - `node --check app/static/app.js`: passed.
 - `git diff --check`: passed.
+- `python3 scripts/verify-foundry-backup.py`: passed, with two synthetic projects
+  and three preserved history entries.
 - Every newly referenced local guidance path was checked; all five allowlisted
   source documents returned nonempty content.
 - The universe contains exactly the seven owner-specified elements; only Skillz

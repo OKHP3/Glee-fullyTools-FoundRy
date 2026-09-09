@@ -1,14 +1,7 @@
 name: Manifest validation
 
 on:
-  pull_request:
-    paths:
-      - 'manifest.yaml'
-      - 'schemas/**'
-      - 'scripts/**'
-      - 'requirements.txt'
-      - 'requirements-lock.txt'
-      - '.github/workflows/manifest-validation.yml'
+  pull_request: {}
 
 permissions:
   contents: read
@@ -20,15 +13,37 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check whether manifest validation is required
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Eq \
+            '^(manifest\.yaml|schemas/|scripts/|requirements\.txt$|requirements-lock\.txt$|\.github/workflows/manifest-validation\.yml$)'; then
+            echo "manifest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "manifest=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Set up Python
         uses: actions/setup-python@v7
+        if: steps.changes.outputs.manifest == 'true'
         with:
           python-version: '3.11'
       - name: Install manifest validation dependencies
         run: python -m pip install -r requirements.txt --constraint requirements-lock.txt
+        if: steps.changes.outputs.manifest == 'true'
       - name: Check manifest validation requirements
         run: python -m unittest discover -s scripts/tests -p 'test_manifest_validators.py' -v
+        if: steps.changes.outputs.manifest == 'true'
       - name: Validate manifest schema
         run: python scripts/validate-manifest.py
+        if: steps.changes.outputs.manifest == 'true'
       - name: Audit manifest governance fields
         run: python scripts/manifest-audit.py .
+        if: steps.changes.outputs.manifest == 'true'

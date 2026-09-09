@@ -7,6 +7,7 @@ on:
       - 'schemas/**'
       - 'scripts/**'
       - 'requirements.txt'
+      - 'requirements-lock.txt'
       - '.github/workflows/manifest-validation.yml'
 
 permissions:
@@ -24,7 +25,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install manifest validation dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt --constraint requirements-lock.txt
       - name: Check manifest validation requirements
         run: python -m unittest discover -s scripts/tests -p 'test_manifest_validators.py' -v
       - name: Validate manifest schema

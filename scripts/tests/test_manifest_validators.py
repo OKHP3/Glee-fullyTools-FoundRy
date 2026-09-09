@@ -23,7 +23,17 @@ MANIFEST = ROOT / "manifest.yaml"
 VALIDATOR = ROOT / "scripts" / "validate-manifest.py"
 AUDIT = ROOT / "scripts" / "manifest-audit.py"
 REQUIREMENTS = ROOT / "requirements.txt"
+REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
+LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES = {
+    "attrs",
+    "jsonschema",
+    "jsonschema-specifications",
+    "pyyaml",
+    "referencing",
+    "rpds-py",
+    "typing-extensions",
+}
 REQUIREMENT_LINE = re.compile(
     r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[^\]]+\])?(?P<specifier>.*)$"
 )
@@ -36,8 +46,10 @@ def canonical_requirement_name(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def requirements_contract_errors(path: Path) -> list[str]:
-    """Report requirement entries that break the manifest validator contract."""
+def parse_requirement_entries(
+    path: Path,
+) -> tuple[list[tuple[int, str, str]], list[str]]:
+    """Parse package entries and report malformed requirement lines."""
 
     entries: list[tuple[int, str, str]] = []
     errors: list[str] = []
@@ -61,6 +73,13 @@ def requirements_contract_errors(path: Path) -> list[str]:
             )
         )
 
+    return entries, errors
+
+
+def requirements_contract_errors(path: Path) -> list[str]:
+    """Report requirement entries that break the manifest validator contract."""
+
+    entries, errors = parse_requirement_entries(path)
     names = [name for _, name, _ in entries]
     for name in sorted(set(names)):
         if names.count(name) > 1:
@@ -80,6 +99,30 @@ def requirements_contract_errors(path: Path) -> list[str]:
                 errors.append(
                     f"{dependency} on line {line_number} must use an exact == pin"
                 )
+
+    return errors
+
+
+def lock_contract_errors(path: Path) -> list[str]:
+    """Report lock entries that do not describe the reviewed validator graph."""
+
+    entries, errors = parse_requirement_entries(path)
+    names = [name for _, name, _ in entries]
+    for name in sorted(set(names)):
+        if names.count(name) > 1:
+            errors.append(f"duplicate lock requirement name: {name}")
+
+    if set(names) != LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES:
+        missing = LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES - set(names)
+        unexpected = set(names) - LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES
+        for dependency in sorted(missing):
+            errors.append(f"missing locked dependency: {dependency}")
+        for dependency in sorted(unexpected):
+            errors.append(f"unexpected locked dependency: {dependency}")
+
+    for line_number, name, specifier in entries:
+        if not EXACT_PIN.fullmatch(specifier):
+            errors.append(f"{name} on line {line_number} must use an exact == pin")
 
     return errors
 
@@ -136,6 +179,24 @@ class ManifestValidatorTests(unittest.TestCase):
     def test_manifest_validator_requirements_are_unique_and_exactly_pinned(self) -> None:
         self.assertEqual([], requirements_contract_errors(REQUIREMENTS))
 
+    def test_manifest_validator_lock_is_complete_and_exactly_pinned(self) -> None:
+        self.assertEqual([], lock_contract_errors(REQUIREMENTS_LOCK))
+
+        requirements, _ = parse_requirement_entries(REQUIREMENTS)
+        locked_requirements, _ = parse_requirement_entries(REQUIREMENTS_LOCK)
+        requirement_versions = {
+            name: specifier for _, name, specifier in requirements
+        }
+        locked_versions = {
+            name: specifier for _, name, specifier in locked_requirements
+        }
+        for dependency in MANIFEST_VALIDATOR_DEPENDENCIES:
+            self.assertEqual(
+                requirement_versions[dependency],
+                locked_versions[dependency],
+                f"{dependency} lock pin must match requirements.txt",
+            )
+
     def test_duplicate_requirement_names_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = self.write_requirements_variant(
@@ -146,6 +207,18 @@ class ManifestValidatorTests(unittest.TestCase):
             errors = requirements_contract_errors(path)
 
         self.assertIn("duplicate requirement name: pyyaml", errors)
+
+    def test_incomplete_validator_lock_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "jsonschema==4.26.0\n",
+            )
+
+            errors = lock_contract_errors(path)
+
+        self.assertIn("missing locked dependency: attrs", errors)
+        self.assertIn("missing locked dependency: pyyaml", errors)
 
     def test_non_exact_manifest_validator_pins_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

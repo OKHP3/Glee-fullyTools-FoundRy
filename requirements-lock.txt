@@ -1,0 +1,10 @@
+# Reviewed Python 3.11 dependency lock for the manifest validators.
+# Keep this set synchronized with requirements.txt. CI installs it with:
+# python -m pip install -r requirements.txt --constraint requirements-lock.txt
+attrs==26.1.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+PyYAML==6.0.3
+referencing==0.37.0
+rpds-py==2026.6.3
+typing-extensions==4.16.0

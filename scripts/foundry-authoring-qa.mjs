@@ -56,7 +56,7 @@ async function main() {
     process.exitCode = 2;
     return;
   }
-  const executablePath = playwright.chromium.executablePath();
+  const executablePath = process.env.CHROME_BIN || playwright.chromium.executablePath();
   const { access } = await import("node:fs/promises");
   try { await access(executablePath); } catch (_) {
     console.log(`NOT RUN: browser binary was not found at ${executablePath}; no browser proof claimed.`);
@@ -141,10 +141,12 @@ async function main() {
     const duplicateName = await page.locator('[name="name"]').inputValue();
     await page.getByRole("button", { name: "Archive" }).click();
     await page.getByRole("tab", { name: "Archive" }).click();
-    await page.locator(`.project-card:has-text("${duplicateName}")`).click();
+    await page.locator(".project-card").filter({ hasText: duplicateName }).first().click();
     await page.getByRole("button", { name: "Restore draft" }).click();
     await page.getByRole("tab", { name: "Active" }).click();
-    await page.locator(`.project-card:has-text("${duplicateName}")`).click();
+    const duplicateCard = page.locator(".project-card").filter({ hasText: duplicateName }).first();
+    await duplicateCard.click();
+    await page.waitForFunction(name => document.querySelector('[name="name"]')?.value === name, duplicateName);
     await page.getByRole("button", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Delete project" }).click();
     await page.getByRole("status").filter({ hasText: "Project deleted" }).waitFor({ state: "visible" });
@@ -163,7 +165,7 @@ async function main() {
     await page.keyboard.press("Escape");
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    await page.locator(`.project-card:has-text("${projectName}")`).click();
+    await page.locator(".project-card").filter({ hasText: projectName }).first().click();
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "JSON", exact: true }).click();
     const download = await downloadPromise;
@@ -195,7 +197,7 @@ async function main() {
     assert(browserErrors.length === 0, `browser console is clean (${browserErrors.join(" | ")})`);
     await writeFile(join(evidenceDir, "result.json"), JSON.stringify({
        status: "PASS", sourceSha: process.env.FOUNDRY_SOURCE_SHA || "not-provided", url,
-       evidenceDir, checks: ["create", "edit", "save", "reopen", "package inspection", "backup", "duplicate", "archive", "restore", "delete", "theme", "export", "import", "workspace restore", "reload persistence", "console health"],
+       evidenceDir, checks: ["create", "edit", "save", "reopen", "package inspection", "backup", "duplicate", "archive", "restore", "delete", "theme", "desktop overflow", "390px mobile overflow", "keyboard activation", "export", "import", "workspace restore", "reload persistence", "console health"],
     }, null, 2));
     console.log(`PASS: browser authoring journey completed against ${url}`);
     console.log(`EVIDENCE: ${evidenceDir}`);

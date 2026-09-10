@@ -21,6 +21,28 @@ duplicate/archive/delete, themes and overflow checks. In this environment its
 Playwright driver was unavailable, so the runner reported **NOT RUN** and no
 browser proof is claimed for this update. The Python/API evidence remains valid.
 
+## Browser acceptance run, September 10, 2026
+
+The complete FoundRy authoring journey was run with `playwright-core` and the
+environment-provided Chromium binary at `/repl/tools/bin/chromium`:
+
+```text
+CHROME_BIN=/repl/tools/bin/chromium FOUNDRY_SOURCE_SHA=e9749ce19db31e6ffb2193cbaba7f9dc7cc8422b node scripts/foundry-authoring-qa.mjs
+PASS: browser authoring journey completed against http://127.0.0.1:41527/
+```
+
+The run used an isolated temporary SQLite data directory and retained its
+evidence directory at `/tmp/foundry-f09-evidence-k972b7/`. Its `result.json`
+records `PASS`, the tested source SHA, and the individual browser checks. The
+directory contains three desktop screenshots at 1280 × 900, the exported
+project JSON, the workspace backup JSON, and the result record.
+
+This is browser acceptance evidence, separate from the API and structural
+checks below. The journey completed authoring, package inspection, backup and
+restore, duplicate, archive and restore, confirmed delete, theme switching,
+desktop and 390px overflow checks, keyboard activation, export/import, reload
+persistence, and browser console health with no application console errors.
+
 ## Automated checks
 
 - `python3 -m unittest discover -s app/tests -v`: **109 passed** in the current

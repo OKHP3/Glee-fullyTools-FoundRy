@@ -74,20 +74,6 @@ The technical reference document. Covers:
 - **A Mermaid architecture diagram** of the full ecosystem
 - **Cross-ecosystem compatibility** with OverKill Hill P³ and The GPT Found-Ry
 
-### Technical Overview (`gleefully-technical-overview.md`)
-
-The technical reference document. Covers:
-
-- **The Trunk-Branch-Twig-Leaf model** — how the Toolbox, Tools, Tool-ettes, Functions,
-  and Function-ettes relate to each other architecturally
-- **The Canon System** — how the 9 dataLedger files govern the ecosystem
-- **The PromptChain lifecycle** — PROMPT00 through PROMPT05, what each step does, and
-  what "PME-ready" means
-- **Tone overlays** — Bleeds GLEE, ForgeDialect.A1, and Watchkeeper.Core
-- **Role discipline** — Coach, Quarterback, Specialist, Core Skill, Kicker archetypes
-- **A worked example** — forging a new Tool-ette step by step
-- **A Mermaid architecture diagram** of the full ecosystem
-- **Cross-ecosystem compatibility** with OverKill Hill P³ and The GPT Found-Ry
 
 ### Narrative Overview (`gleefully-narrative-overview.md`)
 
@@ -129,16 +115,3 @@ docs/source-material/ <-- supplies evidence to --> docs/ and Phase 5 decision re
 - The `.docx` and `.pdf` files are source/export formats — the `.md` files are the canonical versions for this repo.
 - `source-material/` contains imported, non-canonical inputs and should not be treated as a source of authority without explicit adoption.
 - The `content-synthesis-for-glee-fully.docx` and `brand-origin-story.docx` are working documents that may be used to generate or refresh website content via the megaprompt (`prompts/glee-fully-tools-megaprompt.md`).
-
-### Narrative Overview (`gleefully-narrative-overview.md`)
-
-The brand story and philosophical foundation. Covers:
-
-- Why Glee-fully exists — the problem of joyless productivity tools
-- The muse (Glee, Pacific Northwest, chai, color-coding, cozy chaos)
-- How the ecosystem is structured as a living tree metaphor
-- What it feels like to use Glee-fully — tone attunement, emotional design
-- The hidden canon — governance as architecture
-- The "cathedral of code and personality" metaphor
-- Growth-without-reduction philosophy
-- The broader vision: joy as infrastructure

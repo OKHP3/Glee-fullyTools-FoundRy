@@ -250,6 +250,7 @@ class Store:
             if row["revision"] != revision: raise RuntimeError("revision conflict")
             editable = editable_defaults(editable)
             old = json.loads(row["data"])
+            old = {**old, **editable_defaults(old)}
             material = {"kind", "owner", "version", "purpose", "description", "audience", "inputs", "outputs", "constraints", "instructions", "components", "skillIds"}
             test_contract = lambda cases: [(c["id"], c["name"], c["expected"]) for c in cases]
             if (any(old[field] != editable[field] for field in material) or
@@ -406,12 +407,12 @@ class Handler(SimpleHTTPRequestHandler):
     def do_DELETE(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_PATCH(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_OPTIONS(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
-    def body(self):
+    def body(self, limit=MAX_BODY):
         if self.headers.get("Content-Type", "").split(";",1)[0].lower() != "application/json": raise ValidationError("Content-Type must be application/json")
         if self.headers.get("X-Foundry-Request") != "1": raise ValidationError("X-Foundry-Request: 1 is required")
         try: length=int(self.headers.get("Content-Length", "-1"))
         except ValueError: raise ValidationError("invalid Content-Length")
-        if length < 0 or length > MAX_BODY: raise ValidationError("JSON body exceeds 1 MB")
+        if length < 0 or length > limit: raise ValidationError(f"JSON body exceeds {limit // (1024 * 1024)} MB")
         try: return json.loads(self.rfile.read(length))
         except (UnicodeDecodeError, json.JSONDecodeError, RecursionError): raise ValidationError("invalid or excessively nested JSON")
     def do_GET(self):
@@ -559,7 +560,10 @@ behavioral validation.
         self.send_response(200);self.send_header("Content-Type",content_type);self.send_header("Content-Disposition",f'attachment; filename="{name}"');self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_POST(self):
         if not self.valid_request(): return self.error_json(403,"foreign Host or Origin")
-        try: payload=self.body()
+        path=urlparse(self.path).path
+        # Allow the backup plus its JSON envelope, while keeping ordinary writes bounded.
+        limit = MAX_BACKUP_BYTES + MAX_BODY if path == "/api/workspace/restore" else MAX_BODY
+        try: payload=self.body(limit)
         except ValidationError as err: return self.error_json(400,str(err))
         path=urlparse(self.path).path
         try:

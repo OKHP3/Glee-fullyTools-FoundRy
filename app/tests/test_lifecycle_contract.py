@@ -7,6 +7,43 @@ from app.tests.test_server import ServiceTests
 
 
 class LifecycleContractTests(ServiceTests):
+    def test_legacy_record_save_defaults_metadata_without_resetting_evidence(self):
+        item = self.create(tests=[{"id": "case", "name": "Case", "expected": "Result",
+                                  "actual": "Observed", "status": "pass"}])
+        legacy = {key: value for key, value in item.items()
+                  if key not in {"owner", "version", "purpose"}}
+        with self.server.store.lock, self.server.store.conn:
+            self.server.store.conn.execute("UPDATE projects SET data=? WHERE id=?",
+                                           (json.dumps(legacy), item["id"]))
+        payload = self.project(revision=1, tests=item["tests"])
+        status, _, saved = self.request("PUT", f"/api/projects/{item['id']}", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(saved["revision"], 2)
+        self.assertEqual(saved["tests"], item["tests"])
+        for key in ("owner", "version", "purpose"):
+            self.assertEqual(saved[key], "")
+
+    def test_restore_accepts_backup_larger_than_regular_request_limit(self):
+        for index in range(12):
+            self.create(name=f"Project {index}", instructions="x" * 100_000)
+        status, _, backup = self.request("GET", "/api/workspace/backup")
+        self.assertEqual(status, 200)
+        self.assertGreater(len(json.dumps(backup).encode()), 1024 * 1024)
+        status, _, result = self.request("POST", "/api/workspace/restore",
+                                        {"backup": backup, "confirm": True, "mode": "replace"})
+        self.assertEqual(status, 200)
+        self.assertEqual(result["restored"], 12)
+        status, _, error = self.request("POST", "/api/projects", {"padding": "x" * (1024 * 1024)})
+        self.assertEqual(status, 400)
+        self.assertIn("1 MB", error["error"])
+
+    def test_restore_rejects_backup_above_ten_megabytes(self):
+        status, _, error = self.request("POST", "/api/workspace/restore",
+                                        {"backup": "x" * (10 * 1024 * 1024),
+                                         "confirm": True, "mode": "replace"})
+        self.assertEqual(status, 400)
+        self.assertIn("10 MB", error["error"])
+
     def test_metadata_duplicate_delete_and_package_inspection(self):
         original = self.create(
             kind="custom-gpt",

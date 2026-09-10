@@ -237,7 +237,7 @@
     if (!file || state.busy) return;
     setBusy(true);
     try {
-      if (file.size > 1024 * 1024) throw new Error('Choose a workspace backup smaller than 1 MB.');
+      if (file.size > 10 * 1024 * 1024) throw new Error('Choose a workspace backup no larger than 10 MB.');
       const backup = JSON.parse(await file.text());
       await api('/api/workspace/restore', {method:'POST', body:JSON.stringify({backup, confirm:true, mode:'replace'})});
       state.current = null; state.saved = null; state.dirty = false;

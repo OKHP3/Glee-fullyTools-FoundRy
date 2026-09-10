@@ -163,6 +163,29 @@ class CheckInventoryCatalogTests(unittest.TestCase):
             scaffold.default_inventory_path(),
         )
 
+    def test_output_modes_preserve_inventory_metadata(self):
+        outputs = []
+        for mode in ([], ["--quiet"], ["--json"]):
+            with self.subTest(mode=mode):
+                directory = self._make_repository()
+                self.addCleanup(shutil.rmtree, directory)
+                catalog = CATALOG_TEXT.replace("### Full Description:",
+                    "🌐 [Open](https://chatgpt.com/g/example-toolbox)\n"
+                    "**Parent Tool:** [Example Parent](https://chatgpt.com/g/example-parent)\n\n"
+                    "### Full Description:")
+                (directory / CHECKER.CATALOG_PATH).write_text(catalog, encoding="utf-8")
+                result = subprocess.run([sys.executable, str(directory / CHECKER.SCAFFOLD_PATH),
+                    "--tier", "toolbox", "--name", "Example Toolbox", "--id", "00",
+                    "--overwrite", *mode], cwd=directory, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                files = {name: (directory / name).read_text(encoding="utf-8") for name in
+                         ("AGENTS.md", "README.md", "manifest.yaml", "canon/registry-entry.md")}
+                self.assertIn("https://chatgpt.com/g/example-toolbox", files["manifest.yaml"])
+                outputs.append({name: content.replace(directory.name, "fixture-repository")
+                                for name, content in files.items()})
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(outputs[0], outputs[2])
+
     def test_explicit_inventory_path_overrides_catalog_default(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

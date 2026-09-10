@@ -1,5 +1,8 @@
+import json
 import importlib.util
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -62,6 +65,28 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         ledger.parent.mkdir(parents=True, exist_ok=True)
         ledger.write_text(text, encoding="utf-8")
 
+    def _run_scaffold(
+        self, directory: Path, *arguments: str
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(directory / CHECKER.SCAFFOLD_PATH),
+                "--tier",
+                "toolbox",
+                "--name",
+                "Example Toolbox",
+                "--id",
+                "00",
+                "--dry-run",
+                *arguments,
+            ],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def test_current_contract_passes(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)
@@ -103,6 +128,55 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
 
         self.assertEqual(explicit, scaffold.resolve_inventory_path(str(explicit)))
+
+    def test_missing_default_catalog_warns_with_recovery_action(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        (directory / CHECKER.CATALOG_PATH).unlink()
+
+        result = self._run_scaffold(directory)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("WARNING: canonical inventory catalog", result.stdout)
+        self.assertIn(CHECKER.CATALOG_PATH.as_posix(), result.stdout)
+        self.assertIn("catalog enrichment skipped", result.stdout)
+        self.assertIn("pass --inventory PATH", result.stdout)
+
+    def test_unreadable_explicit_catalog_warns_with_supplied_path(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        explicit = directory / "unreadable-catalog"
+        explicit.write_bytes(b"\xff")
+
+        result = self._run_scaffold(directory, "--inventory", str(explicit))
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn(f"inventory override '{explicit}'", result.stdout)
+        self.assertIn("file is not valid UTF-8", result.stdout)
+        self.assertIn("catalog enrichment skipped", result.stdout)
+
+    def test_quiet_mode_keeps_catalog_warning_suppressed(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        (directory / CHECKER.CATALOG_PATH).unlink()
+
+        result = self._run_scaffold(directory, "--quiet")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("WARNING:", result.stdout)
+        self.assertNotIn("WARNING:", result.stderr)
+        self.assertIn("DRY RUN COMPLETE", result.stdout)
+
+    def test_json_mode_keeps_catalog_warning_out_of_json_stdout(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        (directory / CHECKER.CATALOG_PATH).unlink()
+
+        result = self._run_scaffold(directory, "--json")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("WARNING:", result.stdout)
+        self.assertIsInstance(json.loads(result.stdout), dict)
 
     def test_missing_documented_reference_is_reported(self):
         directory = self._make_repository()

@@ -68,6 +68,46 @@ def resolve_inventory_path(explicit_path: str = "") -> Path:
         return Path(explicit_path)
     return default_inventory_path()
 
+
+def inventory_unavailable_reason(inventory_path: Path) -> str | None:
+    """Return a concise reason when an inventory cannot be read."""
+    try:
+        if not inventory_path.exists():
+            return "file does not exist"
+        if not inventory_path.is_file():
+            return "path is not a regular file"
+        inventory_path.read_text(encoding="utf-8-sig")
+    except UnicodeError:
+        return "file is not valid UTF-8"
+    except OSError as exc:
+        detail = getattr(exc, "strerror", None) or str(exc)
+        return f"cannot be read ({detail})"
+    return None
+
+
+def inventory_unavailable_warning(
+    inventory_path: Path,
+    reason: str,
+    *,
+    explicit: bool,
+    supplied_path: str = "",
+) -> str:
+    """Describe skipped catalog enrichment for human-readable CLI output."""
+    if explicit:
+        label = f"inventory override '{supplied_path}'"
+        action = (
+            "Check the supplied path or remove --inventory to use the canonical "
+            "catalog."
+        )
+    else:
+        label = f"canonical inventory catalog '{inventory_path}'"
+        action = "Restore the canonical catalog or pass --inventory PATH."
+    return (
+        f"WARNING: {label} is unavailable ({reason}); catalog enrichment skipped. "
+        f"{action}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Inventory data structures and parser
 # ---------------------------------------------------------------------------
@@ -1538,11 +1578,31 @@ def main():
     # Inventory pre-population: use the repository catalog unless overridden.
     inv: InventoryEntry | None = None
     inv_path = resolve_inventory_path(args.inventory_path)
-    inv = parse_inventory(
-        inv_path,
-        target_id=getattr(args, "id", "") or "",
-        target_name=args.name or "",
-    )
+    inventory_reason = inventory_unavailable_reason(inv_path)
+    if inventory_reason is None:
+        try:
+            inv = parse_inventory(
+                inv_path,
+                target_id=getattr(args, "id", "") or "",
+                target_name=args.name or "",
+            )
+        except (OSError, UnicodeError) as exc:
+            inventory_reason = (
+                getattr(exc, "strerror", None)
+                or str(exc)
+                or "read failed"
+            )
+
+    if inventory_reason and not args.quiet and not args.as_json:
+        print(
+            inventory_unavailable_warning(
+                inv_path,
+                inventory_reason,
+                explicit=bool(args.inventory_path),
+                supplied_path=args.inventory_path,
+            )
+        )
+
     if not args.quiet and not args.as_json:
         if inv:
             print(f"Inventory match: #{inv.entity_id} — {inv.name}")

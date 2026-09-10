@@ -51,11 +51,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - name: Install maintenance test dependencies
+        run: python -m pip install -r requirements.txt --constraint requirements-lock.txt
       - name: Check maintained Markdown links
         run: python scripts/check-markdown-links.py .
       - name: Check inventory catalog integration
         run: python scripts/check-inventory-catalog.py .
-      - name: Test Markdown link checker
+      - name: Test maintenance scripts
         run: python -m unittest discover -s scripts/tests -v
       - name: Exercise the application and exported packages
         run: python -m unittest discover -s app/tests -v

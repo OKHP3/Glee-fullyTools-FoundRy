@@ -139,7 +139,10 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         overview = (directory / "docs/overview.md").read_text(encoding="utf-8")
         functions = (directory / "docs/functions.md").read_text(encoding="utf-8")
 
-        self.assertIn("Example Toolbox", description)
+        # Imported descriptions retain catalog prose without adding the entity name.
+        self.assertTrue(description.startswith(
+            "An example toolbox used by the regression check.\n"
+        ))
         self.assertIn("Example Toolbox", instructions)
         self.assertIn("Example Toolbox", overview)
         self.assertIn("Example Toolbox", functions)

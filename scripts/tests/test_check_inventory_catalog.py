@@ -108,6 +108,47 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         self.assertEqual("00", entry.entity_id)
         self.assertEqual("Example Toolbox", entry.name)
 
+    def test_scaffold_preserves_bom_catalog_metadata_in_generated_files(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(directory / CHECKER.SCAFFOLD_PATH),
+                "--tier",
+                "toolbox",
+                "--name",
+                "Example Toolbox",
+                "--id",
+                "00",
+            ],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        description = (directory / "gpt/description.md").read_text(
+            encoding="utf-8"
+        )
+        instructions = (directory / "gpt/instructions.md").read_text(
+            encoding="utf-8"
+        )
+        overview = (directory / "docs/overview.md").read_text(encoding="utf-8")
+        functions = (directory / "docs/functions.md").read_text(encoding="utf-8")
+
+        self.assertIn("Example Toolbox", description)
+        self.assertIn("Example Toolbox", instructions)
+        self.assertIn("Example Toolbox", overview)
+        self.assertIn("Example Toolbox", functions)
+        self.assertIn("An example toolbox used by the regression check.", description)
+        self.assertIn(
+            "A complete example toolbox for exercising catalog imports.", overview
+        )
+        self.assertIn("Perform the example action", functions)
+
     def test_scaffold_defaults_to_catalog_in_its_repository(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

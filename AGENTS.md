@@ -269,6 +269,12 @@ be rechecked before relying on exact skill counts.
 
 ## Keeping this guide current
 
+The local candidate `okhp3-repo-settings` captures single-owner, AI-assisted
+GitHub configuration and composes with the universal FoundRy repo creator.
+See `docs/repo-settings-recap.md` and `docs/repo-settings-review/README.md` for
+the source decisions and analytical review limits. Its intended distribution
+home is `OKHP3/skillz` under `universal/`; local routing is not publication.
+
 Update this file when the repository's actual structure, authority chain, validation
 commands, or non-goals change. Base updates on files or executable checks. Label
 inferences and unknowns instead of presenting them as facts. Keep `CLAUDE.md` as a

@@ -31,6 +31,11 @@ above.
 provider roles, Git reconciliation, small handoff packets and completion evidence.
 It applies to this repository and preserves the existing runtime and canon boundaries.
 
+The [solo-owner repository settings recap](repo-settings-recap.md) records the
+GitHub configuration decisions and reusable workflow. Its
+[skill review record](repo-settings-review/README.md) separates candidate design
+evidence from live performance and publication claims.
+
 ## Application and research
 
 The [application guide](application/README.md), [implementation plan](application/implementation-plan.md)
@@ -113,3 +118,8 @@ docs/source-material/ <-- supplies evidence to --> docs/ and Phase 5 decision re
 - The `.docx` and `.pdf` files are source/export formats — the `.md` files are the canonical versions for this repo.
 - `source-material/` contains imported, non-canonical inputs and should not be treated as a source of authority without explicit adoption.
 - The `content-synthesis-for-glee-fully.docx` and `brand-origin-story.docx` are working documents that may be used to generate or refresh website content via the megaprompt (`prompts/glee-fully_tools_megaprompt.md`).
+
+## Repository settings v2
+
+See [v2 validation, review and continuation record](repo-settings-v2/README.md)
+for the portable helper and inactive Actions adapter candidate.

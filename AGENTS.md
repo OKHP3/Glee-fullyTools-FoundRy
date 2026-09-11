@@ -224,8 +224,9 @@ explicit request because the current dry run proposes 12 renames, including a
 The other audits are useful evidence, but they are not currently clean for this
 repository:
 
-- `manifest-audit.py` expects a top-level `brand_domain:` field, while the current
-  manifest stores it as `brand.domain`.
+- `manifest-audit.py` now checks the current `brand.domain` field.
+  `validate-manifest.py` uses `schemas/manifest.schema.yaml`; its nine regression
+  tests run in the always-reporting `Validate manifest` PR workflow.
 - `registry-audit.py` checks for `registry/index.yaml`, which is absent. The actual
   canonical registry is `canon/dataledger_registry_v3.md`.
 - `foundry-sync.py` checks for `_template/`, `registry/`, `schemas/`, and `.github/`

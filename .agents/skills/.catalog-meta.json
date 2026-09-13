@@ -1,10 +1,10 @@
 {
-  "last_indexed": "2026-08-06T04:33:41Z",
-  "skill_count": 52,
+  "last_indexed": "2026-09-11T01:31:54Z",
+  "skill_count": 60,
   "mode": "project",
   "surface": "project-skills",
   "indexed_by": "okhp3-skill-cataloger v1.7.0",
-  "repo": "Glee-fullyTools-FoundRy",
+  "repo": "glee-fullytools-foundry-settings-skill",
   "homepage": "https://overkillhill.com",
   "github": "https://github.com/OKHP3"
 }

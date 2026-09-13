@@ -3,7 +3,7 @@
   const $ = (s, p = document) => p.querySelector(s);
   const $$ = (s, p = document) => [...p.querySelectorAll(s)];
   const state = { bootstrap: { templates: [], skills: [], sources: [], universe: [] }, projects: [], current: null, dirty: false, library: 'active', pending: null, busy: false, validation: null, historyToken: 0, sourceToken: 0 };
-  const fields = ['name','kind','description','audience','inputs','outputs','constraints','instructions'];
+  const fields = ['name','kind','owner','version','purpose','description','audience','inputs','outputs','constraints','instructions'];
   const kinds = { 'custom-gpt':'Custom GPT', 'agent-skill':'Agent Skill', workflow:'Workflow', 'web-tool':'Web tool' };
   const api = async (path, options = {}) => {
     const opts = { headers: { Accept: 'application/json', ...(options.headers || {}) }, ...options };
@@ -28,6 +28,8 @@
   function invalidateReview() {
     state.validation = null;
     $('#validation-result').innerHTML = '<p>Check readiness for this saved revision. Earlier results are no longer shown.</p>';
+    $('#package-inspection').hidden = true;
+    $('#package-inspection').replaceChildren();
   }
   function showSaved(project) {
     state.current = project;
@@ -36,6 +38,7 @@
     state.sourceToken++;
     $('#source-viewer').hidden = true;
     $('#save-button').textContent = 'Save draft';
+    $('#package-inspection').hidden = true;
     invalidateReview();
     renderCurrent();
     renderLibrary();
@@ -145,6 +148,35 @@
     } catch (error) { status(error.message, true); }
     finally { setBusy(false); }
   }
+  async function duplicateProject() {
+    if (state.busy || !state.current) return;
+    if (state.dirty && !(await save())) return;
+    setBusy(true);
+    try {
+      const project = await (await api(`/api/projects/${state.current.id}/duplicate`, {method:'POST', body:JSON.stringify({revision: state.current.revision})})).json();
+      showSaved(project);
+      status('Duplicated as a fresh draft. Its acceptance evidence needs a new test run.');
+      await refreshAfterSave();
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  function requestDelete() {
+    if (state.busy || !state.current) return;
+    $('#delete-dialog').showModal();
+  }
+  async function deleteProject() {
+    if (state.busy || !state.current) return;
+    const id = state.current.id, revision = state.current.revision;
+    setBusy(true);
+    try {
+      await api(`/api/projects/${id}`, {method:'DELETE', body:JSON.stringify({confirm:true, revision})});
+      state.current = null; state.saved = null; state.dirty = false;
+      $('#editor').hidden = true; $('#empty-state').hidden = false;
+      await refreshProjects();
+      status('Project deleted. Other local projects and backups were not changed.');
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
   async function validate() {
     if (state.busy || !state.current || (state.dirty && !(await save()))) return;
     setBusy(true);
@@ -153,6 +185,18 @@
       state.validation = data;
       $('#validation-result').innerHTML = `<p><strong>${data.readyForReview ? 'Ready for review' : 'Still shaping'}</strong> · ${esc(data.summary)}</p>${data.checks.map(c => `<div class="check ${esc(c.status)}"><span class="check-icon" aria-hidden="true">${c.status === 'pass' ? '✓' : c.status === 'fail' ? '×' : '!'}</span><div><strong>${esc(c.label)} · ${esc(c.status)}</strong><br><small>${esc(c.detail)}</small></div></div>`).join('')}`;
       status('Review checks reflect the saved revision and the evidence you recorded.');
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  async function inspectPackage() {
+    if (state.busy || !state.current || (state.dirty && !(await save()))) return;
+    setBusy(true);
+    try {
+      const data = await (await api(`/api/projects/${state.current.id}/package`)).json();
+      const wrap = $('#package-inspection');
+      wrap.innerHTML = `<div class="inspection-heading"><div><p class="eyebrow">Generated, not certified</p><h3>Package inspection</h3></div><p class="muted">${esc(data.files.length)} files · manifest v${esc(data.manifest.manifestVersion)} · ${data.manifest.readyForReview ? 'review checks pass' : 'review checks incomplete'}</p></div><p class="muted">These are the exact text files prepared for the ZIP export. Inspect them before downloading; generated structure does not prove behavior or publication readiness.</p>${data.files.map(file => `<details class="package-file"><summary><strong>${esc(file.name)}</strong><span>${esc(file.size)} bytes</span></summary><pre>${esc(file.content)}</pre></details>`).join('')}`;
+      wrap.hidden = false;
+      status('Package inspected from the saved revision. ZIP export uses the same files.');
     } catch (error) { status(error.message, true); }
     finally { setBusy(false); }
   }
@@ -169,6 +213,39 @@
       status(`${format.toUpperCase()} download prepared from the saved revision.`);
     } catch (error) { status(error.message, true); }
     finally { setBusy(false); }
+  }
+  async function backupWorkspace() {
+    if (state.busy || (state.dirty && !(await save()))) return;
+    setBusy(true);
+    try {
+      const response = await api('/api/workspace/backup');
+      const url = URL.createObjectURL(await response.blob()), link = document.createElement('a');
+      link.href = url; link.download = 'glee-fully-foundry-workspace.json'; document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      status('Workspace backup prepared from all saved local projects and revision trails.');
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  function importWorkspace(file) {
+    if (!file || state.busy) return;
+    state.pendingRestoreFile = file;
+    $('#restore-dialog').showModal();
+  }
+  async function restoreWorkspace() {
+    const file = state.pendingRestoreFile;
+    state.pendingRestoreFile = null;
+    if (!file || state.busy) return;
+    setBusy(true);
+    try {
+      if (file.size > 10 * 1024 * 1024) throw new Error('Choose a workspace backup no larger than 10 MB.');
+      const backup = JSON.parse(await file.text());
+      await api('/api/workspace/restore', {method:'POST', body:JSON.stringify({backup, confirm:true, mode:'replace'})});
+      state.current = null; state.saved = null; state.dirty = false;
+      $('#editor').hidden = true; $('#empty-state').hidden = false;
+      await refreshProjects();
+      status('Workspace restored after complete validation. Current projects and revision trails now match the backup.');
+    } catch (error) { status(error.message || 'The workspace backup is not valid.', true); }
+    finally { $('#restore-file').value = ''; setBusy(false); }
   }
   async function openSource(id) {
     const token = ++state.sourceToken, projectId = state.current?.id;
@@ -201,7 +278,23 @@
     finally { $('#import-file').value = ''; setBusy(false); }
   }
   function activatePanel(name) { $$('.editor-tab').forEach(b => { const active = b.dataset.panel === name; b.classList.toggle('active', active); if (active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }); $$('.panel').forEach(p => p.classList.toggle('active',p.id === `panel-${name}`)); }
-  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#archive-button').addEventListener('click',toggleArchive); $('#validate-button').addEventListener('click',validate); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>{ state.sourceToken++; $('#source-viewer').hidden=true; }); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;fn();}else state.pending=null;}); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
+  function applyTheme() {
+    let theme = 'light';
+    try { theme = localStorage.getItem('foundry-theme') === 'dark' ? 'dark' : 'light'; } catch (_) {}
+    document.documentElement.dataset.theme = theme;
+    const button = $('#theme-button');
+    button.textContent = theme === 'dark' ? 'Day mode' : 'Night mode';
+    button.setAttribute('aria-pressed', String(theme === 'dark'));
+  }
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('foundry-theme', next); } catch (_) {}
+    const button = $('#theme-button');
+    button.textContent = next === 'dark' ? 'Day mode' : 'Night mode';
+    button.setAttribute('aria-pressed', String(next === 'dark'));
+  }
+  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#backup-button').addEventListener('click',backupWorkspace); $('#restore-button').addEventListener('click',() => $('#restore-file').click()); $('#restore-file').addEventListener('change',e => importWorkspace(e.target.files[0])); $('#theme-button').addEventListener('click',toggleTheme); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#duplicate-button').addEventListener('click',duplicateProject); $('#archive-button').addEventListener('click',toggleArchive); $('#delete-button').addEventListener('click',requestDelete); $('#validate-button').addEventListener('click',validate); $('#inspect-button').addEventListener('click',inspectPackage); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>{ state.sourceToken++; $('#source-viewer').hidden=true; }); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;fn();}else state.pending=null;}); $('#delete-dialog').addEventListener('close',()=>{if($('#delete-dialog').returnValue==='delete')deleteProject();}); $('#restore-dialog').addEventListener('close',()=>{if($('#restore-dialog').returnValue==='restore')restoreWorkspace();else state.pendingRestoreFile=null;}); applyTheme(); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
     try { const [boot, projects] = await Promise.all([api('/api/bootstrap'),api('/api/projects')]); state.bootstrap = await boot.json(); state.projects = (await projects.json()).projects || []; setConnection(true); renderTemplates(); renderLibrary(); renderUniverse(); } catch(e) { setConnection(false); $('#empty-state').querySelector('p:last-of-type').textContent = 'The local service is not running yet. Start it, then refresh this workspace.'; status(e.message,true); }
   }
   init();

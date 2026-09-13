@@ -22,7 +22,14 @@ PLAYWRIGHT_CORE_PATH="/path/to/already-installed/playwright-core" \
 
 The runner selects a free loopback port, starts `python3 -m app.server` with a
 temporary SQLite directory, launches an already-installed Playwright-compatible
-Chrome-for-Testing binary, and removes the temporary database on completion.
+Chrome-for-Testing binary, and removes the temporary database on completion. Set
+`CHROME_BIN` when the environment provides Chromium separately from the
+Playwright driver, for example:
+
+```bash
+CHROME_BIN="/repl/tools/bin/chromium" \
+  FOUNDRY_SOURCE_SHA="$(git rev-parse HEAD)" node scripts/foundry-authoring-qa.mjs
+```
 Evidence screenshots and the exported synthetic JSON remain in a temporary
 directory printed as `EVIDENCE` for the duration of local review.
 

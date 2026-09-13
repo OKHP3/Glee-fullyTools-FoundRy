@@ -73,9 +73,11 @@ python3 .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py \
 ```
 
 `--check` discovers skills, reports fatal metadata errors and warnings, and in
-catalog mode confirms that the output README has both markers. It never writes
-the README, `FAMILY.md`, or `.catalog-meta.json`; it does not prove the generated
-catalog is current.
+catalog mode confirms that the output README has both markers and that every
+relative link in the generated catalog points to an existing path. Broken links
+report the catalog source, line, and destination. It never writes the README,
+`FAMILY.md`, or `.catalog-meta.json`; it does not prove the generated catalog is
+current.
 
 Resolve fatal errors before generation. A fatal error is a directory/frontmatter
 name mismatch, duplicate skill name, or missing description. A missing version is
@@ -103,6 +105,7 @@ python3 .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py \
 ```
 
 `--dry-run` validates and previews the generated block without writing any file.
+The generated catalog links are checked during this validation.
 It reports full-mode `FAMILY.md` creates/updates and any first-run family README
 that would be absorbed and deleted. A normal `--full` may delete a family
 `README.md` on first `FAMILY.md` creation; pass `--no-absorb-readme` to preserve

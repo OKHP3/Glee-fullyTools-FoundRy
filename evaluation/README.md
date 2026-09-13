@@ -79,9 +79,9 @@ file or pasted inline. The session will:
 
 After a PulseBook is completed:
 
-- **Evaluation result** → log summary in `canon/dataledger_registry_v3.md` on the entity's record
-- **Tone violations found** → log as `!DRIFT_EVENT` in `canon/dataledger_persona_v3.md`
-- **Open gaps** → promote incomplete stubs to `canon/dataledger_ideation_v3.md` for resolution
+- **Evaluation result** → log summary in `canon/dataledger-registry-v3.md` on the entity's record
+- **Tone violations found** → log as `!DRIFT_EVENT` in `canon/dataledger-persona-v3.md`
+- **Open gaps** → promote incomplete stubs to `canon/dataledger-ideation-v3.md` for resolution
 - **PME-ready confirmed** → entity is eligible for deployment in ChatGPT Builder
 
 ---
@@ -101,6 +101,6 @@ After a PulseBook is completed:
 ```
 evaluation/    <-- validates entities against --> canon/ (registry, persona, parameters)
 evaluation/    <-- triggered at end of       --> prompts/ (PROMPT05 Fusion Checkpoint)
-evaluation/    <-- produces input for        --> canon/dataledger_registry_v3.md
+evaluation/    <-- produces input for        --> canon/dataledger-registry-v3.md
 evaluation/    <-- used to populate          --> inventory/ (entity descriptions)
 ```

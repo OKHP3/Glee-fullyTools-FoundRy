@@ -4,15 +4,57 @@ Date: 2026-09-07. Scope: the new owner-local application and its exported packag
 Local environment: Python 3.14.5, Node 26.0.0 and the Codex Chromium browser.
 This is implementation evidence, not a certification of authored GPTs or skills.
 
+## Parity update, September 9, 2026
+
+The local workbench now carries the four target types through metadata capture,
+revisioned authoring, validation/evidence, package inspection, export, reopen,
+duplicate, archive/restore and confirmed delete. It also supports a complete
+workspace JSON backup with project history and an atomic, pre-validated restore.
+The generated ZIP contract includes `manifest.json`, README/specification,
+evaluation, Skillz provenance, build/handoff guidance and target-specific files.
+These files document limitations; they do not execute authored capabilities,
+certify behavior, grant publication permission or host a service.
+
+The current API suite passes with the lifecycle contract tests included. The
+browser acceptance runner was extended for package inspection, backup/restore,
+duplicate/archive/delete, themes and overflow checks. In this environment its
+Playwright driver was unavailable, so the runner reported **NOT RUN** and no
+browser proof is claimed for this update. The Python/API evidence remains valid.
+
+## Browser acceptance run, September 10, 2026
+
+The complete FoundRy authoring journey was run with `playwright-core` and the
+environment-provided Chromium binary at `/repl/tools/bin/chromium`:
+
+```text
+CHROME_BIN=/repl/tools/bin/chromium FOUNDRY_SOURCE_SHA=e9749ce19db31e6ffb2193cbaba7f9dc7cc8422b node scripts/foundry-authoring-qa.mjs
+PASS: browser authoring journey completed against http://127.0.0.1:41527/
+```
+
+The run used an isolated temporary SQLite data directory and retained its
+evidence directory at `/tmp/foundry-f09-evidence-k972b7/`. Its `result.json`
+records `PASS`, the tested source SHA, and the individual browser checks. The
+directory contains three desktop screenshots at 1280 × 900, the exported
+project JSON, the workspace backup JSON, and the result record.
+
+This is browser acceptance evidence, separate from the API and structural
+checks below. The journey completed authoring, package inspection, backup and
+restore, duplicate, archive and restore, confirmed delete, theme switching,
+desktop and 390px overflow checks, keyboard activation, export/import, reload
+persistence, and browser console health with no application console errors.
+
 ## Automated checks
 
-- `python3 -m unittest discover -s app/tests -v`: **15 passed**. Covers durable
-  SQLite records, revision conflicts, archive preservation, import identity and
-  evidence reset, malformed inputs, dependency cycles, request/source boundaries,
-  all four package kinds and stale acceptance-contract invalidation.
+- `python3 -m unittest discover -s app/tests -v`: **109 passed** in the current
+  checkout. Covers durable SQLite records, revision conflicts, archive
+  preservation, import/duplicate identity and evidence reset, workspace backup
+  and restore atomicity, malformed inputs, dependency cycles, request/source
+  boundaries, all four package kinds and stale acceptance-contract invalidation.
 - `python3 -m py_compile app/server.py`: passed.
 - `node --check app/static/app.js`: passed.
 - `git diff --check`: passed.
+- `python3 scripts/verify-foundry-backup.py`: passed, with two synthetic projects
+  and three preserved history entries.
 - Every newly referenced local guidance path was checked; all five allowlisted
   source documents returned nonempty content.
 - The universe contains exactly the seven owner-specified elements; only Skillz

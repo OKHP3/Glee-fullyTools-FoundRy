@@ -245,7 +245,7 @@ These require answers before consolidation architecture is finalized:
 | `assets/gleefully-brand.json` | Included verbatim in every Agent Skill package |
 | `pulsebook/pulsebook-v1-7.md` | Functional map used to identify cross-cutting patterns |
 | `canon/registry-entry.md` | Becomes the Agent Skill registry entry |
-| `inventory/inventory_of_toolbox_tools_and_tool-ettes.md` | Routing table source data |
+| `inventory/inventory-of-toolbox-tools-and-tool-ettes.md` | Routing table source data |
 
 ---
 

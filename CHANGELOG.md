@@ -8,18 +8,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- Populate `canon/dataledger_narrative_v3.md` with finalized narrative clauses
-- Populate `canon/dataledger_ideation_v3.md` with active idea seeds
-- Populate `canon/dataledger_archive_v3.md` with retired entities
-- Populate `canon/dataledger_processing_v3.md` as legacy scaffold if needed
-- Add child-repo registry to `canon/dataledger_registry_v3.md`
+- Populate `canon/dataledger-narrative-v3.md` with finalized narrative clauses
+- Populate `canon/dataledger-ideation-v3.md` with active idea seeds
+- Populate `canon/dataledger-archive-v3.md` with retired entities
+- Populate `canon/dataledger-processing-v3.md` as legacy scaffold if needed
+- Add child-repo registry to `canon/dataledger-registry-v3.md`
 
 ---
 
 ## [3.1.0] — 2025-09-14
 
 ### Added
-- `dataledger_registry_v3.md` v3.1.0 with expanded PME-ready entity set
+- `dataledger-registry-v3.md` v3.1.0 with expanded PME-ready entity set
 - `glee-fully-super-template-v1.5.md` — refined supertemplate iteration
 - `glee-fully-super-template-v1.2.md` — prior supertemplate iteration (archived in snapshot)
 - `🏆🔩-glee-fully-supertemplate-v1.0.md` — original supertemplate (archived in snapshot)
@@ -33,13 +33,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Canonical Data Ledger Governance Directive v3.0.1 (`GleeCoreDirective.v3.0.1.locked`)
-- `dataledger_persona_v3.md` with tone overlays and JoyWarden.Core persona
-- `dataledger_parameters_v3.md` with runtime flag schema
-- `dataledger_hydration_v3.md` with rehydration and cross-GPT handoff schema
-- `dataledger_system_v3.md` with PME/CME engine schemas
+- `dataledger-persona-v3.md` with tone overlays and JoyWarden.Core persona
+- `dataledger-parameters-v3.md` with runtime flag schema
+- `dataledger-hydration-v3.md` with rehydration and cross-GPT handoff schema
+- `dataledger-system-v3.md` with PME/CME engine schemas
 
 ### Changed
-- Deprioritized `dataledger_processing_v3.md` — legacy scaffolds only
+- Deprioritized `dataledger-processing-v3.md` — legacy scaffolds only
 - Hydration-first runtime control mandated; prompt-local memory disallowed
 
 ---

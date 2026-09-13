@@ -47,8 +47,8 @@ technical descriptions below remain source context, not proof of live operation.
 
 | File | Format | Purpose |
 |------|--------|---------|
-| [`gleefully_technical_overview.md`](gleefully_technical_overview.md) | Markdown | Primary technical reference — architecture, PromptChain lifecycle, tone overlays, role discipline, and cross-ecosystem compatibility |
-| [`gleefully_narrative_overview.md`](gleefully_narrative_overview.md) | Markdown | Brand philosophy and storytelling — the "why" behind Glee-fully, ecosystem metaphors, emotional design rationale |
+| [`gleefully-technical-overview.md`](gleefully-technical-overview.md) | Markdown | Primary technical reference — architecture, PromptChain lifecycle, tone overlays, role discipline, and cross-ecosystem compatibility |
+| [`gleefully-narrative-overview.md`](gleefully-narrative-overview.md) | Markdown | Brand philosophy and storytelling — the "why" behind Glee-fully, ecosystem metaphors, emotional design rationale |
 | [`structure-and-ordering-for-custom-gpt-instruction-blocks.md`](structure-and-ordering-for-custom-gpt-instruction-blocks.md) | Markdown | Reference for how to structure and order GPT instruction blocks when building new entities |
 | `gleefully-technical-overview.docx` | Word | Source document for the technical overview |
 | `gleefully-technical-overview.pdf` | PDF | Portable export of the technical overview |
@@ -63,7 +63,8 @@ technical descriptions below remain source context, not proof of live operation.
 
 ## Document Summaries
 
-### Technical Overview (`gleefully_technical_overview.md`)
+
+### Technical Overview (`gleefully-technical-overview.md`)
 
 The technical reference document. Covers:
 
@@ -78,7 +79,8 @@ The technical reference document. Covers:
 - **A Mermaid architecture diagram** of the full ecosystem
 - **Cross-ecosystem compatibility** with OverKill Hill P³ and The GPT Found-Ry
 
-### Narrative Overview (`gleefully_narrative_overview.md`)
+
+### Narrative Overview (`gleefully-narrative-overview.md`)
 
 The brand story and philosophical foundation. Covers:
 
@@ -113,11 +115,11 @@ docs/source-material/ <-- supplies evidence to --> docs/ and Phase 5 decision re
 
 ## Usage Notes
 
-- When onboarding a new AI agent to this repo, point them to `gleefully_technical_overview.md` first.
-- When a human needs to understand the ecosystem's purpose, start with `gleefully_narrative_overview.md`.
+- When onboarding a new AI agent to this repo, point them to `gleefully-technical-overview.md` first.
+- When a human needs to understand the ecosystem's purpose, start with `gleefully-narrative-overview.md`.
 - The `.docx` and `.pdf` files are source/export formats — the `.md` files are the canonical versions for this repo.
 - `source-material/` contains imported, non-canonical inputs and should not be treated as a source of authority without explicit adoption.
-- The `content-synthesis-for-glee-fully.docx` and `brand-origin-story.docx` are working documents that may be used to generate or refresh website content via the megaprompt (`prompts/glee-fully_tools_megaprompt.md`).
+- The `content-synthesis-for-glee-fully.docx` and `brand-origin-story.docx` are working documents that may be used to generate or refresh website content via the megaprompt (`prompts/glee-fully-tools-megaprompt.md`).
 
 ## Repository settings v2
 

@@ -17,6 +17,8 @@ Confirmed by `manifest.yaml`, `README.md`, and the directory layout:
   and ledgers with an owner-local Python/SQLite application under `app/`.
 - The application uses the Python standard library and static browser JavaScript.
   It has an application test suite and needs no package installation or build step.
+  The manifest validators are separate maintenance tooling with dependencies
+  declared in `requirements.txt`.
 - The public storefront and child repositories are external consumers of material
   produced here. `web-templates/` contains source assets only and must not be served
   from this workbench.
@@ -154,8 +156,8 @@ ideation -> registry / persona / parameters -> narrative -> archive
 ```
 
 `processing` is legacy and deprioritized. Runtime continuity belongs in
-`dataledger_hydration_v3.md`, not in prompt-local memory. Canonical outputs must
-carry a `!CLAUSE` identifier declared in `canon/dataledger_registry_v3.md`.
+`dataledger-hydration-v3.md`, not in prompt-local memory. Canonical outputs must
+carry a `!CLAUSE` identifier declared in `canon/dataledger-registry-v3.md`.
 
 The Builder-Ready PromptChain in `prompts/` describes the PROMPT00 through PROMPT05
 creation flow. The PulseBook rubric in `evaluation/` is the local evaluation
@@ -204,6 +206,8 @@ available, with their present limitations:
 git status --short --branch
 git diff --check
 python3 scripts/normalize_filenames.py . --recursive --ascii-only --include-dirs
+python3 -m pip install -r requirements.txt
+python3 scripts/validate-manifest.py
 python3 scripts/manifest-audit.py .
 python3 scripts/registry-audit.py .
 python3 scripts/foundry-sync.py
@@ -228,7 +232,7 @@ repository:
   `validate-manifest.py` uses `schemas/manifest.schema.yaml`; its nine regression
   tests run in the always-reporting `Validate manifest` PR workflow.
 - `registry-audit.py` checks for `registry/index.yaml`, which is absent. The actual
-  canonical registry is `canon/dataledger_registry_v3.md`.
+  canonical registry is `canon/dataledger-registry-v3.md`.
 - `foundry-sync.py` checks for `_template/`, `registry/`, `schemas/`, and `.github/`
   paths that are absent from this workbench. Its strict baseline appears to target a
   different FoundRy layout.

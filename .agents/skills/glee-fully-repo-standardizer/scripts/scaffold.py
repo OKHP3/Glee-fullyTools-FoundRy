@@ -22,7 +22,8 @@ Options:
     --inventory     Path to the canonical inventory file for auto-population.
                     Matches by --id or --name; pre-fills description, overview,
                     functions, and §1 of instructions from authoritative source.
-                    Example: --inventory /path/to/FoundRy/inventory/inventory_of_toolbox_tools_and_tool-ettes.md
+                    Defaults to the canonical catalog in this repository.
+                    Example: --inventory /path/to/FoundRy/inventory/inventory-of-toolbox-tools-and-tool-ettes.md
     --dry-run       Show what would be created without writing files
     --audit         Show missing files/folders in existing repo, do not write
     --overwrite     Overwrite existing files (default: skip existing)
@@ -42,6 +43,70 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 SCRIPT_VERSION = "1.1.0"
+CANONICAL_INVENTORY_PATH = Path(
+    "inventory/inventory-of-toolbox-tools-and-tool-ettes.md"
+)
+
+
+def default_inventory_path(script_path: Path | None = None) -> Path:
+    """Return the canonical catalog path owned by the scaffold repository.
+
+    The standardizer is nested four directories below the repository root:
+    ``.agents/skills/glee-fully-repo-standardizer/scripts``. Deriving the
+    default from the script location keeps it stable when the scaffold is run
+    from a child repository instead of requiring a caller-specific absolute
+    path.
+    """
+    script = (script_path or Path(__file__)).resolve()
+    repository_root = script.parents[4]
+    return repository_root / CANONICAL_INVENTORY_PATH
+
+
+def resolve_inventory_path(explicit_path: str = "") -> Path:
+    """Use an explicit inventory path, or the repository's canonical default."""
+    if explicit_path:
+        return Path(explicit_path)
+    return default_inventory_path()
+
+
+def inventory_unavailable_reason(inventory_path: Path) -> str | None:
+    """Return a concise reason when an inventory cannot be read."""
+    try:
+        if not inventory_path.exists():
+            return "file does not exist"
+        if not inventory_path.is_file():
+            return "path is not a regular file"
+        inventory_path.read_text(encoding="utf-8-sig")
+    except UnicodeError:
+        return "file is not valid UTF-8"
+    except OSError as exc:
+        detail = getattr(exc, "strerror", None) or str(exc)
+        return f"cannot be read ({detail})"
+    return None
+
+
+def inventory_unavailable_warning(
+    inventory_path: Path,
+    reason: str,
+    *,
+    explicit: bool,
+    supplied_path: str = "",
+) -> str:
+    """Describe skipped catalog enrichment for human-readable CLI output."""
+    if explicit:
+        label = f"inventory override '{supplied_path}'"
+        action = (
+            "Check the supplied path or remove --inventory to use the canonical "
+            "catalog."
+        )
+    else:
+        label = f"canonical inventory catalog '{inventory_path}'"
+        action = "Restore the canonical catalog or pass --inventory PATH."
+    return (
+        f"WARNING: {label} is unavailable ({reason}); catalog enrichment skipped. "
+        f"{action}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Inventory data structures and parser
@@ -75,12 +140,14 @@ def parse_inventory(
     Parse the canonical Glee-fully inventory file and return data for one entity.
     Matches by entity ID (e.g. '01a') or display name (e.g. 'Resume Builder').
 
-    Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md
+    Source: inventory/inventory-of-toolbox-tools-and-tool-ettes.md
     """
     if not inventory_path.exists():
         return None
 
-    text = inventory_path.read_text(encoding="utf-8")
+    # The canonical inventory is UTF-8 and may begin with a byte-order mark.
+    # Decode it without letting the BOM become part of the first heading.
+    text = inventory_path.read_text(encoding="utf-8-sig")
 
     # Match section headers: # TOOL-ETTE ...: #01a – Resume Builder
     header_re = re.compile(
@@ -422,7 +489,7 @@ OKHP3/Glee-fullyTools-FoundRy/canon/ > governance/ > GPT-local logic
 
 ### 4. No Prompt-Local Memory
 Runtime state must not be stored in GPT-local logic or prompt context.
-All continuity uses `canon/dataledger_hydration_v3.md` in the FoundRy.
+All continuity uses `canon/dataledger-hydration-v3.md` in the FoundRy.
 
 ### 5. Tone Default
 This entity uses **{tone}**. Threads without an explicit overlay default to
@@ -877,7 +944,7 @@ def build_gpt_description(args, inv: InventoryEntry | None = None) -> str:
         return f"""{inv.full_description}
 
 [← FROM INVENTORY — verify this is under 300 characters before deploying to Builder]
-[Source: inventory/inventory_of_toolbox_tools_and_tool-ettes.md]
+[Source: inventory/inventory-of-toolbox-tools-and-tool-ettes.md]
 """
     return f"""{name} — {placeholder("One punchy sentence describing what this GPT does. 300 characters MAX including this entity name. Count carefully.")}
 
@@ -1129,7 +1196,7 @@ def build_canon_registry_entry(args) -> str:
     return f"""# Canon Registry Entry — {name}
 
 > This file declares {name} in the Glee-fully canon system.
-> It is the entity's !CLAUSE block for `canon/dataledger_registry_v3.md`.
+> It is the entity's !CLAUSE block for `canon/dataledger-registry-v3.md`.
 > Copy the YAML block below into the FoundRy registry when this entity reaches 1.0.
 
 ---
@@ -1177,7 +1244,7 @@ Before copying this declaration to the FoundRy registry:
 - [ ] `pulsebook/pulsebook-v1-7.md` is filled and passes all checks
 - [ ] `manifest.yaml` has `lifecycle_status: active` and `pme_ready: true`
 - [ ] CanonSeal tag has been assigned and added above
-- [ ] Entry has been added to `canon/dataledger_registry_v3.md` in the FoundRy
+- [ ] Entry has been added to `canon/dataledger-registry-v3.md` in the FoundRy
 """
 
 
@@ -1472,9 +1539,10 @@ def main():
         dest="inventory_path",
         default="",
         help=(
-            "Path to the canonical inventory file for auto-population. "
+            "Path to the inventory file for auto-population "
+            "(default: canonical catalog in the scaffold repository). "
             "Example: /path/to/Glee-fullyTools-FoundRy/inventory/"
-            "inventory_of_toolbox_tools_and_tool-ettes.md"
+            "inventory-of-toolbox-tools-and-tool-ettes.md"
         ),
     )
 
@@ -1507,27 +1575,48 @@ def main():
     if not args.parent:
         args.parent = ""
 
-    # Inventory pre-population: parse if --inventory path is given
+    # Inventory pre-population: use the repository catalog unless overridden.
     inv: InventoryEntry | None = None
-    if args.inventory_path:
-        inv_path = Path(args.inventory_path)
-        inv = parse_inventory(
-            inv_path,
-            target_id=getattr(args, "id", "") or "",
-            target_name=args.name or "",
+    inv_path = resolve_inventory_path(args.inventory_path)
+    inventory_reason = inventory_unavailable_reason(inv_path)
+    if inventory_reason is None:
+        try:
+            inv = parse_inventory(
+                inv_path,
+                target_id=getattr(args, "id", "") or "",
+                target_name=args.name or "",
+            )
+        except (OSError, UnicodeError) as exc:
+            inventory_reason = (
+                getattr(exc, "strerror", None)
+                or str(exc)
+                or "read failed"
+            )
+
+    if inventory_reason and not args.quiet and not args.as_json:
+        print(
+            inventory_unavailable_warning(
+                inv_path,
+                inventory_reason,
+                explicit=bool(args.inventory_path),
+                supplied_path=args.inventory_path,
+            )
         )
-        if not args.quiet and not args.as_json:
-            if inv:
-                print(f"Inventory match: #{inv.entity_id} — {inv.name}")
-                print(f"  Pre-filling: description, overview, functions, instructions")
-                if inv.chatgpt_url and not args.chatgpt_url:
-                    args.chatgpt_url = inv.chatgpt_url
-                if inv.parent_name and not args.parent:
-                    args.parent = inv.parent_name
-                if inv.parent_url and not args.parent_url:
-                    args.parent_url = inv.parent_url
-            else:
-                print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
+
+    if inv:
+        if inv.chatgpt_url and not args.chatgpt_url:
+            args.chatgpt_url = inv.chatgpt_url
+        if inv.parent_name and not args.parent:
+            args.parent = inv.parent_name
+        if inv.parent_url and not args.parent_url:
+            args.parent_url = inv.parent_url
+
+    if not args.quiet and not args.as_json:
+        if inv:
+            print(f"Inventory match: #{inv.entity_id} — {inv.name}")
+            print(f"  Pre-filling: description, overview, functions, instructions")
+        elif args.inventory_path:
+            print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
 
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
                  quiet=args.quiet, as_json=args.as_json, inv=inv)

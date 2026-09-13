@@ -90,6 +90,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 # Windows consoles can default to cp1252, while catalog warnings intentionally
 # include Unicode status glyphs. Keep stdout/stderr portable for interactive use.
@@ -114,6 +115,8 @@ FAMILY_INVENTORY_END   = "<!-- FAMILY_INVENTORY_END -->"
 
 FAMILIES_TABLE_START = "<!-- FAMILIES_TABLE_START -->"
 FAMILIES_TABLE_END   = "<!-- FAMILIES_TABLE_END -->"
+
+MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\n]+)\)")
 
 
 def display_timestamp(value: datetime) -> str:
@@ -643,6 +646,52 @@ def inject_families_table(readme: Path, block: str) -> tuple[bool, str]:
 
 # ── Validation ────────────────────────────────────────────────────────────────
 
+def validate_catalog_links(readme: Path, content: str) -> list[str]:
+    """Return actionable errors for relative links in the generated catalog."""
+    start = content.find(START_MARKER)
+    end_marker = content.find(END_MARKER, start + len(START_MARKER))
+    if start == -1 or end_marker == -1:
+        return []
+
+    end = end_marker + len(END_MARKER)
+    catalog = content[start:end]
+    errors: list[str] = []
+    base = readme.parent.resolve()
+
+    for match in MARKDOWN_LINK_RE.finditer(catalog):
+        raw_destination = match.group(1).strip()
+        destination = raw_destination
+        if destination.startswith("<"):
+            closing = destination.find(">")
+            destination = destination[1:closing] if closing != -1 else destination[1:]
+        else:
+            destination = destination.split(maxsplit=1)[0]
+
+        parsed = urlsplit(destination)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+
+        target = (base / unquote(parsed.path)).resolve()
+        line = content.count("\n", 0, start + match.start()) + 1
+        source = readme.as_posix()
+        try:
+            target.relative_to(base)
+        except ValueError:
+            errors.append(
+                f"  ✗ {source}:{line}: generated catalog link "
+                f"{raw_destination!r} escapes catalog directory"
+            )
+            continue
+
+        if not target.exists():
+            errors.append(
+                f"  ✗ {source}:{line}: generated catalog link "
+                f"{raw_destination!r} targets missing path {parsed.path!r}"
+            )
+
+    return errors
+
+
 def validate(skills: list[dict]) -> tuple[list[str], list[str]]:
     """Returns (fatal_errors, warnings). Fatals block generation; warnings do not."""
     errors:   list[str] = []
@@ -931,6 +980,11 @@ def main() -> int:
             if START_MARKER not in c or END_MARKER not in c:
                 print("✗ README missing catalog markers.", file=sys.stderr)
                 return 1
+            link_errors = validate_catalog_links(output, c)
+            if link_errors:
+                print("\nCatalog link errors:", file=sys.stderr)
+                print("\n".join(link_errors), file=sys.stderr)
+                return 1
         print("✓ Check passed.")
         return 0
 
@@ -939,6 +993,11 @@ def main() -> int:
 
     # ── Dry run ──────────────────────────────────────────────────────────────
     if args.dry_run:
+        link_errors = validate_catalog_links(output, block)
+        if link_errors:
+            print("\nCatalog link errors:", file=sys.stderr)
+            print("\n".join(link_errors), file=sys.stderr)
+            return 1
         if args.full:
             exists = output.exists()
             print(f"[DRY RUN] Would write to: {output}"
@@ -977,6 +1036,12 @@ def main() -> int:
             changed, new_content = inject_strict(output, block)
     except (FileNotFoundError, ValueError) as exc:
         print(f"✗ {exc}", file=sys.stderr)
+        return 1
+
+    link_errors = validate_catalog_links(output, new_content)
+    if link_errors:
+        print("\nCatalog link errors:", file=sys.stderr)
+        print("\n".join(link_errors), file=sys.stderr)
         return 1
 
     if changed:

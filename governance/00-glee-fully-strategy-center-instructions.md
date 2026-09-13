@@ -1,38 +1,40 @@
+# 📘 Project Instructions — 00_Glee-fully_StrategyCenter
+
 ## 🔐 Canonical Data Ledger Governance Directive – `Glee‑fully Personalizable Tools`
 
 ### `!DIRECTIVE_UPDATE` – Version: `v3.0.1-Project`
 
-::CanonSeal[GleeCoreDirective.v3.0.1.locked]::
+\::CanonSeal::
 
-> **Applies to:** All *Projects* within the Glee‑fully Personalizable Tools ecosystem.  
-> **Authority:** Overrides GPT-local logic, tool drift, and legacy (v1/v2) ledger schema. Only the **nine `dataledger_*_v3.md`** files are authoritative.
+> **Applies to:** All *Projects* within the Glee‑fully Personalizable Tools ecosystem.
+> **Authority:** Overrides GPT-local logic, tool drift, and legacy (v1/v2) ledger schema. Only the \*\*nine \*\*\`\` files are authoritative.
 
 ---
 
 ### 🧬 CANONICAL PROJECT ENFORCEMENT – Routing, Suffixes, Lifecycle Discipline
 
-> ✳️ **Core Mandate:** Project-level logic must regulate how entities route clauses to their correct canonical ledger.  
-> 🌀 Ideas must flow through the clause lifecycle.  
-> 🔖 Tools, Functions, and Threads must be declared in `registry_v3.md`.  
-> 🎙️ Tone and overlay violations must log to `persona_v3.md`.  
-> 🧾 Output clauses must be signed with `!CLAUSE` tags.  
+> ✳️ **Core Mandate:** Project-level logic must regulate how entities route clauses to their correct canonical ledger.
+> 🌀 Ideas must flow through the clause lifecycle.
+> 🔖 Tools, Functions, and Threads must be declared in `registry_v3.md`.
+> 🎙️ Tone and overlay violations must log to `persona_v3.md`.
+> 🧾 Output clauses must be signed with `!CLAUSE` tags.
 > ❌ No project may rely on volatile memory or prompt-local storage.
 
 ---
 
 ## 📁 LEDGER SYSTEM – Canonical 9-File Schema
 
-| Ledger File                     | Purpose Summary                                                  |
-|--------------------------------|------------------------------------------------------------------|
-| `dataledger_narrative_v3.md`   | Final essays, storyworlds, documentation-grade narrative clauses |
-| `dataledger_archive_v3.md`     | Retired logic, sunset entities, drifted overlays                 |
-| `dataledger_ideation_v3.md`    | Idea seeds, raw stubs, tonal fragments                           |
-| `dataledger_processing_v3.md`  | 🔻 *Deprioritized*: legacy mid-run trails only                   |
-| `dataledger_registry_v3.md`    | Project-registered entities and version-tagged declarations      |
-| `dataledger_persona_v3.md`     | Voice archetypes, tone drift logs, overlay enforcements          |
-| `dataledger_parameters_v3.md`  | Runtime flags, execution toggles, suffix modes                   |
-| `dataledger_system_v3.md`      | PME/CME schemas, suffix compliance, lifecycle control             |
-| `dataledger_hydration_v3.md`   | Runtime snapshots, rehydration schemas, thread exports           |
+| Ledger File                   | Purpose Summary                                                  |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `dataledger-narrative-v3.md`  | Final essays, storyworlds, documentation-grade narrative clauses |
+| `dataledger-archive-v3.md`    | Retired logic, sunset entities, drifted overlays                 |
+| `dataledger-ideation-v3.md`   | Idea seeds, raw stubs, tonal fragments                           |
+| `dataledger-processing-v3.md` | 🔻 *Deprioritized*: legacy mid-run trails only                   |
+| `dataledger-registry-v3.md`   | Project-registered entities and version-tagged declarations      |
+| `dataledger-persona-v3.md`    | Voice archetypes, tone drift logs, overlay enforcements          |
+| `dataledger-parameters-v3.md` | Runtime flags, execution toggles, suffix modes                   |
+| `dataledger-system-v3.md`     | PME/CME schemas, suffix compliance, lifecycle control            |
+| `dataledger-hydration-v3.md`  | Runtime snapshots, rehydration schemas, thread exports           |
 
 > 🔐 Projects must never simulate runtime memory. All continuity flows through `hydration_v3.md`.
 
@@ -61,8 +63,8 @@ Definition: Only Tools, Tool‑ettes, Functions, and Function‑ettes may use th
 DeclaredBy: Glee‑fully Project Layer Directive
 ```
 
-✅ Valid: PromptTracer‑R, GiftHelper‑R (within OverKill Hill P³ or Found‑Rᵧ)  
-❌ Invalid: CanonDoc‑R, PersonaOverlay‑R (non-tools)  
+✅ Valid: PromptTracer‑R, GiftHelper‑R (within OverKill Hill P³ or Found‑Rᵧ)
+❌ Invalid: CanonDoc‑R, PersonaOverlay‑R (non-tools)
 🆓 Glee‑fully branded GPTs and Projects are **exempt** from `-R` and `-Rᵧ` suffix usage — these are **exclusive** to OverKill Hill P³ and The GPT Found‑Rᵧ.
 
 → Violators from non-exempt ecosystems must be retired to `archive_v3.md` using `!LEGACY_RETIRED`.
@@ -98,6 +100,7 @@ Definition: All outputs from any Project-controlled logic must include a `!CLAUS
 ```
 
 📝 Example:
+
 ```yaml
 !CLAUSE: !PME_READY
 ID: Toolette.CalendarTagger.1.2.0
@@ -116,19 +119,18 @@ ID: parameters_declare_only_in_ledger
 Definition: All behavior toggles must reside in `parameters_v3.md`.
 ```
 
-→ Project runtime modes, entropy settings, and suffix state logic must appear only in canonical YAML format.
-→ Prompt-embedded toggles = ❌ disallowed.
+→ Project runtime modes, entropy settings, and suffix state logic must appear only in canonical YAML format. → Prompt-embedded toggles = ❌ disallowed.
 
 ---
 
 ## 💾 RUNTIME PRESERVATION – Hydration Only
 
-Projects must delegate all runtime continuity to `dataledger_hydration_v3.md`.
+Projects must delegate all runtime continuity to `dataledger-hydration-v3.md`.
 
-- Thread context snapshots
-- Continuity scaffolds
-- PME/CME resumable structures
-- `@mention`-aware handoff schemas
+* Thread context snapshots
+* Continuity scaffolds
+* PME/CME resumable structures
+* `@mention`-aware handoff schemas
 
 > 🧃 `hydration_v3` is the runtime bloodstream — simulate nothing, preserve everything.
 
@@ -149,8 +151,8 @@ All new Projects must:
 
 ## ⚰️ PROJECT SUNSET & DEPRECATION LOGIC
 
-* `archive_v3.md` → for clause or entity retirement (`!LEGACY_RETIRED`)  
-* `persona_v3.md` → for tone violations (`!DRIFT_EVENT`)  
+* `archive_v3.md` → for clause or entity retirement (`!LEGACY_RETIRED`)
+* `persona_v3.md` → for tone violations (`!DRIFT_EVENT`)
 * `hydration_v3.md` → for frozen state capture and reinjection
 
 ---

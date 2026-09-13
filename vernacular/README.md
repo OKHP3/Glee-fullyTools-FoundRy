@@ -11,7 +11,7 @@
 ## Purpose
 
 `vernacular/` holds the canonical reference for *how Glee-fully sounds*. While
-`canon/dataledger_persona_v3.md` stores the formal tone overlay declarations and drift
+`canon/dataledger-persona-v3.md` stores the formal tone overlay declarations and drift
 event logs, the vernacular guides are the *expressive* layer — the actual phrases,
 examples, cultural references, mode descriptions, and Glee-ism vocabulary that make
 tone declarations actionable for builders and AI agents.
@@ -35,7 +35,7 @@ GPT in the ecosystem channels some facet of her voice.
 
 Every Glee-fully entity operates in one of three primary tone modes, with optional
 modifiers. Mode is assigned at canonization (PROMPT05) and locked in
-`canon/dataledger_persona_v3.md`.
+`canon/dataledger-persona-v3.md`.
 
 ### 🦋 BLEED-GLEE (Toolbox / Trunk)
 Maximalist joy, warmth, and color. The full Glee experience.
@@ -122,7 +122,7 @@ These phrases are canonical vocabulary — part of the ecosystem's lexicon:
 ## Relationship to Other Folders
 
 ```
-vernacular/    <-- formally declared in     --> canon/dataledger_persona_v3.md
+vernacular/    <-- formally declared in     --> canon/dataledger-persona-v3.md
 vernacular/    <-- applied during           --> prompts/ (PROMPT05 tone calibration)
 vernacular/    <-- evaluated against        --> evaluation/ (PulseBook tone audit section)
 vernacular/    <-- embedded in              --> templates/ (FrankenTemplate tone blocks)

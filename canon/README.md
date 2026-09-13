@@ -26,48 +26,48 @@ content is ever removed, only expanded or retired.
 
 | File | Role | Status | Priority |
 |------|------|--------|----------|
-| [`dataledger_registry_v3.md`](dataledger_registry_v3.md) | Master entity registry — all registered Tools, Tool-ettes, Functions, Function-ettes with IDs, ChatGPT links, descriptions, and lifecycle tags | Active | Critical |
-| [`dataledger_persona_v3.md`](dataledger_persona_v3.md) | Voice archetypes, tone overlay definitions, persona drift event logs | Active | Critical |
-| [`dataledger_parameters_v3.md`](dataledger_parameters_v3.md) | Runtime flags, execution toggles, BLEED GLEE / Calm mode switches, suffix law rules | Active | Critical |
-| [`dataledger_system_v3.md`](dataledger_system_v3.md) | PME/CME engine schemas, suffix compliance rules, lifecycle control logic | Active | Critical |
-| [`dataledger_hydration_v3.md`](dataledger_hydration_v3.md) | Runtime snapshots, rehydration schemas, cross-GPT session handoff | Active | Critical |
-| [`dataledger_narrative_v3.md`](dataledger_narrative_v3.md) | Finalized brand essays, storyworlds, documentation-grade narrative clauses | Active — seeded | High |
-| [`dataledger_ideation_v3.md`](dataledger_ideation_v3.md) | Raw idea seeds, candidate Tool-ette stubs, tonal fragments awaiting promotion | Active — seeded | Medium |
-| [`dataledger_archive_v3.md`](dataledger_archive_v3.md) | Retired logic, sunset entities, deprecated overlays — preserved, never deleted | Active — seeded | Reference |
-| [`dataledger_processing_v3.md`](dataledger_processing_v3.md) | Legacy mid-run scaffolds — deprioritized as of v3.0.1 | Legacy | Low |
+| [`dataledger-registry-v3.md`](dataledger-registry-v3.md) | Master entity registry — all registered Tools, Tool-ettes, Functions, Function-ettes with IDs, ChatGPT links, descriptions, and lifecycle tags | Active | Critical |
+| [`dataledger-persona-v3.md`](dataledger-persona-v3.md) | Voice archetypes, tone overlay definitions, persona drift event logs | Active | Critical |
+| [`dataledger-parameters-v3.md`](dataledger-parameters-v3.md) | Runtime flags, execution toggles, BLEED GLEE / Calm mode switches, suffix law rules | Active | Critical |
+| [`dataledger-system-v3.md`](dataledger-system-v3.md) | PME/CME engine schemas, suffix compliance rules, lifecycle control logic | Active | Critical |
+| [`dataledger-hydration-v3.md`](dataledger-hydration-v3.md) | Runtime snapshots, rehydration schemas, cross-GPT session handoff | Active | Critical |
+| [`dataledger-narrative-v3.md`](dataledger-narrative-v3.md) | Finalized brand essays, storyworlds, documentation-grade narrative clauses | Active — seeded | High |
+| [`dataledger-ideation-v3.md`](dataledger-ideation-v3.md) | Raw idea seeds, candidate Tool-ette stubs, tonal fragments awaiting promotion | Active — seeded | Medium |
+| [`dataledger-archive-v3.md`](dataledger-archive-v3.md) | Retired logic, sunset entities, deprecated overlays — preserved, never deleted | Active — seeded | Reference |
+| [`dataledger-processing-v3.md`](dataledger-processing-v3.md) | Legacy mid-run scaffolds — deprioritized as of v3.0.1 | Legacy | Low |
 
 ---
 
 ## Clause Lifecycle
 
 Canonical clauses follow a strict one-way lifecycle. Rehydration from
-`dataledger_hydration_v3.md` is the only allowed re-entry point.
+`dataledger-hydration-v3.md` is the only allowed re-entry point.
 
 ```
-dataledger_ideation_v3.md        (spark — raw ideas and seeds)
+dataledger-ideation-v3.md        (spark — raw ideas and seeds)
         |
         v
-dataledger_registry_v3.md        (register the entity with ID + metadata)
-dataledger_persona_v3.md         (lock tone overlay and persona assignment)
-dataledger_parameters_v3.md      (declare runtime flags and toggles)
+dataledger-registry-v3.md        (register the entity with ID + metadata)
+dataledger-persona-v3.md         (lock tone overlay and persona assignment)
+dataledger-parameters-v3.md      (declare runtime flags and toggles)
         |
         v
-dataledger_narrative_v3.md       (finalized canonical clauses and brand copy)
+dataledger-narrative-v3.md       (finalized canonical clauses and brand copy)
         |
         v
-dataledger_archive_v3.md         (retired / deprecated — !LEGACY_RETIRED)
+dataledger-archive-v3.md         (retired / deprecated — !LEGACY_RETIRED)
 ```
 
 Rehydration path:
 ```
-dataledger_hydration_v3.md  -->  dataledger_ideation_v3.md  (with !CLAUSE update)
+dataledger-hydration-v3.md  -->  dataledger-ideation-v3.md  (with !CLAUSE update)
 ```
 
 ---
 
 ## How Entries Are Structured
 
-Each registered entity in `dataledger_registry_v3.md` contains:
+Each registered entity in `dataledger-registry-v3.md` contains:
 
 - **Manifest title** and suite context
 - **Builder description** (≤300 chars — ready to paste into ChatGPT Builder)
@@ -92,11 +92,11 @@ DeclaredBy: Glee-fully FoundRy
 
 | Rule | Detail |
 |------|--------|
-| **Growth-Only** | Never delete content. Retire to `dataledger_archive_v3.md` with `!LEGACY_RETIRED` |
+| **Growth-Only** | Never delete content. Retire to `dataledger-archive-v3.md` with `!LEGACY_RETIRED` |
 | **CanonSeal Integrity** | `::CanonSeal[...]::` tags must not be removed or altered under any circumstance |
 | **Override Authority** | These files override GPT-local logic, prompt context, and all legacy (v1/v2) schema |
-| **No Prompt-Local Memory** | All runtime continuity must flow through `dataledger_hydration_v3.md` |
-| **Output Signatures** | All canonical outputs must carry a `!CLAUSE` ID declared in `dataledger_registry_v3.md` |
+| **No Prompt-Local Memory** | All runtime continuity must flow through `dataledger-hydration-v3.md` |
+| **Output Signatures** | All canonical outputs must carry a `!CLAUSE` ID declared in `dataledger-registry-v3.md` |
 | **Tone Fallback** | Untagged threads default to `GleeTone.A1` and log via `!DRIFT_EVENT` in persona ledger |
 | **Conflict Resolution** | When ledgers conflict, priority: registry > persona > parameters > system |
 
@@ -117,7 +117,7 @@ DeclaredBy: Glee-fully FoundRy
 ## Relationship to Other Folders
 
 ```
-canon/         <-- governed by --> governance/glee-fully_project_governance_v3-0-1.md
+canon/         <-- governed by --> governance/glee-fully-project-governance-v3-0-1.md
 canon/         <-- validated by --> evaluation/ (PulseBook rubrics)
 canon/         <-- populated by --> prompts/ (PromptChain creates registry entries)
 canon/         <-- described in --> docs/ (technical + narrative overviews)

@@ -20,17 +20,21 @@ MAX_BODY = 1024 * 1024
 MAX_TEXT = 100_000
 MAX_ITEMS = 1_000
 MAX_DEPENDENCIES = 100
+MAX_BACKUP_PROJECTS = 1_000
+MAX_BACKUP_BYTES = 10 * 1024 * 1024
 KINDS = {"custom-gpt", "agent-skill", "workflow", "web-tool"}
 STATUSES = {"draft", "archived"}
 TEST_STATUSES = {"not-run", "pass", "fail"}
-EDITABLE = {"name", "kind", "description", "audience", "inputs", "outputs",
-            "constraints", "instructions", "components", "tests", "skillIds", "status"}
+EDITABLE = {"name", "kind", "owner", "version", "purpose", "description",
+            "audience", "inputs", "outputs", "constraints", "instructions",
+            "components", "tests", "skillIds", "status"}
 TEXT_FIELDS = EDITABLE - {"components", "tests", "skillIds", "kind", "status"}
 SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+UUID_ID = re.compile(r"^[0-9a-f-]{36}$")
 
 SOURCES = {
     "promptchain": ("Builder-Ready PromptChain", "prompts/glee-fully-builder-ready-promptchain-v2-0.md"),
-    "gpt-scaffold": ("Custom GPT scaffold", "prompts/custom_gpt_scaffold.md"),
+    "gpt-scaffold": ("Custom GPT scaffold", "prompts/custom-gpt-scaffold.md"),
     "pulsebook": ("GPT PulseBook v1.7", "evaluation/gpt-pulsebook-evaluation-v1-7.md"),
     "vernacular": ("Glee-fully vernacular", "vernacular/glee-fully-vernacular-lite.md"),
     "canon-overview": ("Canon overview", "canon/README.md"),
@@ -64,7 +68,8 @@ def template(kind: str, name: str, description: str) -> dict:
     component_name, purpose, instructions = guidance[kind]
     return {"id": kind, "name": name, "description": description,
             "project": {"name": "Untitled " + name, "kind": kind,
-                        "description": "", "audience": "", "inputs": "", "outputs": "",
+                        "owner": "", "version": "0.1.0", "purpose": description,
+                        "description": description, "audience": "", "inputs": "", "outputs": "",
                         "constraints": "Working draft. Preserve source provenance and label unknowns. Evaluate before publication.",
                         "instructions": instructions,
                         "components": [{"id": "core", "name": component_name, "purpose": purpose, "dependsOn": []}],
@@ -154,6 +159,65 @@ def validate_project(payload: object, *, creating: bool = False, importing: bool
     return result
 
 
+def editable_defaults(payload: dict) -> dict:
+    """Make direct Store callers as tolerant as the HTTP schema."""
+    return {key: payload.get(key, "" if key in TEXT_FIELDS else []) for key in EDITABLE}
+
+
+def validate_workspace_backup(payload: object) -> tuple[list[dict], dict[str, list[dict]]]:
+    if not isinstance(payload, dict):
+        raise ValidationError("backup must be an object")
+    if set(payload) != {"format", "version", "projects", "history"}:
+        raise ValidationError("backup must contain format, version, projects, history only")
+    if payload["format"] != "glee-fully-foundry-workspace" or payload["version"] != 1:
+        raise ValidationError("unsupported workspace backup version")
+    projects = payload["projects"]
+    histories = payload["history"]
+    if not isinstance(projects, list) or len(projects) > MAX_BACKUP_PROJECTS:
+        raise ValidationError("backup projects must be a list with at most 1000 entries")
+    if not isinstance(histories, dict):
+        raise ValidationError("backup history must be an object")
+    if len(histories) != len(projects):
+        raise ValidationError("backup history must contain one entry per project")
+
+    validated = []
+    seen = set()
+    history_by_project = {}
+    for source in projects:
+        if not isinstance(source, dict):
+            raise ValidationError("backup project must be an object")
+        project = validate_project(source, importing=True)
+        project_id = source.get("id")
+        revision = source.get("revision")
+        if not isinstance(project_id, str) or not UUID_ID.fullmatch(project_id) or project_id in seen:
+            raise ValidationError("backup project IDs must be unique UUIDs")
+        if type(revision) is not int or revision < 1:
+            raise ValidationError("backup project revision must be a positive integer")
+        if not isinstance(source.get("schemaVersion"), int) or source["schemaVersion"] != 1:
+            raise ValidationError("backup project schemaVersion must be 1")
+        if not isinstance(source.get("createdAt"), str) or not isinstance(source.get("updatedAt"), str):
+            raise ValidationError("backup project timestamps must be text")
+        project = {**project, "id": project_id, "schemaVersion": 1,
+                   "revision": revision, "createdAt": source["createdAt"],
+                   "updatedAt": source["updatedAt"]}
+        entries = histories.get(project_id)
+        if not isinstance(entries, list) or len(entries) != revision:
+            raise ValidationError(f"backup history is incomplete for project {project_id}")
+        checked_entries = []
+        for index, entry in enumerate(entries, start=1):
+            if not isinstance(entry, dict) or set(entry) != {"revision", "at", "action", "summary"}:
+                raise ValidationError("backup history entries have an invalid shape")
+            if entry["revision"] != index or not isinstance(entry["at"], str) or not isinstance(entry["action"], str) or not isinstance(entry["summary"], str):
+                raise ValidationError(f"backup history is not contiguous for project {project_id}")
+            checked_entries.append(dict(entry))
+        seen.add(project_id)
+        validated.append(project)
+        history_by_project[project_id] = checked_entries
+    if set(histories) != seen:
+        raise ValidationError("backup history contains an unknown project")
+    return validated, history_by_project
+
+
 class Store:
     def __init__(self, directory: Path):
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -171,6 +235,7 @@ class Store:
             row = self.conn.execute("SELECT data FROM projects WHERE id=?", (project_id,)).fetchone()
         return json.loads(row["data"]) if row else None
     def create(self, editable, action="created", summary=None):
+        editable = editable_defaults(editable)
         stamp = now(); project = {"id": str(uuid.uuid4()), "schemaVersion": 1, "revision": 1, **editable, "createdAt": stamp, "updatedAt": stamp}
         self._insert(project, action, summary or "Project created")
         return project
@@ -183,8 +248,10 @@ class Store:
             row = self.conn.execute("SELECT data,revision FROM projects WHERE id=?", (project_id,)).fetchone()
             if not row: return None
             if row["revision"] != revision: raise RuntimeError("revision conflict")
+            editable = editable_defaults(editable)
             old = json.loads(row["data"])
-            material = {"kind", "description", "audience", "inputs", "outputs", "constraints", "instructions", "components", "skillIds"}
+            old = {**old, **editable_defaults(old)}
+            material = {"kind", "owner", "version", "purpose", "description", "audience", "inputs", "outputs", "constraints", "instructions", "components", "skillIds"}
             test_contract = lambda cases: [(c["id"], c["name"], c["expected"]) for c in cases]
             if (any(old[field] != editable[field] for field in material) or
                     test_contract(old["tests"]) != test_contract(editable["tests"])):
@@ -193,6 +260,57 @@ class Store:
             self.conn.execute("UPDATE projects SET revision=?,data=? WHERE id=?", (project["revision"], json.dumps(project, separators=(",", ":")), project_id))
             self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)", (project_id, project["revision"], project["updatedAt"], "updated", "Project updated"))
         return project
+    def duplicate(self, project_id, revision):
+        with self.lock, self.conn:
+            row = self.conn.execute("SELECT data,revision FROM projects WHERE id=?", (project_id,)).fetchone()
+            if not row: return None
+            if row["revision"] != revision: raise RuntimeError("revision conflict")
+            source = json.loads(row["data"])
+            stamp = now()
+            project = {**source, "id": str(uuid.uuid4()), "revision": 1,
+                       "status": "draft", "tests": [{**case, "actual": "", "status": "not-run"} for case in source["tests"]],
+                       "createdAt": stamp, "updatedAt": stamp}
+            self._insert_locked(project, "duplicated", f"Duplicated from {source['id']} with fresh identity and reset evidence")
+        return project
+    def _insert_locked(self, project, action, summary):
+        self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)",
+                          (project["id"], project["revision"], json.dumps(project, separators=(",", ":"))))
+        self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)",
+                          (project["id"], project["revision"], project["updatedAt"], action, summary))
+    def delete(self, project_id, revision):
+        with self.lock, self.conn:
+            row = self.conn.execute("SELECT revision FROM projects WHERE id=?", (project_id,)).fetchone()
+            if not row: return None
+            if row["revision"] != revision: raise RuntimeError("revision conflict")
+            self.conn.execute("DELETE FROM history WHERE project_id=?", (project_id,))
+            self.conn.execute("DELETE FROM projects WHERE id=?", (project_id,))
+        return True
+    def backup(self):
+        with self.lock:
+            projects = [json.loads(row["data"]) for row in self.conn.execute("SELECT data FROM projects ORDER BY id")]
+            history = {}
+            for project in projects:
+                history[project["id"]] = [
+                    dict(row) for row in self.conn.execute(
+                        "SELECT revision,at,action,summary FROM history WHERE project_id=? ORDER BY revision",
+                        (project["id"],)
+                    )
+                ]
+        return {"format": "glee-fully-foundry-workspace", "version": 1,
+                "projects": projects, "history": history}
+    def restore(self, projects, histories):
+        with self.lock, self.conn:
+            self.conn.execute("DELETE FROM history")
+            self.conn.execute("DELETE FROM projects")
+            for project in projects:
+                self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)",
+                                  (project["id"], project["revision"], json.dumps(project, separators=(",", ":"))))
+                for entry in histories[project["id"]]:
+                    self.conn.execute(
+                        "INSERT INTO history(project_id,revision,at,action,summary) VALUES(?,?,?,?,?)",
+                        (project["id"], entry["revision"], entry["at"], entry["action"], entry["summary"])
+                    )
+        return len(projects)
     def history(self, project_id):
         with self.lock: rows = self.conn.execute("SELECT revision,at,action,summary FROM history WHERE project_id=? ORDER BY revision", (project_id,)).fetchall()
         return [dict(r) for r in rows]
@@ -201,12 +319,16 @@ class Store:
 def readiness(project: dict, skills: list[dict]) -> dict:
     checks = []
     def required(id, label, value): checks.append({"id": id, "label": label, "status": "pass" if value.strip() else "fail", "detail": "Recorded." if value.strip() else "Add this before review."})
-    required("purpose", "Purpose", project["description"]); required("audience", "Audience", project["audience"])
-    required("inputs", "Inputs", project["inputs"]); required("outputs", "Outputs", project["outputs"]); required("constraints", "Constraints", project["constraints"]); required("instructions", "Instructions", project["instructions"])
-    checks.append({"id":"components", "label":"Components and dependencies", "status":"pass" if project["components"] else "fail", "detail":"Recorded." if project["components"] else "Add at least one component before review."})
-    evidence_ok = bool(project["tests"]) and all(x["status"] == "pass" and x["actual"].strip() for x in project["tests"])
+    purpose = project.get("purpose") or project.get("description", "")
+    required("purpose", "Purpose", purpose); required("audience", "Audience", project.get("audience", ""))
+    required("inputs", "Inputs", project.get("inputs", "")); required("outputs", "Outputs", project.get("outputs", ""))
+    required("constraints", "Constraints", project.get("constraints", "")); required("instructions", "Instructions", project.get("instructions", ""))
+    components = project.get("components", [])
+    tests = project.get("tests", [])
+    checks.append({"id":"components", "label":"Components and dependencies", "status":"pass" if components else "fail", "detail":"Recorded." if components else "Add at least one component before review."})
+    evidence_ok = bool(tests) and all(x["status"] == "pass" and x["actual"].strip() for x in tests)
     checks.append({"id":"evidence", "label":"Acceptance evidence", "status":"pass" if evidence_ok else "fail", "detail":"All acceptance cases have observed passing evidence." if evidence_ok else "Add acceptance cases and record passing actual evidence for every case."})
-    ids = {x.get("id") for x in skills}; attached = project["skillIds"]
+    ids = {x.get("id") for x in skills}; attached = project.get("skillIds", [])
     missing = sorted(set(attached) - ids)
     skill_detail = ("Unavailable skill references: " + ", ".join(missing) if missing else
                     "Pinned skill references recorded." if attached else "No skills attached; this is optional.")
@@ -222,7 +344,14 @@ def markdown_text(value: str) -> str:
 
 def markdown(project: dict) -> str:
     esc = markdown_text
-    lines = [f"# {esc(project['name'])}", "", f"Status: `{project['status']}`", "", "## Description", esc(project["description"]), "", "## Audience", esc(project["audience"]), "", "## Inputs", esc(project["inputs"]), "", "## Outputs", esc(project["outputs"]), "", "## Constraints", esc(project["constraints"]), "", "## Instructions", esc(project["instructions"]), "", "## Components"]
+    lines = [f"# {esc(project['name'])}", "", f"Status: `{project['status']}`",
+             f"Version: `{esc(project.get('version', '')) or 'unspecified'}`",
+             f"Owner: {esc(project.get('owner', '')) or 'unspecified'}", "",
+             "## Purpose", esc(project.get("purpose") or project.get("description", "")),
+             "", "## Description", esc(project["description"]), "", "## Audience", esc(project["audience"]),
+             "", "## Inputs", esc(project["inputs"]), "", "## Outputs", esc(project["outputs"]),
+             "", "## Constraints", esc(project["constraints"]), "", "## Instructions", esc(project["instructions"]),
+             "", "## Components"]
     lines += [f"- **{esc(c['name'])}**: {esc(c['purpose'])}" + (" (depends on: " + ", ".join(esc(x) for x in c["dependsOn"]) + ")" if c["dependsOn"] else "") for c in project["components"]] or ["No components recorded."]
     lines += ["", "## Acceptance cases"]
     lines += [f"- **{esc(t['name'])}**: expected {esc(t['expected'])}; status `{t['status']}`; actual {esc(t['actual']) or 'not recorded'}" for t in project["tests"]] or ["No acceptance cases recorded."]
@@ -271,19 +400,19 @@ class Handler(SimpleHTTPRequestHandler):
         return True
     def do_HEAD(self):
         self.send_response(HTTPStatus.METHOD_NOT_ALLOWED)
-        self.send_header("Allow", "GET, POST, PUT")
+        self.send_header("Allow", "GET, POST, PUT, DELETE")
         self.end_headers()
     def do_TRACE(self): self.error_json(HTTPStatus.NOT_IMPLEMENTED, "method not implemented")
     def do_CONNECT(self): self.error_json(HTTPStatus.NOT_IMPLEMENTED, "method not implemented")
     def do_DELETE(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_PATCH(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
     def do_OPTIONS(self): self.error_json(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed")
-    def body(self):
+    def body(self, limit=MAX_BODY):
         if self.headers.get("Content-Type", "").split(";",1)[0].lower() != "application/json": raise ValidationError("Content-Type must be application/json")
         if self.headers.get("X-Foundry-Request") != "1": raise ValidationError("X-Foundry-Request: 1 is required")
         try: length=int(self.headers.get("Content-Length", "-1"))
         except ValueError: raise ValidationError("invalid Content-Length")
-        if length < 0 or length > MAX_BODY: raise ValidationError("JSON body exceeds 1 MB")
+        if length < 0 or length > limit: raise ValidationError(f"JSON body exceeds {limit // (1024 * 1024)} MB")
         try: return json.loads(self.rfile.read(length))
         except (UnicodeDecodeError, json.JSONDecodeError, RecursionError): raise ValidationError("invalid or excessively nested JSON")
     def do_GET(self):
@@ -292,13 +421,18 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/health": return self.json(200,{"status":"ok"})
         if path == "/api/bootstrap": return self.json(200,{"templates":TEMPLATES,"skills":self.app.skills(),"sources":[{"id":k,"title":v[0],"path":v[1],"url":None,"description":"Local read-only reference."} for k,v in SOURCES.items()],"universe":UNIVERSE})
         if path == "/api/projects": return self.json(200,{"projects":self.app.store.list()})
+        if path == "/api/workspace/backup":
+            raw = json.dumps(self.app.store.backup(), indent=2).encode()
+            if len(raw) > MAX_BACKUP_BYTES:
+                return self.error_json(413, "workspace backup exceeds 10 MB")
+            return self.download("foundry-workspace.json", "application/json", raw)
         if path.startswith("/api/sources/"):
             key=path.rsplit("/",1)[1]; source=SOURCES.get(key)
             if not source: return self.error_json(404,"source not found")
             file=(self.app.root/source[1]).resolve()
             if self.app.root not in file.parents or not file.is_file(): return self.error_json(404,"source unavailable")
             return self.json(200,{"id":key,"title":source[0],"content":file.read_text(encoding="utf-8"),"path":source[1],"url":None})
-        match=re.fullmatch(r"/api/projects/([0-9a-f-]{36})(?:/(validation|history|export))?", path)
+        match=re.fullmatch(r"/api/projects/([0-9a-f-]{36})(?:/(validation|history|package|export))?", path)
         if match:
             project=self.app.store.get(match.group(1))
             if not project: return self.error_json(404,"project not found")
@@ -306,6 +440,7 @@ class Handler(SimpleHTTPRequestHandler):
             if suffix is None: return self.json(200,project)
             if suffix == "validation": return self.json(200,readiness(project,self.app.skills()))
             if suffix == "history": return self.json(200,{"history":self.app.store.history(project["id"])})
+            if suffix == "package": return self.json(200, self.package_inspection(project))
             return self.export(project, parse_qs(urlparse(self.path).query).get("format",[""])[0])
         return self.static(path)
     def static(self,path):
@@ -314,28 +449,109 @@ class Handler(SimpleHTTPRequestHandler):
         if not target.is_file(): return self.error_json(404,"static resource unavailable")
         raw=target.read_bytes(); content="text/html; charset=utf-8" if filename.endswith("html") else ("application/javascript; charset=utf-8" if filename.endswith("js") else "text/css; charset=utf-8")
         self.send_response(200);self.send_header("Content-Type",content);self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
+    def package_contents(self, project):
+        report = readiness(project, self.app.skills())
+        skill_map = {item["id"]: item for item in self.app.skills()}
+        skill_ids = project.get("skillIds", [])
+        skills = [skill_map[item] for item in skill_ids if item in skill_map]
+        missing_skills = [item for item in skill_ids if item not in skill_map]
+        esc = markdown_text
+        evidence = "\n".join(
+            f"- {esc(case['name'])}: expected {esc(case['expected'])}; status `{case['status']}`; actual {esc(case['actual']) or 'not recorded'}"
+            for case in project["tests"]
+        ) or "- No acceptance cases recorded."
+        refs = "\n".join(
+            f"- [{esc(item['name'])}]({item['url']}) (`{item['id']}`, revision `{item['revision']}`, source `{esc(item['sourcePath'])}`): {esc(item['description'])}"
+            for item in skills
+        ) or "No Skillz references attached."
+        if missing_skills:
+            refs += "\nUnavailable references: " + ", ".join(missing_skills) + ". Recover their recorded source before review."
+        checks = "\n".join(f"- {esc(check['label'])}: `{check['status']}`. {esc(check['detail'])}" for check in report["checks"])
+        build = f"""# Build and handoff guidance for {esc(project['name'])}
+
+This is a local Glee-fully FoundRy working package for a `{project['kind']}` target.
+The package is inspectable and portable; it is not a deployment, account, model
+provider integration, or PME/publication certification.
+
+## Build sequence
+
+1. Read `manifest.json`, `specification.md`, and the recorded evidence.
+2. Resolve any unavailable Skillz references before relying on them.
+3. Adapt the target-specific files to the declared inputs, outputs, constraints,
+   components, and acceptance cases.
+4. Re-run the acceptance cases and record observed evidence in the FoundRy project.
+5. Export a new revision after material changes.
+"""
+        contents = {
+            "manifest.json": "",
+            "project.json": json.dumps(project, indent=2),
+            "README.md": markdown(project),
+            "specification.md": markdown(project),
+            "evaluation.md": f"# Evaluation for {esc(project['name'])}\n\nProject status: `{project['status']}`.\n\n## Observed acceptance evidence\n{evidence}\n\n## Readiness observations\n{checks}\n\n{esc(report['summary'])}\n",
+            "skill-references.md": "# Skill references\n\n" + refs + "\n",
+            "build.md": build,
+            "handoff.md": f"""# Handoff: {esc(project['name'])}
+
+This package is a `{project['status']}` working record at revision {project['revision']}.
+It does not certify PME readiness, publication readiness, deployment, or automatic
+behavioral validation.
+
+## Continue from here
+
+1. Review `specification.md` and the recorded acceptance evidence.
+2. Add or revise observed evidence in the FoundRy application, then export a new revision.
+3. For a web-tool package, open `index.html` in a modern browser and exercise add, complete, reopen, and filters.
+4. Treat attached Skillz references as pinned provenance, not executable dependencies.
+"""
+        }
+        if project["kind"] == "custom-gpt":
+            contents.update({
+                "instructions.md": esc(project["instructions"]) + "\n",
+                "starters.md": f"# Conversation starters for {esc(project['name'])}\n\n- Help me with: {esc(project['description']) or 'this project'}\n- My input is: {esc(project['inputs']) or 'not yet specified'}\n- What output should I expect? {esc(project['outputs']) or 'not yet specified'}\n"
+            })
+        elif project["kind"] == "agent-skill":
+            slug = re.sub(r"[^a-z0-9]+", "-", project["name"].lower()).strip("-")[:64] or "foundry-draft-skill"
+            description = json.dumps(project["description"] or "Draft FoundRy skill.").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+            contents["SKILL.md"] = f"---\nname: {slug}\ndescription: {description}\n---\n\n" + markdown(project) + "\nDraft status only. Review recorded evidence before use.\n"
+        elif project["kind"] == "workflow":
+            contents.update({"workflow.md": markdown(project), "workflow.json": json.dumps({"name": project["name"], "components": project["components"]}, indent=2)})
+        elif project["kind"] == "web-tool":
+            contents.update(web_starter(project))
+        manifest = {
+            "manifestVersion": 1,
+            "projectId": project["id"],
+            "schemaVersion": project["schemaVersion"],
+            "revision": project["revision"],
+            "name": project["name"],
+            "kind": project["kind"],
+            "owner": project.get("owner", ""),
+            "version": project.get("version", ""),
+            "purpose": project.get("purpose") or project.get("description", ""),
+            "status": project["status"],
+            "readyForReview": report["readyForReview"],
+            "validation": report,
+            "skillReferences": skills,
+            "unavailableSkillIds": missing_skills,
+            "files": [name for name in contents if name != "manifest.json"],
+            "limitations": [
+                "Recorded evidence is not automatic behavioral validation.",
+                "Review readiness is not PME or publication authorization.",
+                "This local package does not publish, deploy, or call an AI provider."
+            ]
+        }
+        contents["manifest.json"] = json.dumps(manifest, indent=2)
+        return contents, manifest
+    def package_inspection(self, project):
+        contents, manifest = self.package_contents(project)
+        return {
+            "manifest": manifest,
+            "files": [{"name": name, "size": len(data.encode("utf-8")), "content": data} for name, data in contents.items()]
+        }
     def export(self, project, fmt):
         if fmt == "json": return self.download("project.json","application/json",json.dumps(project,indent=2).encode())
         if fmt == "markdown": return self.download("README.md","text/markdown; charset=utf-8",markdown(project).encode())
         if fmt != "zip": return self.error_json(400,"format must be json, markdown, or zip")
-        report=readiness(project,self.app.skills())
-        skill_map={item["id"]:item for item in self.app.skills()}
-        skills=[skill_map[item] for item in project["skillIds"] if item in skill_map]
-        missing_skills=[item for item in project["skillIds"] if item not in skill_map]
-        esc = markdown_text
-        evidence="\n".join(f"- {esc(case['name'])}: expected {esc(case['expected'])}; status `{case['status']}`; actual {esc(case['actual']) or 'not recorded'}" for case in project["tests"]) or "- No acceptance cases recorded."
-        refs="\n".join(f"- [{item['name']}]({item['url']}) (`{item['id']}`, revision `{item['revision']}`, source `{item['sourcePath']}`): {item['description']}" for item in skills) or "No Skillz references attached."
-        if missing_skills:
-            refs += "\nUnavailable references: " + ", ".join(missing_skills) + ". Recover their recorded source before review."
-        checks="\n".join(f"- {esc(check['label'])}: `{check['status']}`. {esc(check['detail'])}" for check in report["checks"])
-        contents={"project.json":json.dumps(project,indent=2),"README.md":markdown(project),"specification.md":markdown(project),"evaluation.md":f"# Evaluation for {esc(project['name'])}\n\nProject status: `{project['status']}`.\n\n## Observed acceptance evidence\n{evidence}\n\n## Readiness observations\n{checks}\n\n{esc(report['summary'])}\n", "skill-references.md":"# Skill references\n\n"+refs+"\n", "handoff.md":f"# Handoff: {esc(project['name'])}\n\nThis package is a `{project['status']}` working record at revision {project['revision']}. It does not certify PME readiness, publication readiness, deployment, or automatic behavioral validation.\n\n## Continue from here\n\n1. Review `specification.md` and the recorded acceptance evidence.\n2. Add or revise observed evidence in the FoundRy application, then export a new revision.\n3. For a web-tool package, open `index.html` in a modern browser and exercise add, complete, reopen, and filters.\n4. Treat attached Skillz references as pinned provenance, not executable dependencies.\n"}
-        if project["kind"] == "custom-gpt": contents.update({"instructions.md":esc(project["instructions"])+"\n", "starters.md":f"# Conversation starters for {esc(project['name'])}\n\n- Help me with: {esc(project['description']) or 'this project'}\n- My input is: {esc(project['inputs']) or 'not yet specified'}\n- What output should I expect? {esc(project['outputs']) or 'not yet specified'}\n"})
-        elif project["kind"] == "agent-skill":
-            slug=re.sub(r"[^a-z0-9]+", "-", project["name"].lower()).strip("-")[:64] or "foundry-draft-skill"
-            description=json.dumps(project["description"] or "Draft FoundRy skill.").replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
-            contents["SKILL.md"]=f"---\nname: {slug}\ndescription: {description}\n---\n\n"+markdown(project)+"\nDraft status only. Review recorded evidence before use.\n"
-        elif project["kind"] == "workflow": contents.update({"workflow.md":markdown(project),"workflow.json":json.dumps({"name":project["name"],"components":project["components"]},indent=2)})
-        elif project["kind"] == "web-tool": contents.update(web_starter(project))
+        contents, _ = self.package_contents(project)
         out=io.BytesIO()
         with zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED) as z:
             for name,data in contents.items(): z.writestr(name,data)
@@ -344,13 +560,23 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200);self.send_header("Content-Type",content_type);self.send_header("Content-Disposition",f'attachment; filename="{name}"');self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_POST(self):
         if not self.valid_request(): return self.error_json(403,"foreign Host or Origin")
-        try: payload=self.body()
+        path=urlparse(self.path).path
+        # Allow the backup plus its JSON envelope, while keeping ordinary writes bounded.
+        limit = MAX_BACKUP_BYTES + MAX_BODY if path == "/api/workspace/restore" else MAX_BODY
+        try: payload=self.body(limit)
         except ValidationError as err: return self.error_json(400,str(err))
         path=urlparse(self.path).path
         try:
             if path == "/api/projects":
                 editable=validate_project(payload,creating=True); self.app.validate_skill_ids(editable)
                 return self.json(201,self.app.store.create(editable))
+            duplicate = re.fullmatch(r"/api/projects/([0-9a-f-]{36})/duplicate", path)
+            if duplicate:
+                if not isinstance(payload, dict) or set(payload) != {"revision"} or type(payload["revision"]) is not int:
+                    raise ValidationError("duplicate requires the current revision")
+                project = self.app.store.duplicate(duplicate.group(1), payload["revision"])
+                if project is None: return self.error_json(404, "project not found")
+                return self.json(201, project)
             if path == "/api/import":
                 if not isinstance(payload,dict) or set(payload)!={"project"}: raise ValidationError("import requires project only")
                 source=payload["project"]
@@ -361,7 +587,21 @@ class Handler(SimpleHTTPRequestHandler):
                 editable["status"]="draft"
                 origin = source.get("id", "unidentified source") if isinstance(source.get("id"), str) else "unidentified source"
                 return self.json(201,self.app.store.create(editable,"imported",f"Imported from {origin} with fresh identity and reset evidence"))
+            if path == "/api/workspace/restore":
+                if not isinstance(payload, dict) or set(payload) != {"backup", "confirm", "mode"}:
+                    raise ValidationError("workspace restore requires backup, confirm and mode")
+                if payload["confirm"] is not True:
+                    raise ValidationError("workspace restore requires explicit confirmation")
+                if payload["mode"] != "replace":
+                    raise ValidationError("workspace restore mode must be replace")
+                raw_backup = json.dumps(payload["backup"], separators=(",", ":")).encode()
+                if len(raw_backup) > MAX_BACKUP_BYTES:
+                    raise ValidationError("workspace backup exceeds 10 MB")
+                projects, histories = validate_workspace_backup(payload["backup"])
+                restored = self.app.store.restore(projects, histories)
+                return self.json(200, {"restored": restored, "mode": "replace"})
             return self.error_json(404,"not found")
+        except RuntimeError: return self.error_json(409, "revision conflict")
         except ValidationError as err: return self.error_json(400,str(err))
     def do_PUT(self):
         if not self.valid_request(): return self.error_json(403,"foreign Host or Origin")
@@ -379,6 +619,21 @@ class Handler(SimpleHTTPRequestHandler):
             return self.json(200,project)
         except RuntimeError: return self.error_json(409,"revision conflict")
         except ValidationError as err:return self.error_json(400,str(err))
+    def do_DELETE(self):
+        if not self.valid_request(): return self.error_json(403, "foreign Host or Origin")
+        match = re.fullmatch(r"/api/projects/([0-9a-f-]{36})", urlparse(self.path).path)
+        if not match: return self.error_json(405, "method not allowed")
+        try:
+            payload = self.body()
+            if not isinstance(payload, dict) or set(payload) != {"confirm", "revision"}:
+                raise ValidationError("delete requires confirm and revision")
+            if payload["confirm"] is not True or type(payload["revision"]) is not int:
+                raise ValidationError("delete requires explicit confirmation and current revision")
+            deleted = self.app.store.delete(match.group(1), payload["revision"])
+            if deleted is None: return self.error_json(404, "project not found")
+            return self.json(200, {"deleted": True, "id": match.group(1)})
+        except RuntimeError: return self.error_json(409, "revision conflict")
+        except ValidationError as err: return self.error_json(400, str(err))
 
 
 class FoundryServer(ThreadingHTTPServer):

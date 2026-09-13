@@ -19,20 +19,22 @@ remains source material for child repositories.
 | Mermaid | CDN ES module loaded by `web-templates/index.html`. | `11.17.2` | `11.17.2` | Review the pinned release when Mermaid publishes a newer version. |
 | Google Fonts | Remote font stylesheet for Fredoka, Open Sans, Poppins, and DM Sans. | No semantic package version | Service-managed | Check URL availability; font families and weights are the meaningful contract. |
 | Ko-fi widget | Remote script loaded by the HTML template. | No public version pin | Service-managed | Check URL availability; update only when Ko-fi changes the integration contract. |
-| YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | YAML 1.2-style usage, no parser dependency | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. Python scripts do not require PyYAML. |
+| YAML | `manifest.yaml` and YAML-shaped fenced content in governed Markdown. | PyYAML declared in `requirements.txt` for manifest validation | YAML 1.2.2 | Keep canonical files Markdown/YAML compatible. |
+| JSON Schema | `schemas/manifest.schema.yaml` validates the current root manifest. | jsonschema declared in `requirements.txt` | Draft 2020-12 | Keep the schema aligned with the current manifest shape. |
 | Markdown | Canon, governance, prompts, inventory, and documentation. | No renderer pin | CommonMark has no single runtime release | Render in the consuming platform. |
 | Git | Repository version control. | Not pinned by this repository | `2.55.0` | Developer-machine tooling; document only, do not install or upgrade from CI. |
 | GitHub Actions | Application checks and scheduled technology auditing. | `actions/checkout@v7`, `actions/setup-python@v7` | `v7` / `v7` | Dependabot monitors action references monthly. |
 
 ## Explicitly absent
 
-The repository has no `package.json`, lockfile, `requirements.txt`,
-`pyproject.toml`, `tsconfig.json`, Vite configuration, Tailwind configuration,
-React source, or Node/npm runtime declaration. GitHub Actions workflows are now
-present for application checks and technology auditing. References to Vite,
-TypeScript, and Tailwind in planning documents describe possible architectures,
-not technologies used by the current solution.
-
+The repository has no `package.json`, lockfile, `pyproject.toml`, `tsconfig.json`,
+Vite configuration, Tailwind configuration, React source, or Node/npm runtime
+declaration. `requirements.txt` is present for manifest-validation tooling, but
+the owner-local application itself uses the Python standard library and does not
+require package installation. GitHub Actions workflows are present for application
+checks and technology auditing; no hosted deployment workflow is configured.
+References to Vite, TypeScript and Tailwind in planning documents describe
+possible architectures, not technologies used by the current solution.
 ## Update plan
 
 1. Keep this inventory as the human-readable baseline.

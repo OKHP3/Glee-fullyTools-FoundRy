@@ -56,7 +56,7 @@ async function main() {
     process.exitCode = 2;
     return;
   }
-  const executablePath = playwright.chromium.executablePath();
+  const executablePath = process.env.CHROME_BIN || playwright.chromium.executablePath();
   const { access } = await import("node:fs/promises");
   try { await access(executablePath); } catch (_) {
     console.log(`NOT RUN: browser binary was not found at ${executablePath}; no browser proof claimed.`);
@@ -121,6 +121,51 @@ async function main() {
     assert((await page.locator("#project-meta").innerText()).includes("Revision 2"), "reopen restores the saved revision");
 
     await page.getByRole("button", { name: "Review" }).click();
+    await page.getByRole("button", { name: "Inspect package" }).click();
+    await page.locator("#package-inspection").waitFor({ state: "visible" });
+    assert((await page.locator("#package-inspection").innerText()).includes("manifest.json"), "package inspection lists the canonical manifest");
+    assert((await page.locator("#package-inspection").innerText()).includes("instructions.md"), "package inspection lists the target file");
+
+    const backupPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Backup workspace" }).click();
+    const backupDownload = await backupPromise;
+    const backupPath = join(evidenceDir, "workspace-backup.json");
+    await backupDownload.saveAs(backupPath);
+    const backup = JSON.parse(await readFile(backupPath, "utf8"));
+    assert(backup.format === "glee-fully-foundry-workspace", "workspace backup uses the explicit format");
+    assert(backup.projects.length === 1, "workspace backup contains the saved project");
+
+    await page.getByRole("button", { name: "Duplicate" }).click();
+    await page.getByRole("status").filter({ hasText: "Duplicated as a fresh draft" }).waitFor({ state: "visible" });
+    assert((await page.locator(".project-card").count()) === 2, "duplicate persists a second project");
+    const duplicateName = await page.locator('[name="name"]').inputValue();
+    await page.getByRole("button", { name: "Archive" }).click();
+    await page.getByRole("tab", { name: "Archive" }).click();
+    await page.locator(".project-card").filter({ hasText: duplicateName }).first().click();
+    await page.getByRole("button", { name: "Restore draft" }).click();
+    await page.getByRole("tab", { name: "Active" }).click();
+    const duplicateCard = page.locator(".project-card").filter({ hasText: duplicateName }).first();
+    await duplicateCard.click();
+    await page.waitForFunction(name => document.querySelector('[name="name"]')?.value === name, duplicateName);
+    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Delete project" }).click();
+    await page.getByRole("status").filter({ hasText: "Project deleted" }).waitFor({ state: "visible" });
+    assert((await page.locator(".project-card").count()) === 1, "confirmed delete removes only the duplicate");
+
+    await page.getByRole("button", { name: "Night mode" }).click();
+    assert(await page.locator("html").getAttribute("data-theme") === "dark", "night mode changes the document theme");
+    await page.getByRole("button", { name: "Day mode" }).click();
+    assert(await page.locator("html").getAttribute("data-theme") === "light", "day mode restores the document theme");
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "desktop view has no horizontal overflow");
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "narrow mobile view has no horizontal overflow");
+    await page.locator("#new-button").focus();
+    await page.keyboard.press("Enter");
+    await page.locator("#template-dialog").waitFor({ state: "visible" });
+    await page.keyboard.press("Escape");
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    await page.locator(".project-card").filter({ hasText: projectName }).first().click();
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "JSON", exact: true }).click();
     const download = await downloadPromise;
@@ -144,10 +189,15 @@ async function main() {
     await page.waitForFunction(name => document.querySelector('[name="name"]')?.value === name, projectName);
     assert(await page.locator('[name="name"]').inputValue() === projectName, "reopen after reload preserves imported values");
     assert((await page.locator("#project-meta").innerText()).includes("Revision 1"), "reopen after reload preserves imported revision");
+    await page.getByRole("button", { name: "Restore workspace" }).click();
+    await page.locator("#restore-file").setInputFiles(backupPath);
+    await page.getByRole("button", { name: "Replace workspace" }).click();
+    await page.getByRole("status").filter({ hasText: "Workspace restored" }).waitFor({ state: "visible" });
+    assert(await page.locator(".project-card").count() === 1, "validated workspace restore replaces imported work");
     assert(browserErrors.length === 0, `browser console is clean (${browserErrors.join(" | ")})`);
     await writeFile(join(evidenceDir, "result.json"), JSON.stringify({
-      status: "PASS", sourceSha: process.env.FOUNDRY_SOURCE_SHA || "not-provided", url,
-      evidenceDir, checks: ["create", "edit", "save", "reopen", "export", "import", "reload persistence", "console health"],
+       status: "PASS", sourceSha: process.env.FOUNDRY_SOURCE_SHA || "not-provided", url,
+       evidenceDir, checks: ["create", "edit", "save", "reopen", "package inspection", "backup", "duplicate", "archive", "restore", "delete", "theme", "desktop overflow", "390px mobile overflow", "keyboard activation", "export", "import", "workspace restore", "reload persistence", "console health"],
     }, null, 2));
     console.log(`PASS: browser authoring journey completed against ${url}`);
     console.log(`EVIDENCE: ${evidenceDir}`);

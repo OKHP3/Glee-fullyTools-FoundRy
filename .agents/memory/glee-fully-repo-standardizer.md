@@ -37,7 +37,7 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 | `--parent-url` | No | empty |
 | `--chatgpt-url` | No | empty |
 | `--tone` | No | tier default (toolbox=BledsGLEE, tool=GleeRich, toolette=GleeLite) |
-| `--inventory` | No | if given, pre-populates description/overview/functions/instructions from the canonical inventory file |
+| `--inventory` | No | canonical catalog is used automatically; an explicit path overrides it |
 | `--dry-run` | — | preview without writing |
 | `--audit` | — | show missing files only, do not write |
 | `--overwrite` | — | overwrite existing files (default: skip) |
@@ -50,15 +50,17 @@ python3 /path/to/.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py
 
 ## Inventory Pre-Population (v1.1.0)
 
-Pass `--inventory /path/to/inventory_of_toolbox_tools_and_tool-ettes.md` and the
-script will parse the canonical inventory file and auto-fill:
+The scaffold automatically resolves
+`inventory/inventory-of-toolbox-tools-and-tool-ettes.md` relative to the
+standardizer repository. Pass `--inventory /path/to/inventory-of-toolbox-tools-and-tool-ettes.md`
+to intentionally override the catalog. The importer auto-fills:
 - `gpt/description.md` ← Full Description
 - `docs/overview.md` ← Elevator Pitch (in "What It Is" section)
 - `docs/functions.md` ← Primary Functions (each with stub Trigger/Output/Notes)
 - `gpt/instructions.md §1` ← Full Description + parent link + ChatGPT URL
 
 Match is by `--id` first, then `--name`. Uses FoundRy inventory at
-`inventory/inventory_of_toolbox_tools_and_tool-ettes.md`.
+`inventory/inventory-of-toolbox-tools-and-tool-ettes.md`.
 
 ## Design Decisions
 
@@ -91,3 +93,16 @@ Procedures, Templates, Good/Bad Examples, FAQ) per OKH KF Playbook v1.0.
   → strip with `re.sub(r"^📒\s*(?:\*+[^*]+\*+\s*)?", "", pitch)` to get clean text
 - Tool display name in inventory includes "Glee-fully " prefix (e.g., "Glee-fully Discovered Careers")
   → match by `--id` is more reliable than `--name` for Tool tier entities
+
+The canonical inventory currently begins with a UTF-8 BOM, so the first Toolbox
+heading is not matched by the parser's anchored header regex while later Tool and
+Tool-ette entries are. Until the parser normalizes the BOM, regression checks
+should exercise a later known entry rather than treating the first Toolbox entry
+as proof of importer health.
+
+**Why:** This is an input-format edge case that is not obvious from the rendered
+Markdown and can make a seemingly valid catalog appear empty to the importer.
+
+**How to apply:** Normalize leading BOM characters when improving the parser; keep
+the catalog contract check focused on a known entry that the current parser can
+actually import.

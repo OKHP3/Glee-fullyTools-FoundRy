@@ -112,7 +112,7 @@ Tool-ette page in the public site. Each entry includes:
 - Elevator pitch
 
 This document is the **primary content source** for building or refreshing individual
-Tool-ette pages. It mirrors and extends `inventory/inventory_of_toolbox_tools_and_tool-ettes.md`
+Tool-ette pages. It mirrors and extends `inventory/inventory-of-toolbox-tools-and-tool-ettes.md`
 with web-ready content formatting.
 
 ---
@@ -155,7 +155,7 @@ These are narrative/brand content documents, not web template assets.
 web-templates/    <-- content sourced from --> inventory/ (entity descriptions + elevator pitches)
 web-templates/    <-- content sourced from --> docs/ (narrative + technical overviews)
 web-templates/    <-- tone governed by     --> vernacular/ (Glee-fully voice rules)
-web-templates/    <-- entity links from    --> canon/dataledger_registry_v3.md
+web-templates/    <-- entity links from    --> canon/dataledger-registry-v3.md
 web-templates/    <-- deployed to          --> child repos: glee-fully-gpt00-* through gpt07-*
 web-templates/    <-- NOT served from      --> this workbench (Glee-fullyTools-FoundRy)
 ```

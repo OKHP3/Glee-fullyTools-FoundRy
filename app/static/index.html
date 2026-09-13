@@ -11,7 +11,7 @@
   <a class="skip-link" href="#workspace">Skip to workspace</a>
   <header class="masthead">
     <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><div><p class="eyebrow">Glee-fully Personalizable Tools</p><h1>FoundRy <em>workbench</em></h1></div></div>
-    <div class="mast-actions"><span id="connection" class="connection" role="status">Connecting locally…</span><button class="button ghost" id="import-button">Import JSON</button><input id="import-file" type="file" accept="application/json,.json" hidden></div>
+    <div class="mast-actions"><span id="connection" class="connection" role="status">Connecting locally…</span><button class="button ghost" id="theme-button" type="button" aria-pressed="false">Night mode</button><button class="button ghost" id="backup-button" type="button">Backup workspace</button><button class="button ghost" id="restore-button" type="button">Restore workspace</button><button class="button ghost" id="import-button" type="button">Import JSON</button><input id="import-file" type="file" accept="application/json,.json" hidden><input id="restore-file" type="file" accept="application/json,.json" hidden></div>
   </header>
   <div id="message" class="message global-message" hidden role="status" tabindex="-1"></div>
   <main id="workspace" class="shell">
@@ -28,12 +28,14 @@
         <div id="template-grid" class="template-grid"></div>
       </div>
       <div id="editor" hidden>
-        <div class="project-bar"><div><p id="project-kind" class="eyebrow"></p><h2 id="project-title">Untitled</h2><p id="project-meta" class="muted"></p></div><div class="project-actions"><button id="archive-button" class="button ghost">Archive</button><button id="save-button" class="button primary">Save draft</button></div></div>
+        <div class="project-bar"><div><p id="project-kind" class="eyebrow"></p><h2 id="project-title">Untitled</h2><p id="project-meta" class="muted"></p></div><div class="project-actions"><button id="duplicate-button" class="button ghost" type="button">Duplicate</button><button id="archive-button" class="button ghost" type="button">Archive</button><button id="delete-button" class="button danger" type="button">Delete</button><button id="save-button" class="button primary" type="button">Save draft</button></div></div>
         <nav class="editor-tabs" aria-label="Project workspace"><button class="editor-tab active" data-panel="brief" aria-current="page">Brief</button><button class="editor-tab" data-panel="build">Components</button><button class="editor-tab" data-panel="review">Review</button><button class="editor-tab" data-panel="references">References</button><button class="editor-tab" data-panel="universe">Universe</button></nav>
         <form id="project-form" novalidate>
           <section class="panel active" id="panel-brief">
             <div class="section-heading"><div><p class="eyebrow">The human part</p><h3>What are we making?</h3></div><p>Start loose. Shape it as you learn.</p></div>
             <div class="field-grid"><label>Project name<input name="name" required maxlength="180" autocomplete="off"></label><label>Kind<select name="kind" id="kind-select"><option value="custom-gpt">Custom GPT</option><option value="agent-skill">Agent Skill</option><option value="workflow">Workflow</option><option value="web-tool">Web tool</option></select></label></div>
+            <div class="field-grid"><label>Owner<input name="owner" maxlength="6000" placeholder="Person or team responsible for this working record."></label><label>Version<input name="version" maxlength="120" placeholder="For example, 0.1.0"></label></div>
+            <label>Purpose<textarea name="purpose" rows="3" maxlength="6000" placeholder="The useful outcome this capability should make possible."></textarea></label>
             <label>Description<textarea name="description" rows="3" maxlength="6000" placeholder="A clear, short description of the useful outcome."></textarea></label>
             <div class="field-grid"><label>Who is it for?<textarea name="audience" rows="3" maxlength="6000" placeholder="People, context, and boundaries."></textarea></label><label>Inputs<textarea name="inputs" rows="3" maxlength="6000" placeholder="Inputs, starting material, or signals."></textarea></label></div>
             <div class="field-grid"><label>Outputs<textarea name="outputs" rows="3" maxlength="6000" placeholder="What a person can use next."></textarea></label><label>Constraints<textarea name="constraints" rows="3" maxlength="6000" placeholder="Limits, safety rails, source boundaries."></textarea></label></div>
@@ -45,8 +47,9 @@
             <div class="section-heading evidence-heading"><div><p class="eyebrow">Observed, not imagined</p><h3>Acceptance evidence</h3></div><button type="button" class="button secondary" id="add-test">Add evidence</button></div><p class="muted">Save the specification first, then record your test run. A pass needs actual evidence.</p><div id="tests" class="test-list"></div>
           </section>
           <section class="panel" id="panel-review">
-            <div class="section-heading"><div><p class="eyebrow">A careful checkpoint</p><h3>Readiness &amp; history</h3></div><div class="button-row"><button type="button" class="button secondary" id="validate-button">Check readiness</button><button type="button" class="button secondary" data-export="json">JSON</button><button type="button" class="button secondary" data-export="markdown">Markdown</button><button type="button" class="button secondary" data-export="zip">ZIP package</button></div></div>
+             <div class="section-heading"><div><p class="eyebrow">A careful checkpoint</p><h3>Readiness &amp; history</h3></div><div class="button-row"><button type="button" class="button secondary" id="validate-button">Check readiness</button><button type="button" class="button secondary" id="inspect-button">Inspect package</button><button type="button" class="button secondary" data-export="json">JSON</button><button type="button" class="button secondary" data-export="markdown">Markdown</button><button type="button" class="button secondary" data-export="zip">ZIP package</button></div></div>
             <p class="muted">Checking review readiness is not PME approval or publication certification.</p><div id="validation-result" class="review-card"><p>Save your draft, then ask the service for its current review checks.</p></div>
+             <div id="package-inspection" class="package-inspection" hidden></div>
             <h3 class="subheading">Revision trail</h3><ol id="history" class="history"></ol>
           </section>
           <section class="panel" id="panel-references">
@@ -61,6 +64,8 @@
   </main>
   <dialog id="template-dialog"><form method="dialog" class="dialog-card"><button class="dialog-close" value="cancel" aria-label="Close">×</button><p class="eyebrow">Start a draft</p><h2>Choose a shape, not a destiny.</h2><div id="dialog-templates" class="template-grid"></div></form></dialog>
   <dialog id="confirm-dialog"><form method="dialog" class="dialog-card"><p class="eyebrow">Unsaved work</p><h2>Leave this draft?</h2><p>You have changes that are not saved. Leaving will discard them from this screen.</p><div class="button-row"><button value="cancel" class="button secondary">Keep editing</button><button id="confirm-leave" value="leave" class="button danger">Discard changes</button></div></form></dialog>
+  <dialog id="delete-dialog"><form method="dialog" class="dialog-card"><p class="eyebrow">Destructive action</p><h2>Delete this project?</h2><p>This removes the saved project and its revision trail. Export a JSON or workspace backup first if you may need it later.</p><div class="button-row"><button value="cancel" class="button secondary">Keep project</button><button id="confirm-delete" value="delete" class="button danger">Delete project</button></div></form></dialog>
+  <dialog id="restore-dialog"><form method="dialog" class="dialog-card"><p class="eyebrow">Replace local workspace</p><h2>Restore this backup?</h2><p>Restoring replaces every saved local project and revision trail. The backup is validated completely before any replacement happens.</p><div class="button-row"><button value="cancel" class="button secondary">Keep current workspace</button><button id="confirm-restore" value="restore" class="button danger">Replace workspace</button></div></form></dialog>
   <script src="/app.js" defer></script>
 </body>
 </html>

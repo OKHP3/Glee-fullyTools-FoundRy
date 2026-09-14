@@ -7,6 +7,7 @@ Run from the repository root with:
 
 from __future__ import annotations
 
+import ast
 import re
 import subprocess
 import sys
@@ -25,6 +26,11 @@ AUDIT = ROOT / "scripts" / "manifest-audit.py"
 REQUIREMENTS = ROOT / "requirements.txt"
 REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
+MANIFEST_VALIDATOR_SCRIPTS = (
+    ROOT / "scripts" / "validate-manifest.py",
+    ROOT / "scripts" / "manifest-audit.py",
+)
+IMPORT_TO_REQUIREMENT = {"yaml": "pyyaml", "jsonschema": "jsonschema"}
 LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES = {
     "attrs",
     "jsonschema",
@@ -44,6 +50,44 @@ def canonical_requirement_name(name: str) -> str:
     """Return the normalized name used for requirement duplicate checks."""
 
     return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def validator_imports(path: Path) -> set[str]:
+    """Return top-level imports, including imports nested inside functions."""
+
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    imports: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.update(alias.name.split(".", 1)[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            imports.add(node.module.split(".", 1)[0])
+    return imports
+
+
+def validator_import_contract_errors(
+    scripts: tuple[Path, ...],
+    declared_dependencies: set[str],
+) -> list[str]:
+    """Report third-party validator imports absent from declared dependencies."""
+
+    errors: list[str] = []
+    standard_library = set(getattr(sys, "stdlib_module_names", ()))
+    for script in scripts:
+        for imported_module in sorted(validator_imports(script)):
+            if imported_module == "__future__" or imported_module in standard_library:
+                continue
+            dependency = IMPORT_TO_REQUIREMENT.get(
+                imported_module,
+                canonical_requirement_name(imported_module),
+            )
+            if dependency not in declared_dependencies:
+                errors.append(
+                    f"{script.name} imports undeclared third-party package "
+                    f"'{imported_module}'; add '{dependency}==<version>' "
+                    "to requirements.txt"
+                )
+    return errors
 
 
 def parse_requirement_entries(
@@ -181,6 +225,42 @@ class ManifestValidatorTests(unittest.TestCase):
 
     def test_manifest_validator_requirements_are_unique_and_exactly_pinned(self) -> None:
         self.assertEqual([], requirements_contract_errors(REQUIREMENTS))
+
+    def test_manifest_validator_imports_are_declared(self) -> None:
+        entries, _ = parse_requirement_entries(REQUIREMENTS)
+        declared_dependencies = {
+            name for _, name, _ in entries
+        }
+        self.assertEqual(
+            [],
+            validator_import_contract_errors(
+                MANIFEST_VALIDATOR_SCRIPTS,
+                declared_dependencies,
+            ),
+        )
+
+    def test_undeclared_third_party_import_identifies_source_and_correction(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "drifted-validator.py"
+            script.write_text(
+                "import pathlib\n"
+                "import requests\n"
+                "from urllib.parse import urlparse\n",
+                encoding="utf-8",
+            )
+
+            errors = validator_import_contract_errors(
+                (script,),
+                MANIFEST_VALIDATOR_DEPENDENCIES,
+            )
+
+        self.assertEqual(
+            [
+                "drifted-validator.py imports undeclared third-party package "
+                "'requests'; add 'requests==<version>' to requirements.txt"
+            ],
+            errors,
+        )
 
     def test_manifest_validator_lock_is_complete_and_exactly_pinned(self) -> None:
         self.assertEqual([], lock_contract_errors(REQUIREMENTS_LOCK))

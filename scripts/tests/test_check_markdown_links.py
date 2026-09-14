@@ -42,6 +42,46 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             CHECKER.DEFAULT_DOCUMENTS,
         )
 
+    def test_workflow_filters_cover_every_default_document(self):
+        root = Path(__file__).parents[2]
+
+        self.assertEqual([], CHECKER.check_workflow_document_coverage(root))
+
+    def test_workflow_filter_drift_names_document_and_missing_filter(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+  push:
+    paths:
+      - 'README.md'
+"""
+
+        issues = CHECKER.check_workflow_document_coverage(
+            Path("/repository"),
+            workflow_text=workflow,
+        )
+
+        self.assertTrue(
+            any(
+                "pull_request" in issue
+                and "docs/README.md" in issue
+                and "matching filter" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+        self.assertTrue(
+            any(
+                "push" in issue
+                and "docs/README.md" in issue
+                and "matching filter" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
     def test_supported_non_repository_links_are_skipped(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

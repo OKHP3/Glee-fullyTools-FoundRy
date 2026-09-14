@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import fnmatch
 import pathlib
 import re
 from collections.abc import Iterable
@@ -31,6 +32,8 @@ DEFAULT_DOCUMENTS = (
     "web-templates/README.md",
     "scripts/tests/README.md",
 )
+WORKFLOW_PATH = pathlib.Path(".github/workflows/foundry-app.yml")
+WORKFLOW_EVENTS = ("pull_request", "push")
 
 # This intentionally handles inline Markdown links, which are the link form used
 # by the maintained indexes. Links inside fenced code blocks are not prose links.
@@ -241,6 +244,71 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
             continue
         scan_file(path, root, result)
     return result
+
+
+def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
+    """Extract path filters for one workflow event without a YAML dependency."""
+    filters: list[str] = []
+    in_event = False
+    in_paths = False
+
+    for line in workflow_text.splitlines():
+        if re.fullmatch(rf"  {re.escape(event)}:\s*", line):
+            in_event = True
+            in_paths = False
+            continue
+        if in_event and re.match(r"^  \S", line):
+            break
+        if not in_event:
+            continue
+        if line == "    paths:":
+            in_paths = True
+            continue
+        if not in_paths:
+            continue
+
+        match = re.match(r"^      -\s+(.+?)\s*(?:#.*)?$", line)
+        if match:
+            value = match.group(1).strip().strip("'\"")
+            filters.append(value)
+            continue
+        if line.strip():
+            in_paths = False
+
+    return tuple(filters)
+
+
+def check_workflow_document_coverage(
+    root: pathlib.Path,
+    workflow_text: str | None = None,
+) -> list[str]:
+    """Return drift issues between default documents and workflow path filters."""
+    workflow_path = root / WORKFLOW_PATH
+    if workflow_text is None:
+        try:
+            workflow_text = workflow_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return [f"{WORKFLOW_PATH} is missing or unreadable"]
+
+    issues: list[str] = []
+    for event in WORKFLOW_EVENTS:
+        filters = workflow_path_filters(workflow_text, event)
+        if not filters:
+            issues.append(
+                f"{WORKFLOW_PATH} {event} paths are missing; "
+                "cannot cover maintained documents"
+            )
+            continue
+        for document in DEFAULT_DOCUMENTS:
+            if not any(
+                fnmatch.fnmatchcase(document, path_filter)
+                for path_filter in filters
+            ):
+                issues.append(
+                    f"{WORKFLOW_PATH} {event} paths do not cover maintained "
+                    f"document {document}; add a matching filter"
+                )
+    return issues
 
 
 def main(argv: list[str] | None = None) -> int:

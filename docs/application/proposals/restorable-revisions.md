@@ -1,19 +1,19 @@
 # Proposal: restorable project revisions
 
-Status: proposed, not implemented
+Status: implemented in the local application; this document remains the design record
 Task: F15
 Scope: the owner-local FoundRy application under `app/`
 
 ## Source boundary
 
-The current application stores one complete project JSON document in the
+The application keeps one complete current project JSON document in the
 `projects` table:
 
 ```sql
 projects(id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL)
 ```
 
-It stores only revision metadata in `history`:
+The activity index remains compact in `history`:
 
 ```sql
 history(project_id TEXT NOT NULL, revision INTEGER NOT NULL, at TEXT NOT NULL,
@@ -21,15 +21,19 @@ history(project_id TEXT NOT NULL, revision INTEGER NOT NULL, at TEXT NOT NULL,
         PRIMARY KEY(project_id, revision))
 ```
 
-`Store.create` writes revision 1 to both tables. `Store.update` checks the
-caller's current revision, increments it, replaces the current JSON, and adds a
-metadata row. Material specification, attached-skill, or acceptance-contract
-changes clear recorded test evidence. Archive and restore are currently status
-changes made through the same update path. The existing history endpoint cannot
-reconstruct an earlier project because no earlier JSON is stored.
+`Store.create` writes revision 1 to the current table, activity index, and
+immutable snapshot table. `Store.update` checks the caller's current revision,
+increments it, replaces the current JSON, and adds both metadata and a full
+snapshot row. Material specification, attached-skill, or acceptance-contract
+changes clear recorded test evidence. Archive and lifecycle restore remain
+status changes through the normal update path; version restore is the separate
+append-only snapshot operation described below.
 
-This proposal designs the smallest viable extension. It does not implement a
-database migration, endpoint, UI change, backup command, or runtime behavior.
+This proposal designs the smallest viable extension. The snapshot migration,
+restore endpoint, and local history controls now implement the contract below.
+Workspace backup format remains unchanged; restoring a workspace recreates a
+current-state migration baseline rather than claiming that historical snapshot
+content survived that backup.
 
 ## Decisions
 
@@ -277,8 +281,10 @@ claims that the current application passes them.
   requires a separate migration and engine task, followed by focused SQLite
   failure and recovery checks.
 
-## Next action
+## Implementation note
 
-Owner review the decisions about always-reset-on-restore evidence and archived
-source status. If accepted, implement the schema and transaction contract in a
-separate engine change with a migration plan and synthetic fixture tests.
+The local application now creates and validates immutable snapshots for new
+revisions, exposes verified availability in history, and restores a selected
+snapshot as a new draft revision. Existing databases receive only a labelled
+current-state migration baseline. Focused tests cover the append-only restore,
+evidence reset, conflicts, corrupt sources, and pre-feature migration behavior.

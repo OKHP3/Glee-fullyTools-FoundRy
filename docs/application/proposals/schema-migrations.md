@@ -1,6 +1,6 @@
 # SQLite schema migration proposal
 
-Status: **PROPOSAL**. This document specifies a future implementation contract. It does not change the application, migrate owner data, or claim that a migration runner exists.
+Status: **PROPOSAL**. This document specifies the broader database migration contract. The application now performs the narrower snapshot-table creation and current-state baseline described in the restorable-revisions design; it does not yet provide this document's full versioned migration runner.
 
 ## Decision boundary
 
@@ -15,7 +15,7 @@ The database schema version is separate from the project JSON field `schemaVersi
 | The current database has `projects` and `history` tables, with `data` stored as JSON text. | CONFIRMED | `app/server.py`, `Store.__init__`, lines 157-166 at base `32b8915` | The proposed legacy detector could miss an actual table or column. | Inspect a representative owner-created database before implementation. |
 | The current database has no database-level version marker. | CONFIRMED | `app/server.py` creates tables but does not set or read `PRAGMA user_version`. | A first migration must distinguish the unmarked current shape from an unknown legacy shape. | Add a synthetic unmarked fixture to the migration test. |
 | The current project payload version is `1`. | CONFIRMED | `app/server.py`, `Store.create`, import validation, and API contract | A database migration could be incorrectly coupled to project import compatibility. | Keep payload-version tests separate from database migration tests. |
-| Immutable snapshots and richer recovery are future maturation work, not current behavior. | CONFIRMED | `docs/application/current-state-and-maturation.md`, “Recommended order of maturation”, stage 3 | A migration design could imply that historical project bodies are already restorable. | Revisit the v2 design after snapshot requirements are accepted. |
+| Immutable project snapshots and version restore are implemented, but broader database versioning and backup recovery remain future work. | CONFIRMED | `app/server.py`, `docs/application/proposals/restorable-revisions.md` | This proposal could be mistaken for the narrower snapshot migration already in service. | Keep the snapshot contract and full database migration contract separately documented. |
 | F15 can provide implementation context, but no separate F15 migration artifact is present on `origin/main`. | UNKNOWN | F15 branch name exists locally, but it is at the same base and contains no migration proposal path. | A later F15 change may refine names or lifecycle assumptions. | Coordinator should reconcile this proposal with F15’s accepted output before implementation. |
 
 The design below therefore treats the current table shape as observed and every migration policy as proposed.
@@ -30,7 +30,11 @@ Use SQLite `PRAGMA user_version` for the database version. The proposed versions
 | `1` | Current first-release shape: `projects(id, revision, data)` and `history(project_id, revision, at, action, summary)`, with the existing primary keys and no additional required tables. | Supported target. |
 | `2+` | A newer database format whose migration code is not available in this release. | Refuse to open for writes. Preserve the file and request a compatible application. |
 
-Only `0 -> 1` is specified and supported by this proposal. There is no invented `1 -> 2` transform. A future v2 must first document its data contract, backfill rule, downgrade policy, and recovery tests. The likely roadmap driver is restorable immutable project snapshots, but that is not a v2 schema decision yet.
+Only `0 -> 1` is specified and supported by this proposal. There is no invented
+`1 -> 2` transform. The snapshot table is currently created as an additive
+runtime migration without claiming a `user_version` transition. A future
+versioned migration must first document its data contract, backfill rule,
+downgrade policy, and recovery tests.
 
 ## Startup and legacy detection
 

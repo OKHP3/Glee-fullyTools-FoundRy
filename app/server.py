@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import io
 import json
@@ -225,9 +226,57 @@ class Store:
         (directory / "foundry.sqlite3").chmod(0o600)
         self.conn.row_factory = sqlite3.Row
         self.lock = threading.Lock()
+        self.conn.execute("PRAGMA foreign_keys = ON")
         with self.conn:
             self.conn.execute("CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL)")
             self.conn.execute("CREATE TABLE IF NOT EXISTS history (project_id TEXT NOT NULL, revision INTEGER NOT NULL, at TEXT NOT NULL, action TEXT NOT NULL, summary TEXT NOT NULL, PRIMARY KEY(project_id, revision))")
+            self.conn.execute(
+                """CREATE TABLE IF NOT EXISTS project_revisions (
+                    project_id TEXT NOT NULL,
+                    revision INTEGER NOT NULL,
+                    captured_at TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    schema_version INTEGER NOT NULL,
+                    data TEXT NOT NULL,
+                    sha256 TEXT NOT NULL,
+                    PRIMARY KEY(project_id, revision),
+                    FOREIGN KEY(project_id) REFERENCES projects(id)
+                )"""
+            )
+            self._migrate_current_baselines_locked()
+    @staticmethod
+    def _serialize(project):
+        return json.dumps(project, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+    @classmethod
+    def _digest(cls, serialized):
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    def _migrate_current_baselines_locked(self):
+        """Capture only current state for databases created before snapshots."""
+        rows = self.conn.execute("SELECT id, revision, data FROM projects ORDER BY id").fetchall()
+        for row in rows:
+            try:
+                project = json.loads(row["data"])
+                validate_project(project, importing=True)
+                if (project.get("id") != row["id"] or project.get("schemaVersion") != 1 or
+                        project.get("revision") != row["revision"] or
+                        not isinstance(project.get("createdAt"), str) or
+                        not isinstance(project.get("updatedAt"), str)):
+                    raise ValidationError("project metadata does not match its current row")
+                serialized = self._serialize(project)
+            except (TypeError, ValueError, json.JSONDecodeError, RecursionError, ValidationError) as error:
+                raise RuntimeError(f"snapshot migration failed for project {row['id']}: {error}") from error
+            existing = self.conn.execute(
+                "SELECT 1 FROM project_revisions WHERE project_id=? AND revision=?",
+                (row["id"], row["revision"]),
+            ).fetchone()
+            if existing is None:
+                self.conn.execute(
+                    """INSERT INTO project_revisions
+                       (project_id, revision, captured_at, action, schema_version, data, sha256)
+                       VALUES(?,?,?,?,?,?,?)""",
+                    (row["id"], row["revision"], project["updatedAt"], "migration-baseline",
+                     project["schemaVersion"], serialized, self._digest(serialized)),
+                )
     def list(self):
         with self.lock: return [json.loads(r["data"]) for r in self.conn.execute("SELECT data FROM projects ORDER BY json_extract(data, '$.updatedAt') DESC")]
     def get(self, project_id):
@@ -237,12 +286,23 @@ class Store:
     def create(self, editable, action="created", summary=None):
         editable = editable_defaults(editable)
         stamp = now(); project = {"id": str(uuid.uuid4()), "schemaVersion": 1, "revision": 1, **editable, "createdAt": stamp, "updatedAt": stamp}
-        self._insert(project, action, summary or "Project created")
+        with self.lock, self.conn:
+            self._insert_locked(project, action, summary or "Project created")
         return project
     def _insert(self, project, action, summary):
         with self.lock, self.conn:
-            self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)", (project["id"], project["revision"], json.dumps(project, separators=(",", ":"))))
-            self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)", (project["id"], project["revision"], project["updatedAt"], action, summary))
+            self._insert_locked(project, action, summary)
+    def _insert_locked(self, project, action, summary):
+        serialized = self._serialize(project)
+        self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)", (project["id"], project["revision"], serialized))
+        self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)", (project["id"], project["revision"], project["updatedAt"], action, summary))
+        self.conn.execute(
+            """INSERT INTO project_revisions
+               (project_id, revision, captured_at, action, schema_version, data, sha256)
+               VALUES(?,?,?,?,?,?,?)""",
+            (project["id"], project["revision"], project["updatedAt"], action,
+             project["schemaVersion"], serialized, self._digest(serialized)),
+        )
     def update(self, project_id, editable, revision):
         with self.lock, self.conn:
             row = self.conn.execute("SELECT data,revision FROM projects WHERE id=?", (project_id,)).fetchone()
@@ -257,8 +317,16 @@ class Store:
                     test_contract(old["tests"]) != test_contract(editable["tests"])):
                 editable = {**editable, "tests": [{**case, "actual": "", "status": "not-run"} for case in editable["tests"]]}
             project = {**old, **editable, "revision": revision + 1, "updatedAt": now()}
-            self.conn.execute("UPDATE projects SET revision=?,data=? WHERE id=?", (project["revision"], json.dumps(project, separators=(",", ":")), project_id))
+            serialized = self._serialize(project)
+            self.conn.execute("UPDATE projects SET revision=?,data=? WHERE id=?", (project["revision"], serialized, project_id))
             self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)", (project_id, project["revision"], project["updatedAt"], "updated", "Project updated"))
+            self.conn.execute(
+                """INSERT INTO project_revisions
+                   (project_id, revision, captured_at, action, schema_version, data, sha256)
+                   VALUES(?,?,?,?,?,?,?)""",
+                (project_id, project["revision"], project["updatedAt"], "updated",
+                 project["schemaVersion"], serialized, self._digest(serialized)),
+            )
         return project
     def duplicate(self, project_id, revision):
         with self.lock, self.conn:
@@ -273,16 +341,25 @@ class Store:
             self._insert_locked(project, "duplicated", f"Duplicated from {source['id']} with fresh identity and reset evidence")
         return project
     def _insert_locked(self, project, action, summary):
+        serialized = self._serialize(project)
         self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)",
-                          (project["id"], project["revision"], json.dumps(project, separators=(",", ":"))))
+                          (project["id"], project["revision"], serialized))
         self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)",
                           (project["id"], project["revision"], project["updatedAt"], action, summary))
+        self.conn.execute(
+            """INSERT INTO project_revisions
+               (project_id, revision, captured_at, action, schema_version, data, sha256)
+               VALUES(?,?,?,?,?,?,?)""",
+            (project["id"], project["revision"], project["updatedAt"], action,
+             project["schemaVersion"], serialized, self._digest(serialized)),
+        )
     def delete(self, project_id, revision):
         with self.lock, self.conn:
             row = self.conn.execute("SELECT revision FROM projects WHERE id=?", (project_id,)).fetchone()
             if not row: return None
             if row["revision"] != revision: raise RuntimeError("revision conflict")
             self.conn.execute("DELETE FROM history WHERE project_id=?", (project_id,))
+            self.conn.execute("DELETE FROM project_revisions WHERE project_id=?", (project_id,))
             self.conn.execute("DELETE FROM projects WHERE id=?", (project_id,))
         return True
     def backup(self):
@@ -301,19 +378,103 @@ class Store:
     def restore(self, projects, histories):
         with self.lock, self.conn:
             self.conn.execute("DELETE FROM history")
+            self.conn.execute("DELETE FROM project_revisions")
             self.conn.execute("DELETE FROM projects")
             for project in projects:
                 self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)",
-                                  (project["id"], project["revision"], json.dumps(project, separators=(",", ":"))))
+                                  (project["id"], project["revision"], self._serialize(project)))
                 for entry in histories[project["id"]]:
                     self.conn.execute(
                         "INSERT INTO history(project_id,revision,at,action,summary) VALUES(?,?,?,?,?)",
                         (project["id"], entry["revision"], entry["at"], entry["action"], entry["summary"])
                     )
+                serialized = self._serialize(project)
+                self.conn.execute(
+                    """INSERT INTO project_revisions
+                       (project_id, revision, captured_at, action, schema_version, data, sha256)
+                       VALUES(?,?,?,?,?,?,?)""",
+                    (project["id"], project["revision"], project["updatedAt"], "migration-baseline",
+                     project["schemaVersion"], serialized, self._digest(serialized)),
+                )
         return len(projects)
     def history(self, project_id):
-        with self.lock: rows = self.conn.execute("SELECT revision,at,action,summary FROM history WHERE project_id=? ORDER BY revision", (project_id,)).fetchall()
-        return [dict(r) for r in rows]
+        with self.lock:
+            rows = self.conn.execute(
+                "SELECT revision,at,action,summary FROM history WHERE project_id=? ORDER BY revision",
+                (project_id,),
+            ).fetchall()
+            result = []
+            for row in rows:
+                snapshot = self._valid_snapshot_locked(project_id, row["revision"])
+                result.append({
+                    **dict(row),
+                    "restorable": snapshot is not None,
+                    "baseline": bool(snapshot and snapshot["action"] == "migration-baseline"),
+                })
+        return result
+    def _valid_snapshot_locked(self, project_id, revision):
+        row = self.conn.execute(
+            """SELECT project_id, revision, action, schema_version, data, sha256
+               FROM project_revisions WHERE project_id=? AND revision=?""",
+            (project_id, revision),
+        ).fetchone()
+        if not row or row["schema_version"] != 1 or not isinstance(row["data"], str):
+            return None
+        if not isinstance(row["sha256"], str) or self._digest(row["data"]) != row["sha256"]:
+            return None
+        try:
+            project = json.loads(row["data"])
+            validate_project(project, importing=True)
+            if (project.get("id") != project_id or project.get("schemaVersion") != 1 or
+                    project.get("revision") != revision or
+                    not isinstance(project.get("createdAt"), str) or
+                    not isinstance(project.get("updatedAt"), str) or
+                    self._serialize(project) != row["data"]):
+                return None
+        except (TypeError, ValueError, json.JSONDecodeError, RecursionError, ValidationError):
+            return None
+        return dict(row)
+    def restore_revision(self, project_id, source_revision, current_revision):
+        with self.lock, self.conn:
+            current_row = self.conn.execute(
+                "SELECT data,revision FROM projects WHERE id=?", (project_id,)
+            ).fetchone()
+            if not current_row:
+                return None
+            if current_row["revision"] != current_revision:
+                raise RuntimeError("revision conflict")
+            source_row = self._valid_snapshot_locked(project_id, source_revision)
+            if source_row is None:
+                raise ValidationError("source revision is unavailable or invalid")
+            current = json.loads(current_row["data"])
+            source = json.loads(source_row["data"])
+            restored = {
+                **source,
+                "id": project_id,
+                "createdAt": current["createdAt"],
+                "revision": current_revision + 1,
+                "status": "draft",
+                "tests": [{**case, "actual": "", "status": "not-run"} for case in source["tests"]],
+                "updatedAt": now(),
+            }
+            serialized = self._serialize(restored)
+            summary = f"Restored from revision {source_revision}; evaluation evidence reset"
+            self.conn.execute(
+                "UPDATE projects SET revision=?,data=? WHERE id=?",
+                (restored["revision"], serialized, project_id),
+            )
+            self.conn.execute(
+                "INSERT INTO history VALUES(?,?,?,?,?)",
+                (project_id, restored["revision"], restored["updatedAt"], "restored", summary),
+            )
+            self.conn.execute(
+                """INSERT INTO project_revisions
+                   (project_id, revision, captured_at, action, schema_version, data, sha256)
+                   VALUES(?,?,?,?,?,?,?)""",
+                (project_id, restored["revision"], restored["updatedAt"], "restored",
+                 restored["schemaVersion"], serialized, self._digest(serialized)),
+            )
+        return restored
 
 
 def readiness(project: dict, skills: list[dict]) -> dict:
@@ -577,6 +738,17 @@ behavioral validation.
                 project = self.app.store.duplicate(duplicate.group(1), payload["revision"])
                 if project is None: return self.error_json(404, "project not found")
                 return self.json(201, project)
+            restore = re.fullmatch(r"/api/projects/([0-9a-f-]{36})/restore", path)
+            if restore:
+                if (not isinstance(payload, dict) or set(payload) != {"sourceRevision", "currentRevision"} or
+                        type(payload["sourceRevision"]) is not int or type(payload["currentRevision"]) is not int or
+                        payload["sourceRevision"] < 1 or payload["currentRevision"] < 1):
+                    raise ValidationError("restore requires positive sourceRevision and currentRevision")
+                project = self.app.store.restore_revision(
+                    restore.group(1), payload["sourceRevision"], payload["currentRevision"]
+                )
+                if project is None: return self.error_json(404, "project not found")
+                return self.json(200, project)
             if path == "/api/import":
                 if not isinstance(payload,dict) or set(payload)!={"project"}: raise ValidationError("import requires project only")
                 source=payload["project"]

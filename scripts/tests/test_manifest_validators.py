@@ -25,6 +25,7 @@ VALIDATOR = ROOT / "scripts" / "validate-manifest.py"
 AUDIT = ROOT / "scripts" / "manifest-audit.py"
 REQUIREMENTS = ROOT / "requirements.txt"
 REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
+MANIFEST_WORKFLOW = ROOT / ".github" / "workflows" / "manifest-validation.yml"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
 MANIFEST_VALIDATOR_SCRIPTS = (
     ROOT / "scripts" / "validate-manifest.py",
@@ -44,6 +45,8 @@ REQUIREMENT_LINE = re.compile(
     r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[^\]]+\])?(?P<specifier>.*)$"
 )
 EXACT_PIN = re.compile(r"^==\s*(?![=<>!~])[^;\s]+(?:\s*;\s*.+)?$")
+HASH_OPTION = re.compile(r"^--hash=sha256:[0-9a-fA-F]{64}$")
+HASH_OPTIONS = re.compile(r"\s+--hash=\S+")
 
 
 def canonical_requirement_name(name: str) -> str:
@@ -104,7 +107,7 @@ def parse_requirement_entries(
         if not line:
             continue
 
-        match = REQUIREMENT_LINE.fullmatch(line)
+        match = REQUIREMENT_LINE.fullmatch(HASH_OPTIONS.sub("", line).strip())
         if match is None:
             errors.append(
                 f"line {line_number} is not a supported package requirement: {line}; "
@@ -170,6 +173,25 @@ def lock_contract_errors(path: Path) -> list[str]:
     for line_number, name, specifier in entries:
         if not EXACT_PIN.fullmatch(specifier):
             errors.append(f"{name} on line {line_number} must use an exact == pin")
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    for line_number, name, _ in entries:
+        line = lines[line_number - 1].split("#", 1)[0].strip()
+        hash_options = [
+            token for token in line.split() if token.startswith("--hash=")
+        ]
+        if not hash_options:
+            errors.append(
+                f"{name} on line {line_number} must include an approved "
+                "sha256 hash (--hash=sha256:<64 hex digits>)"
+            )
+            continue
+        for hash_option in hash_options:
+            if not HASH_OPTION.fullmatch(hash_option):
+                errors.append(
+                    f"{name} on line {line_number} has malformed integrity "
+                    f"data {hash_option!r}; use --hash=sha256:<64 hex digits>"
+                )
 
     return errors
 
@@ -279,6 +301,44 @@ class ManifestValidatorTests(unittest.TestCase):
                 locked_versions[dependency],
                 f"{dependency} lock pin must match requirements.txt",
             )
+
+    def test_manifest_workflow_installs_hashed_lock(self) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "python -m pip install --require-hashes -r requirements-lock.txt",
+            workflow,
+        )
+
+    def test_manifest_validator_lock_requires_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "attrs==26.1.0\n",
+            )
+
+            errors = lock_contract_errors(path)
+
+        self.assertIn(
+            "attrs on line 1 must include an approved sha256 hash "
+            "(--hash=sha256:<64 hex digits>)",
+            errors,
+        )
+
+    def test_manifest_validator_lock_rejects_malformed_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "attrs==26.1.0 --hash=sha256:not-a-digest\n",
+            )
+
+            errors = lock_contract_errors(path)
+
+        self.assertIn(
+            "attrs on line 1 has malformed integrity data "
+            "'--hash=sha256:not-a-digest'; use --hash=sha256:<64 hex digits>",
+            errors,
+        )
 
     def test_duplicate_requirement_names_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

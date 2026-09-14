@@ -692,6 +692,52 @@ def validate_catalog_links(readme: Path, content: str) -> list[str]:
     return errors
 
 
+def validate_family_links(readme: Path, content: str) -> list[str]:
+    """Return actionable errors for relative links in the generated family table."""
+    start = content.find(FAMILIES_TABLE_START)
+    end_marker = content.find(FAMILIES_TABLE_END, start + len(FAMILIES_TABLE_START))
+    if start == -1 or end_marker == -1:
+        return []
+
+    end = end_marker + len(FAMILIES_TABLE_END)
+    family_table = content[start:end]
+    errors: list[str] = []
+    base = readme.parent.resolve()
+
+    for match in MARKDOWN_LINK_RE.finditer(family_table):
+        raw_destination = match.group(1).strip()
+        destination = raw_destination
+        if destination.startswith("<"):
+            closing = destination.find(">")
+            destination = destination[1:closing] if closing != -1 else destination[1:]
+        else:
+            destination = destination.split(maxsplit=1)[0]
+
+        parsed = urlsplit(destination)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+
+        target = (base / unquote(parsed.path)).resolve()
+        line = content.count("\n", 0, start + match.start()) + 1
+        source = readme.as_posix()
+        try:
+            target.relative_to(base)
+        except ValueError:
+            errors.append(
+                f"  ✗ {source}:{line}: generated family link "
+                f"{raw_destination!r} escapes index directory"
+            )
+            continue
+
+        if not target.exists():
+            errors.append(
+                f"  ✗ {source}:{line}: generated family link "
+                f"{raw_destination!r} targets missing path {parsed.path!r}"
+            )
+
+    return errors
+
+
 def validate(skills: list[dict]) -> tuple[list[str], list[str]]:
     """Returns (fatal_errors, warnings). Fatals block generation; warnings do not."""
     errors:   list[str] = []
@@ -975,14 +1021,19 @@ def main() -> int:
         return 1
 
     if args.check:
-        if not args.full and output.exists():
+        if output.exists():
             c = output.read_text(encoding="utf-8")
-            if START_MARKER not in c or END_MARKER not in c:
+            if not args.full and (START_MARKER not in c or END_MARKER not in c):
                 print("✗ README missing catalog markers.", file=sys.stderr)
                 return 1
-            link_errors = validate_catalog_links(output, c)
+            link_errors = (
+                validate_family_links(output, c)
+                if args.full
+                else validate_catalog_links(output, c)
+            )
             if link_errors:
-                print("\nCatalog link errors:", file=sys.stderr)
+                label = "Family" if args.full else "Catalog"
+                print(f"\n{label} link errors:", file=sys.stderr)
                 print("\n".join(link_errors), file=sys.stderr)
                 return 1
         print("✓ Check passed.")
@@ -999,6 +1050,17 @@ def main() -> int:
             print("\n".join(link_errors), file=sys.stderr)
             return 1
         if args.full:
+            families_list = discover_all_families(scan_root, skills)
+            fam_block = build_families_table(
+                families_list,
+                display_timestamp(datetime.now(timezone.utc)),
+            )
+            _, fam_content = inject_families_table(output, fam_block)
+            family_link_errors = validate_family_links(output, fam_content)
+            if family_link_errors:
+                print("\nFamily link errors:", file=sys.stderr)
+                print("\n".join(family_link_errors), file=sys.stderr)
+                return 1
             exists = output.exists()
             print(f"[DRY RUN] Would write to: {output}"
                   + (" (create)" if not exists else " (update)"))
@@ -1080,6 +1142,11 @@ def main() -> int:
         now_disp = display_timestamp(datetime.now(timezone.utc))
         fam_block = build_families_table(families_list, now_disp)
         fam_changed, fam_content = inject_families_table(output, fam_block)
+        family_link_errors = validate_family_links(output, fam_content)
+        if family_link_errors:
+            print("\nFamily link errors:", file=sys.stderr)
+            print("\n".join(family_link_errors), file=sys.stderr)
+            return 1
         if fam_changed:
             output.write_text(fam_content, encoding="utf-8")
             if not args.quiet:

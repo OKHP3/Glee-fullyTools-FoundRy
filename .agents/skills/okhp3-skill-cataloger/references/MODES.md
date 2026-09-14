@@ -77,9 +77,11 @@ source by passing `--no-absorb-readme`. `--no-family-md` skips all family-file
 generation. Neither safety flag changes the discovered skill set.
 
 Catalog validation is intentionally separate from the repository's maintained
-index link scan. It checks the links emitted inside the `SKILLS_CATALOG_START`
-and `SKILLS_CATALOG_END` markers, reports the source README, line, and broken
-destination, and does not scan other repository documentation.
+index link scan. Catalog mode checks the links emitted inside the
+`SKILLS_CATALOG_START` and `SKILLS_CATALOG_END` markers. Full-index mode also
+checks links emitted inside the `FAMILIES_TABLE_START` and
+`FAMILIES_TABLE_END` markers. Both checks report the source README, line, and
+broken destination, and neither scans other repository documentation.
 
 ## Choosing a mode
 

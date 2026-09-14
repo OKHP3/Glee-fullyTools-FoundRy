@@ -2,12 +2,16 @@ name: Manifest validation
 
 on:
   pull_request: {}
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   validate-manifest:
+    if: github.event_name == 'pull_request'
     name: Validate manifest
     runs-on: ubuntu-latest
     steps:
@@ -47,3 +51,18 @@ jobs:
       - name: Audit manifest governance fields
         run: python scripts/manifest-audit.py .
         if: steps.changes.outputs.manifest == 'true'
+
+  validator-lock-drift:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Review validator dependency updates
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Check validator lock drift and available updates
+        run: python scripts/check-validator-lock.py --check-updates

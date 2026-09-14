@@ -8,6 +8,7 @@ Run from the repository root with:
 from __future__ import annotations
 
 import ast
+import importlib.util
 import re
 import subprocess
 import sys
@@ -15,6 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Callable
+from unittest.mock import patch
 
 import yaml
 
@@ -23,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "manifest.yaml"
 VALIDATOR = ROOT / "scripts" / "validate-manifest.py"
 AUDIT = ROOT / "scripts" / "manifest-audit.py"
+LOCK_CHECK = ROOT / "scripts" / "check-validator-lock.py"
 REQUIREMENTS = ROOT / "requirements.txt"
 REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
 MANIFEST_WORKFLOW = ROOT / ".github" / "workflows" / "manifest-validation.yml"
@@ -44,6 +47,18 @@ LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES = {
 REQUIREMENT_LINE = re.compile(
     r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[^\]]+\])?(?P<specifier>.*)$"
 )
+
+
+def load_lock_checker():
+    """Load the hyphenated lock-check script for deterministic unit coverage."""
+
+    spec = importlib.util.spec_from_file_location("check_validator_lock", LOCK_CHECK)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"unable to load {LOCK_CHECK}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 EXACT_PIN = re.compile(r"^==\s*(?![=<>!~])[^;\s]+(?:\s*;\s*.+)?$")
 HASH_OPTION = re.compile(r"^--hash=sha256:[0-9a-fA-F]{64}$")
 HASH_OPTIONS = re.compile(r"\s+--hash=\S+")
@@ -225,6 +240,26 @@ class ManifestValidatorTests(unittest.TestCase):
             check=False,
         )
 
+    def run_lock_check(
+        self,
+        requirements_path: Path,
+        lock_path: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(LOCK_CHECK),
+                "--requirements",
+                str(requirements_path),
+                "--lock",
+                str(lock_path),
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def write_requirements_variant(self, directory: Path, contents: str) -> Path:
         path = directory / "requirements.txt"
         path.write_text(contents, encoding="utf-8")
@@ -247,6 +282,66 @@ class ManifestValidatorTests(unittest.TestCase):
 
     def test_manifest_validator_requirements_are_unique_and_exactly_pinned(self) -> None:
         self.assertEqual([], requirements_contract_errors(REQUIREMENTS))
+
+    def test_validator_lock_check_passes_current_graph(self) -> None:
+        result = self.run_lock_check(REQUIREMENTS, REQUIREMENTS_LOCK)
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("OK validator lock matches direct requirements", result.stdout)
+
+    def test_validator_lock_check_reports_version_drift_without_rewriting_files(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            requirements = self.write_requirements_variant(
+                root,
+                "PyYAML==6.0.3\njsonschema==4.26.0\n",
+            )
+            lock = root / "requirements-lock.txt"
+            lock.write_text(
+                "PyYAML==6.0.2\njsonschema==4.26.0\n",
+                encoding="utf-8",
+            )
+            before = lock.read_bytes()
+
+            result = self.run_lock_check(requirements, lock)
+
+            self.assertEqual(before, lock.read_bytes())
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("pyyaml declares 6.0.3", result.stdout)
+        self.assertIn("locks 6.0.2", result.stdout)
+
+    def test_validator_lock_check_reports_missing_direct_dependency(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            requirements = self.write_requirements_variant(
+                root,
+                "PyYAML==6.0.3\njsonschema==4.26.0\n",
+            )
+            lock = root / "requirements-lock.txt"
+            lock.write_text("PyYAML==6.0.3\n", encoding="utf-8")
+
+            result = self.run_lock_check(requirements, lock)
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("jsonschema is declared at 4.26.0", result.stdout)
+        self.assertIn("missing from", result.stdout)
+
+    def test_validator_lock_update_report_identifies_newer_versions(self) -> None:
+        lock_checker = load_lock_checker()
+
+        with patch.object(
+            lock_checker,
+            "latest_version",
+            return_value=("99.0.0", None),
+        ):
+            updates, warnings = lock_checker.update_report(REQUIREMENTS_LOCK)
+
+        self.assertEqual([], warnings)
+        self.assertIn(
+            "attrs: lock has 26.1.0; latest index version is 99.0.0",
+            updates,
+        )
 
     def test_manifest_validator_imports_are_declared(self) -> None:
         entries, _ = parse_requirement_entries(REQUIREMENTS)

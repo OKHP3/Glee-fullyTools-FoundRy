@@ -108,6 +108,53 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         self.assertEqual("00", entry.entity_id)
         self.assertEqual("Example Toolbox", entry.name)
 
+    def test_duplicate_inventory_id_fails_before_import(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        duplicate_catalog = CATALOG_TEXT + """\
+
+# TOOLBOX 🧰 (Trunk🌳) \\#00 – Conflicting Toolbox
+
+### Full Description:
+A conflicting catalog entry that must not be imported.
+"""
+        (directory / CHECKER.CATALOG_PATH).write_text(
+            duplicate_catalog,
+            encoding="utf-8",
+        )
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+
+        with self.assertRaisesRegex(
+            scaffold.DuplicateInventoryIDError,
+            r"duplicate inventory entity ID '#00'.*Example Toolbox.*Conflicting Toolbox",
+        ):
+            scaffold.parse_inventory(
+                directory / CHECKER.CATALOG_PATH,
+                target_id="00",
+            )
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(directory / CHECKER.SCAFFOLD_PATH),
+                "--tier",
+                "toolbox",
+                "--name",
+                "Example Toolbox",
+                "--id",
+                "00",
+            ],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("duplicate inventory entity ID '#00'", result.stderr)
+        self.assertIn("Example Toolbox", result.stderr)
+        self.assertIn("Conflicting Toolbox", result.stderr)
+
     def test_scaffold_preserves_bom_catalog_metadata_in_generated_files(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

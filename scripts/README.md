@@ -129,7 +129,15 @@ Nested scope is deliberate: the application and ADR READMEs are maintained
 indexes, while `docs/application/pilots/*/README.md` are package handoff notes,
 `docs/delegation/2026-09-07-coop-pertition/README.md` is dated delegation
 lineage, and `snapshots/README.md` contains read-only historical records. Those
-documents are intentionally excluded from this affordable default scan. The
+documents are intentionally excluded from this affordable default scan. Use
+the opt-in pilot-package check when reviewing a handoff:
+
+```bash
+python3 scripts/check-markdown-links.py . --pilots
+```
+
+The pilot mode checks direct package directories with `project.json` and skips
+hidden, archived, historical, snapshot, and generated documentation. The
 generated `.agents/skills/README.md` catalog is maintained by its own catalog
 tooling. The `docs/**` and `scripts/tests/**` workflow filters include every
 maintained nested index listed above.

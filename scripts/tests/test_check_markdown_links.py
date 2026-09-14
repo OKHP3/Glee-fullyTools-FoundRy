@@ -42,6 +42,64 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             CHECKER.DEFAULT_DOCUMENTS,
         )
 
+    def test_pilot_discovery_covers_packages_but_not_generated_or_nested_docs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pilots = root / CHECKER.PILOT_DOCUMENT_ROOT
+            for package_name in ("alpha", "beta"):
+                package = pilots / package_name
+                package.mkdir(parents=True)
+                (package / "project.json").write_text("{}\n", encoding="utf-8")
+                (package / "README.md").write_text("# Package\n", encoding="utf-8")
+
+            nested = pilots / "alpha" / "docs"
+            nested.mkdir()
+            (nested / "README.md").write_text("# Nested\n", encoding="utf-8")
+
+            generated = pilots / "generated"
+            generated.mkdir()
+            (generated / "project.json").write_text("{}\n", encoding="utf-8")
+            (generated / "README.md").write_text("# Generated\n", encoding="utf-8")
+
+            no_manifest = pilots / "notes"
+            no_manifest.mkdir()
+            (no_manifest / "README.md").write_text("# Notes\n", encoding="utf-8")
+
+            self.assertEqual(
+                (
+                    "docs/application/pilots/alpha/README.md",
+                    "docs/application/pilots/beta/README.md",
+                ),
+                CHECKER.discover_pilot_documents(root),
+            )
+
+    def test_pilot_scan_reports_broken_link_without_broadening_default_scope(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "README.md").write_text("# Repository\n", encoding="utf-8")
+            package = root / "docs/application/pilots/example"
+            package.mkdir(parents=True)
+            (package / "project.json").write_text("{}\n", encoding="utf-8")
+            (package / "README.md").write_text(
+                "# Pilot\n\n[missing](missing.md)\n",
+                encoding="utf-8",
+            )
+
+            pilot_result = CHECKER.scan(
+                root,
+                CHECKER.discover_pilot_documents(root),
+            )
+            default_result = CHECKER.scan(root, ("README.md",))
+
+            self.assertEqual(1, len(pilot_result.issues))
+            self.assertEqual(
+                Path("docs/application/pilots/example/README.md"),
+                pilot_result.issues[0].source,
+            )
+            self.assertEqual(3, pilot_result.issues[0].line)
+            self.assertEqual("missing.md", pilot_result.issues[0].destination)
+            self.assertEqual([], default_result.issues)
+
     def test_workflow_filters_cover_every_default_document(self):
         root = Path(__file__).parents[2]
 

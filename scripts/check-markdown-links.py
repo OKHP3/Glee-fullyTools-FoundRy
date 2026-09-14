@@ -32,6 +32,10 @@ DEFAULT_DOCUMENTS = (
     "web-templates/README.md",
     "scripts/tests/README.md",
 )
+PILOT_DOCUMENT_ROOT = pathlib.Path("docs/application/pilots")
+PILOT_EXCLUDED_DIRECTORIES = frozenset(
+    {"archive", "archives", "generated", "historical", "snapshots"}
+)
 WORKFLOW_PATH = pathlib.Path(".github/workflows/foundry-app.yml")
 WORKFLOW_EVENTS = ("pull_request", "push")
 
@@ -246,6 +250,27 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
     return result
 
 
+def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
+    """Return direct pilot-package README paths, excluding non-package surfaces."""
+    pilot_root = root / PILOT_DOCUMENT_ROOT
+    if not pilot_root.is_dir():
+        return ()
+
+    documents: list[str] = []
+    for package_dir in sorted(pilot_root.iterdir()):
+        if (
+            not package_dir.is_dir()
+            or package_dir.name.startswith(".")
+            or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
+            or not (package_dir / "project.json").is_file()
+        ):
+            continue
+        documents.append(
+            (PILOT_DOCUMENT_ROOT / package_dir.name / "README.md").as_posix()
+        )
+    return tuple(documents)
+
+
 def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
     """Extract path filters for one workflow event without a YAML dependency."""
     filters: list[str] = []
@@ -328,10 +353,22 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="document relative to root; repeat to override the defaults",
     )
+    parser.add_argument(
+        "--pilots",
+        action="store_true",
+        help="check direct pilot-package READMEs under docs/application/pilots",
+    )
     args = parser.parse_args(argv)
 
-    documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
-    result = scan(pathlib.Path(args.root), documents)
+    if args.pilots and args.documents:
+        parser.error("--pilots cannot be combined with --document")
+
+    root = pathlib.Path(args.root)
+    if args.pilots:
+        documents = discover_pilot_documents(root)
+    else:
+        documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
+    result = scan(root, documents)
     if result.issues:
         print("FAIL broken Markdown links:")
         for issue in result.issues:

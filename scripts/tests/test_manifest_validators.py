@@ -62,7 +62,10 @@ def parse_requirement_entries(
 
         match = REQUIREMENT_LINE.fullmatch(line)
         if match is None:
-            errors.append(f"line {line_number} is not a package requirement: {line}")
+            errors.append(
+                f"line {line_number} is not a supported package requirement: {line}; "
+                "use a package name with an exact == version pin"
+            )
             continue
 
         entries.append(
@@ -231,6 +234,44 @@ class ManifestValidatorTests(unittest.TestCase):
 
         self.assertIn(
             "pyyaml on line 1 must use an exact == pin",
+            errors,
+        )
+
+    def test_missing_manifest_validator_dependencies_are_named(self) -> None:
+        variants = (
+            (
+                "PyYAML==6.0.3\n",
+                "missing manifest validator dependency: jsonschema",
+            ),
+            (
+                "jsonschema==4.26.0\n",
+                "missing manifest validator dependency: pyyaml",
+            ),
+        )
+
+        for contents, expected_error in variants:
+            with self.subTest(expected_error=expected_error):
+                with tempfile.TemporaryDirectory() as directory:
+                    path = self.write_requirements_variant(Path(directory), contents)
+
+                    errors = requirements_contract_errors(path)
+
+                self.assertIn(expected_error, errors)
+
+    def test_unsupported_requirement_syntax_identifies_line_and_correction(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML==6.0.3\n"
+                "jsonschema==4.26.0\n"
+                "-r constraints.txt\n",
+            )
+
+            errors = requirements_contract_errors(path)
+
+        self.assertIn(
+            "line 3 is not a supported package requirement: -r constraints.txt; "
+            "use a package name with an exact == version pin",
             errors,
         )
 

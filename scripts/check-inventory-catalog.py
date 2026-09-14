@@ -30,7 +30,18 @@ DOCUMENTED_REFERENCES = {
 DOCUMENTED_REFERENCE_COUNT = sum(
     expected_count for _, expected_count in DOCUMENTED_REFERENCES.values()
 )
-EXECUTED_MARKER = re.compile(r"\bexecuted\b", re.IGNORECASE)
+LEDGER_FIELDS = (
+    "ID",
+    "Legacy path",
+    "Signals",
+    "Classification",
+    "Candidate target",
+    "Disposition",
+)
+EXECUTION_LIKE_MARKER = re.compile(
+    r"\b(?:execute|executed|executing|execution)\b",
+    re.IGNORECASE,
+)
 INTENTIONAL_RETENTION_MARKERS = (
     "intentional retention",
     "intentionally retained",
@@ -40,6 +51,18 @@ INTENTIONAL_RETENTION_MARKERS = (
     "retain the legacy path",
     "source-material retention",
 )
+
+
+def _disposition_status(disposition: str) -> str:
+    """Classify an execution disposition without trusting ambiguous wording."""
+    normalized = re.sub(r"[*_`]", "", disposition).strip()
+    if re.search(r"\b(?:not|never)\s+executed\b", normalized, re.IGNORECASE):
+        return "ignored"
+    if re.match(r"^executed(?:\s|$)", normalized, re.IGNORECASE):
+        return "executed"
+    if EXECUTION_LIKE_MARKER.search(normalized):
+        return "ambiguous"
+    return "ignored"
 
 
 def _read_text(path: Path) -> str | None:
@@ -101,25 +124,65 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
         return []
 
     issues: list[str] = []
+    mapping_table_active = False
     for line_number, line in enumerate(ledger_text.splitlines(), start=1):
         if not line.lstrip().startswith("|"):
+            mapping_table_active = False
             continue
 
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) < 6 or cells[0].lower() in {"id", "---"}:
+        if not cells:
             continue
 
-        disposition = cells[5]
-        if not EXECUTED_MARKER.search(disposition):
+        if cells[0].lower() == "id":
+            mapping_table_active = tuple(cells) == LEDGER_FIELDS
+            continue
+        if not mapping_table_active:
+            continue
+        if cells[0].lower() == "---":
             continue
 
         row_id = cells[0] or f"line {line_number}"
+        if len(cells) != len(LEDGER_FIELDS):
+            if len(cells) < len(LEDGER_FIELDS):
+                missing_fields = ", ".join(LEDGER_FIELDS[len(cells):])
+                detail = f"missing fields: {missing_fields}"
+            else:
+                detail = (
+                    f"expected {len(LEDGER_FIELDS)} fields, found {len(cells)}"
+                )
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has a malformed "
+                f"table row ({detail})"
+            )
+            continue
+
+        disposition = cells[5]
+        disposition_status = _disposition_status(disposition)
+        if disposition_status == "ambiguous":
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has an ambiguous "
+                "Disposition field; use an explicit Executed or non-executed status"
+            )
+            continue
+        if disposition_status != "executed":
+            continue
+
         legacy_path = _backtick_path(cells[1])
         candidate_path = _backtick_path(cells[4])
-        if legacy_path is None or candidate_path is None:
-            issues.append(
-                f"{MIGRATION_LEDGER_PATH} row {row_id} has an Executed "
-                "mapping without a parseable legacy and candidate path"
+        malformed_path_fields = [
+            field_name
+            for field_name, path in (
+                ("Legacy path", legacy_path),
+                ("Candidate target", candidate_path),
+            )
+            if path is None
+        ]
+        if malformed_path_fields:
+            issues.extend(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has a malformed "
+                f"{field_name} field; expected a Markdown code span"
+                for field_name in malformed_path_fields
             )
             continue
 

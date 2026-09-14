@@ -65,6 +65,14 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         ledger.parent.mkdir(parents=True, exist_ok=True)
         ledger.write_text(text, encoding="utf-8")
 
+    def _mapping_ledger(self, row: str) -> str:
+        return (
+            "| ID | Legacy path | Signals | Classification | Candidate target | "
+            "Disposition |\n"
+            "|---|---|---|---|---|---|\n"
+            f"{row}"
+        )
+
     def _run_scaffold(
         self, directory: Path, *arguments: str
     ) -> subprocess.CompletedProcess[str]:
@@ -331,6 +339,99 @@ A conflicting catalog entry that must not be imported.
 
         self.assertTrue(any("candidate path to exist" in issue for issue in issues))
 
+    def test_executed_move_reports_each_malformed_path_field(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        cases = (
+            ("legacy", "legacy/example.md", "`docs/example.md`"),
+            ("candidate", "`legacy/example.md`", "docs/example.md"),
+        )
+        for index, (field_name, legacy_path, candidate_path) in enumerate(
+            cases,
+            start=1,
+        ):
+            with self.subTest(field_name=field_name):
+                self._set_ledger(
+                    directory,
+                    self._mapping_ledger(
+                        f"| X-{index:02d} | {legacy_path} | underscore | "
+                        f"ordinary documentation | {candidate_path} | "
+                        "**Executed 2026-09-09** |\n"
+                    ),
+                )
+
+                issues = CHECKER.check_filename_migration_ledger(directory)
+
+                self.assertTrue(
+                    any(
+                        f"row X-{index:02d}" in issue
+                        and field_name.capitalize() in issue
+                        and "malformed" in issue
+                        for issue in issues
+                    ),
+                    issues,
+                )
+
+    def test_short_executed_row_reports_missing_fields(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-02 | `legacy/example.md` | underscore | **Executed** |\n"
+            ),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "row X-02" in issue
+                and "malformed table row" in issue
+                and "Candidate target" in issue
+                and "Disposition" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
+    def test_short_rows_in_other_tables_are_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            "| Batch | Rows | Recommended order | Required approval and checks |\n"
+            "|---|---|---|---|\n"
+            "| B0 | X-01 | First | Confirm |\n",
+        )
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_ambiguous_execution_disposition_is_reported(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-03 | `legacy/example.md` | underscore | "
+                "ordinary documentation | `docs/example.md` | "
+                "**Execution pending** |\n"
+            ),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "row X-03" in issue
+                and "Disposition field" in issue
+                and "ambiguous" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
     def test_executed_move_rejects_paths_outside_repository(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)
@@ -350,9 +451,11 @@ A conflicting catalog entry that must not be imported.
             with self.subTest(field_name=field_name, reason=reason):
                 self._set_ledger(
                     directory,
-                    f"| X-{index:02d} | `{legacy_path}` | underscore | "
-                    f"ordinary documentation | `{candidate_path}` | "
-                    "**Executed 2026-09-09** |\n",
+                    self._mapping_ledger(
+                        f"| X-{index:02d} | `{legacy_path}` | underscore | "
+                        f"ordinary documentation | `{candidate_path}` | "
+                        "**Executed 2026-09-09** |\n"
+                    ),
                 )
 
                 issues = CHECKER.check_filename_migration_ledger(directory)
@@ -397,6 +500,19 @@ A conflicting catalog entry that must not be imported.
         (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
         (directory / "legacy/example.md").parent.mkdir(parents=True)
         (directory / "legacy/example.md").write_text("retained source\n", encoding="utf-8")
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_not_executed_disposition_is_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            EXECUTED_LEDGER.replace(
+                "**Executed 2026-09-09**",
+                "**Not executed** — awaiting approval",
+            ),
+        )
 
         self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
 

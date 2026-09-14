@@ -65,6 +65,34 @@ def _backtick_path(cell: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _resolve_repository_path(
+    root: Path,
+    raw_path: str,
+    *,
+    row_id: str,
+    field_name: str,
+) -> tuple[Path | None, str | None]:
+    """Resolve a ledger path only when it stays repository-relative."""
+    path = Path(raw_path)
+    if path.is_absolute():
+        return None, (
+            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"must be repository-relative; absolute paths are not allowed: "
+            f"{raw_path}"
+        )
+
+    resolved_root = root.resolve()
+    resolved_path = (root / path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError:
+        return None, (
+            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"resolves outside the repository root: {raw_path}"
+        )
+    return resolved_path, None
+
+
 def check_filename_migration_ledger(root: Path) -> list[str]:
     """Verify filesystem state for rows marked Executed in the migration ledger."""
     ledger = root / MIGRATION_LEDGER_PATH
@@ -95,7 +123,25 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             )
             continue
 
-        candidate = root / candidate_path
+        candidate, candidate_issue = _resolve_repository_path(
+            root,
+            candidate_path,
+            row_id=row_id,
+            field_name="candidate",
+        )
+        legacy, legacy_issue = _resolve_repository_path(
+            root,
+            legacy_path,
+            row_id=row_id,
+            field_name="legacy",
+        )
+        path_issues = [issue for issue in (candidate_issue, legacy_issue) if issue]
+        if path_issues:
+            issues.extend(path_issues)
+            continue
+
+        assert candidate is not None
+        assert legacy is not None
         if not candidate.is_file():
             issues.append(
                 f"{MIGRATION_LEDGER_PATH} row {row_id} expected candidate "
@@ -106,7 +152,6 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             marker in disposition.lower()
             for marker in INTENTIONAL_RETENTION_MARKERS
         )
-        legacy = root / legacy_path
         if legacy.exists() and not retains_legacy:
             issues.append(
                 f"{MIGRATION_LEDGER_PATH} row {row_id} still has the legacy "

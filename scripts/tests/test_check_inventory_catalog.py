@@ -331,6 +331,45 @@ A conflicting catalog entry that must not be imported.
 
         self.assertTrue(any("candidate path to exist" in issue for issue in issues))
 
+    def test_executed_move_rejects_paths_outside_repository(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        (directory / "docs/example.md").parent.mkdir(parents=True, exist_ok=True)
+        (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
+
+        cases = (
+            ("legacy", "/tmp/legacy/example.md", "docs/example.md", "absolute"),
+            ("legacy", "../outside/legacy.md", "docs/example.md", "outside"),
+            ("candidate", "legacy/example.md", "/tmp/candidate.md", "absolute"),
+            ("candidate", "legacy/example.md", "../outside/candidate.md", "outside"),
+        )
+        for index, (field_name, legacy_path, candidate_path, reason) in enumerate(
+            cases,
+            start=1,
+        ):
+            with self.subTest(field_name=field_name, reason=reason):
+                self._set_ledger(
+                    directory,
+                    f"| X-{index:02d} | `{legacy_path}` | underscore | "
+                    f"ordinary documentation | `{candidate_path}` | "
+                    "**Executed 2026-09-09** |\n",
+                )
+
+                issues = CHECKER.check_filename_migration_ledger(directory)
+
+                self.assertTrue(
+                    any(
+                        field_name in issue
+                        and (
+                            "absolute paths are not allowed" in issue
+                            if reason == "absolute"
+                            else "resolves outside the repository root" in issue
+                        )
+                        for issue in issues
+                    ),
+                    issues,
+                )
+
     def test_executed_move_reports_legacy_path_that_remains(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

@@ -33,7 +33,11 @@ class LifecycleContractTests(ServiceTests):
                                         {"backup": backup, "confirm": True, "mode": "replace"})
         self.assertEqual(status, 200)
         self.assertEqual(result["restored"], 12)
-        status, _, error = self.request("POST", "/api/projects", {"padding": "x" * (1024 * 1024)})
+        # The ordinary endpoint rejects oversized headers before reading a body.
+        # Keep the body small so socket closure cannot race a large client upload.
+        status, _, error = self.request(
+            "POST", "/api/projects", {}, {"Content-Length": str(1024 * 1024 + 1)}
+        )
         self.assertEqual(status, 400)
         self.assertIn("1 MB", error["error"])
 

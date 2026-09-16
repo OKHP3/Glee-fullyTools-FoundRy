@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import fnmatch
 import pathlib
 import re
 from collections.abc import Iterable
@@ -303,6 +302,55 @@ def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
     return tuple(filters)
 
 
+def workflow_path_matches(document: str, pattern: str) -> bool:
+    """Match a full repository path using GitHub Actions filter syntax.
+
+    Single stars stay in one directory; double stars cross directories.
+    See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet
+    """
+    tokens: list[str] = []
+    index = 0
+    while index < len(pattern):
+        char = pattern[index]
+        if pattern.startswith("**/", index):
+            tokens.append("(?:.*/)?")
+            index += 3
+        elif pattern.startswith("**", index):
+            tokens.append(".*")
+            index += 2
+        elif char == "*":
+            tokens.append("[^/]*")
+            index += 1
+        elif char in "?+" and tokens:
+            tokens[-1] = "(?:" + tokens[-1] + ")" + char
+            index += 1
+        elif char == "[":
+            end = pattern.find("]", index + 1)
+            content = pattern[index + 1:end]
+            if end < 0 or not re.fullmatch(r"(?:[a-zA-Z0-9](?:-[a-zA-Z0-9])?)+", content):
+                raise ValueError(f"unsupported character class in path filter {pattern!r}")
+            tokens.append("[" + content + "]")
+            index = end + 1
+        elif char == "\\" and index + 1 < len(pattern):
+            tokens.append(re.escape(pattern[index + 1]))
+            index += 2
+        else:
+            tokens.append(re.escape(char))
+            index += 1
+    return re.fullmatch("".join(tokens), document) is not None
+
+
+def workflow_covers_path(document: str, filters: tuple[str, ...]) -> bool:
+    """Apply ordered exclusions and re-inclusions to a repository path."""
+    covered = False
+    for path_filter in filters:
+        excluded = path_filter.startswith("!")
+        pattern = path_filter[1:] if excluded else path_filter
+        if workflow_path_matches(document, pattern):
+            covered = not excluded
+    return covered
+
+
 def check_workflow_document_coverage(
     root: pathlib.Path,
     workflow_text: str | None = None,
@@ -325,10 +373,7 @@ def check_workflow_document_coverage(
             )
             continue
         for document in DEFAULT_DOCUMENTS:
-            if not any(
-                fnmatch.fnmatchcase(document, path_filter)
-                for path_filter in filters
-            ):
+            if not workflow_covers_path(document, filters):
                 issues.append(
                     f"{WORKFLOW_PATH} {event} paths do not cover maintained "
                     f"document {document}; add a matching filter"

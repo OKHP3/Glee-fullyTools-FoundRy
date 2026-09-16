@@ -180,7 +180,7 @@
     const id = state.current.id;
     setBusy(true);
     try {
-      const project = await (await api(`/api/projects/${id}/restore`, {
+      const project = await (await api(`/api/projects/${encodeURIComponent(id)}/restore`, {
         method: 'POST',
         body: JSON.stringify({sourceRevision, currentRevision: state.current.revision}),
       })).json();

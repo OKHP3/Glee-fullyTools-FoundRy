@@ -440,6 +440,9 @@ A conflicting catalog entry that must not be imported.
 
         cases = (
             ("legacy", "/tmp/legacy/example.md", "docs/example.md", "absolute"),
+            ("legacy", "C:/outside/legacy.md", "docs/example.md", "absolute"),
+            ("legacy", "C:legacy.md", "docs/example.md", "absolute"),
+            ("legacy", r"\outside\legacy.md", "docs/example.md", "absolute"),
             ("legacy", "../outside/legacy.md", "docs/example.md", "outside"),
             ("candidate", "legacy/example.md", "/tmp/candidate.md", "absolute"),
             ("candidate", "legacy/example.md", "../outside/candidate.md", "outside"),

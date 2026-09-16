@@ -100,7 +100,7 @@ def inventory_unavailable_warning(
             "catalog."
         )
     else:
-        label = f"canonical inventory catalog '{inventory_path}'"
+        label = f"canonical inventory catalog '{inventory_path.as_posix()}'"
         action = "Restore the canonical catalog or pass --inventory PATH."
     return (
         f"WARNING: {label} is unavailable ({reason}); catalog enrichment skipped. "

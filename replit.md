@@ -14,6 +14,33 @@ allowlist; keep the repository root and local working data outside that boundary
 
 ## Shared agent work
 
+### GitHub synchronization
+
+GitHub `origin/main` is the shared baseline. Keep Replit and desktop `main`
+checkouts clean and update each separately after a pull request merges.
+New work belongs on a feature branch, created from an up-to-date `main`:
+
+```bash
+git status --short --branch
+git fetch origin
+git pull --ff-only origin main
+git switch -c codex/<task-name>
+```
+
+Run those update commands only from a clean `main`. Replace `<task-name>` with
+the actual task name. Commit reviewed files on the feature branch, push it and
+open a pull request. Complete review fixes and required checks before the
+owner-authorized squash merge. A pushed feature branch is not yet integrated.
+Direct pushes with new commits to protected `main` are rejected by design;
+repeating `git pull && git push` cannot resolve review conversations or merge a PR.
+
+After a squash merge, preserve the feature tip, switch to a clean `main` and
+fast-forward from `origin/main`. If local `main` already contains unsquashed
+commits, preserve its tip and reconcile it with the squash result before pruning.
+Never force-push, discard authored files or disable branch protection to sync.
+Verify a clean status, identical `HEAD` and `origin/main`, and ahead/behind `0/0`
+on both hosts. Replit Git may need a refresh after Shell operations.
+
 Read `AGENTS.md` and [the collaboration protocol](docs/agent-collaboration.md).
 Finish the current Git synchronization directive before accepting overlapping
 work. Report the fetched SHA, local-only work, branch and validation to the

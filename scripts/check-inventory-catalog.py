@@ -7,7 +7,7 @@ import importlib.util
 import re
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 
 CATALOG_PATH = Path("inventory/inventory-of-toolbox-tools-and-tool-ettes.md")
@@ -97,7 +97,7 @@ def _resolve_repository_path(
 ) -> tuple[Path | None, str | None]:
     """Resolve a ledger path only when it stays repository-relative."""
     path = Path(raw_path)
-    if path.is_absolute():
+    if PurePosixPath(raw_path).is_absolute() or PureWindowsPath(raw_path).anchor:
         return None, (
             f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
             f"must be repository-relative; absolute paths are not allowed: "
@@ -244,10 +244,10 @@ def check(root: Path) -> list[str]:
             else 0
         )
         if text is None:
-            issues.append(f"missing documented reference file: {relative_path}")
+            issues.append(f"missing documented reference file: {relative_path.as_posix()}")
         elif actual_count != expected_count:
             issues.append(
-                f"{relative_path} contains {actual_count} references to "
+                f"{relative_path.as_posix()} contains {actual_count} references to "
                 f"{reference}; expected {expected_count}"
             )
 

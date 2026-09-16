@@ -340,19 +340,6 @@ class Store:
                        "createdAt": stamp, "updatedAt": stamp}
             self._insert_locked(project, "duplicated", f"Duplicated from {source['id']} with fresh identity and reset evidence")
         return project
-    def _insert_locked(self, project, action, summary):
-        serialized = self._serialize(project)
-        self.conn.execute("INSERT INTO projects(id,revision,data) VALUES(?,?,?)",
-                          (project["id"], project["revision"], serialized))
-        self.conn.execute("INSERT INTO history VALUES(?,?,?,?,?)",
-                          (project["id"], project["revision"], project["updatedAt"], action, summary))
-        self.conn.execute(
-            """INSERT INTO project_revisions
-               (project_id, revision, captured_at, action, schema_version, data, sha256)
-               VALUES(?,?,?,?,?,?,?)""",
-            (project["id"], project["revision"], project["updatedAt"], action,
-             project["schemaVersion"], serialized, self._digest(serialized)),
-        )
     def delete(self, project_id, revision):
         with self.lock, self.conn:
             row = self.conn.execute("SELECT revision FROM projects WHERE id=?", (project_id,)).fetchone()

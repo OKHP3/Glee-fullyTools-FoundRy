@@ -7,7 +7,7 @@ import importlib.util
 import re
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 
 CATALOG_PATH = Path("inventory/inventory-of-toolbox-tools-and-tool-ettes.md")
@@ -30,7 +30,18 @@ DOCUMENTED_REFERENCES = {
 DOCUMENTED_REFERENCE_COUNT = sum(
     expected_count for _, expected_count in DOCUMENTED_REFERENCES.values()
 )
-EXECUTED_MARKER = re.compile(r"\bexecuted\b", re.IGNORECASE)
+LEDGER_FIELDS = (
+    "ID",
+    "Legacy path",
+    "Signals",
+    "Classification",
+    "Candidate target",
+    "Disposition",
+)
+EXECUTION_LIKE_MARKER = re.compile(
+    r"\b(?:execute|executed|executing|execution)\b",
+    re.IGNORECASE,
+)
 INTENTIONAL_RETENTION_MARKERS = (
     "intentional retention",
     "intentionally retained",
@@ -40,6 +51,18 @@ INTENTIONAL_RETENTION_MARKERS = (
     "retain the legacy path",
     "source-material retention",
 )
+
+
+def _disposition_status(disposition: str) -> str:
+    """Classify an execution disposition without trusting ambiguous wording."""
+    normalized = re.sub(r"[*_`]", "", disposition).strip()
+    if re.search(r"\b(?:not|never)\s+executed\b", normalized, re.IGNORECASE):
+        return "ignored"
+    if re.match(r"^executed(?:\s|$)", normalized, re.IGNORECASE):
+        return "executed"
+    if EXECUTION_LIKE_MARKER.search(normalized):
+        return "ambiguous"
+    return "ignored"
 
 
 def _read_text(path: Path) -> str | None:
@@ -65,6 +88,34 @@ def _backtick_path(cell: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _resolve_repository_path(
+    root: Path,
+    raw_path: str,
+    *,
+    row_id: str,
+    field_name: str,
+) -> tuple[Path | None, str | None]:
+    """Resolve a ledger path only when it stays repository-relative."""
+    path = Path(raw_path)
+    if PurePosixPath(raw_path).is_absolute() or PureWindowsPath(raw_path).anchor:
+        return None, (
+            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"must be repository-relative; absolute paths are not allowed: "
+            f"{raw_path}"
+        )
+
+    resolved_root = root.resolve()
+    resolved_path = (root / path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError:
+        return None, (
+            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"resolves outside the repository root: {raw_path}"
+        )
+    return resolved_path, None
+
+
 def check_filename_migration_ledger(root: Path) -> list[str]:
     """Verify filesystem state for rows marked Executed in the migration ledger."""
     ledger = root / MIGRATION_LEDGER_PATH
@@ -73,29 +124,87 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
         return []
 
     issues: list[str] = []
+    mapping_table_active = False
     for line_number, line in enumerate(ledger_text.splitlines(), start=1):
         if not line.lstrip().startswith("|"):
+            mapping_table_active = False
             continue
 
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) < 6 or cells[0].lower() in {"id", "---"}:
+        if not cells:
             continue
 
-        disposition = cells[5]
-        if not EXECUTED_MARKER.search(disposition):
+        if cells[0].lower() == "id":
+            mapping_table_active = tuple(cells) == LEDGER_FIELDS
+            continue
+        if not mapping_table_active:
+            continue
+        if cells[0].lower() == "---":
             continue
 
         row_id = cells[0] or f"line {line_number}"
-        legacy_path = _backtick_path(cells[1])
-        candidate_path = _backtick_path(cells[4])
-        if legacy_path is None or candidate_path is None:
+        if len(cells) != len(LEDGER_FIELDS):
+            if len(cells) < len(LEDGER_FIELDS):
+                missing_fields = ", ".join(LEDGER_FIELDS[len(cells):])
+                detail = f"missing fields: {missing_fields}"
+            else:
+                detail = (
+                    f"expected {len(LEDGER_FIELDS)} fields, found {len(cells)}"
+                )
             issues.append(
-                f"{MIGRATION_LEDGER_PATH} row {row_id} has an Executed "
-                "mapping without a parseable legacy and candidate path"
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has a malformed "
+                f"table row ({detail})"
             )
             continue
 
-        candidate = root / candidate_path
+        disposition = cells[5]
+        disposition_status = _disposition_status(disposition)
+        if disposition_status == "ambiguous":
+            issues.append(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has an ambiguous "
+                "Disposition field; use an explicit Executed or non-executed status"
+            )
+            continue
+        if disposition_status != "executed":
+            continue
+
+        legacy_path = _backtick_path(cells[1])
+        candidate_path = _backtick_path(cells[4])
+        malformed_path_fields = [
+            field_name
+            for field_name, path in (
+                ("Legacy path", legacy_path),
+                ("Candidate target", candidate_path),
+            )
+            if path is None
+        ]
+        if malformed_path_fields:
+            issues.extend(
+                f"{MIGRATION_LEDGER_PATH} row {row_id} has a malformed "
+                f"{field_name} field; expected a Markdown code span"
+                for field_name in malformed_path_fields
+            )
+            continue
+
+        candidate, candidate_issue = _resolve_repository_path(
+            root,
+            candidate_path,
+            row_id=row_id,
+            field_name="candidate",
+        )
+        legacy, legacy_issue = _resolve_repository_path(
+            root,
+            legacy_path,
+            row_id=row_id,
+            field_name="legacy",
+        )
+        path_issues = [issue for issue in (candidate_issue, legacy_issue) if issue]
+        if path_issues:
+            issues.extend(path_issues)
+            continue
+
+        assert candidate is not None
+        assert legacy is not None
         if not candidate.is_file():
             issues.append(
                 f"{MIGRATION_LEDGER_PATH} row {row_id} expected candidate "
@@ -106,7 +215,6 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             marker in disposition.lower()
             for marker in INTENTIONAL_RETENTION_MARKERS
         )
-        legacy = root / legacy_path
         if legacy.exists() and not retains_legacy:
             issues.append(
                 f"{MIGRATION_LEDGER_PATH} row {row_id} still has the legacy "
@@ -136,10 +244,10 @@ def check(root: Path) -> list[str]:
             else 0
         )
         if text is None:
-            issues.append(f"missing documented reference file: {relative_path}")
+            issues.append(f"missing documented reference file: {relative_path.as_posix()}")
         elif actual_count != expected_count:
             issues.append(
-                f"{relative_path} contains {actual_count} references to "
+                f"{relative_path.as_posix()} contains {actual_count} references to "
                 f"{reference}; expected {expected_count}"
             )
 

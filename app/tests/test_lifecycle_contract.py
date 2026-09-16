@@ -33,7 +33,11 @@ class LifecycleContractTests(ServiceTests):
                                         {"backup": backup, "confirm": True, "mode": "replace"})
         self.assertEqual(status, 200)
         self.assertEqual(result["restored"], 12)
-        status, _, error = self.request("POST", "/api/projects", {"padding": "x" * (1024 * 1024)})
+        # The ordinary endpoint rejects oversized headers before reading a body.
+        # Keep the body small so socket closure cannot race a large client upload.
+        status, _, error = self.request(
+            "POST", "/api/projects", {}, {"Content-Length": str(1024 * 1024 + 1)}
+        )
         self.assertEqual(status, 400)
         self.assertIn("1 MB", error["error"])
 
@@ -134,6 +138,119 @@ class LifecycleContractTests(ServiceTests):
         self.assertEqual(restored, revised)
         self.assertEqual([item["revision"] for item in self.server.store.history(revised["id"])], [1, 2])
         self.assertIsNone(self.server.store.get(newer["id"]))
+
+    def test_revision_snapshots_restore_append_only_and_reset_evidence(self):
+        original = self.create(
+            status="archived",
+            tests=[{
+                "id": "case",
+                "name": "Useful case",
+                "expected": "It works",
+                "actual": "Observed before restore",
+                "status": "pass",
+            }],
+        )
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Changed name", status="archived",
+                         tests=original["tests"]),
+        )
+        self.assertEqual(status, 200)
+        status, _, history = self.request("GET", f"/api/projects/{original['id']}/history")
+        self.assertEqual(status, 200)
+        self.assertTrue(all(entry["restorable"] for entry in history["history"]))
+        self.assertFalse(any(entry["baseline"] for entry in history["history"]))
+
+        status, _, restored = self.request(
+            "POST",
+            f"/api/projects/{original['id']}/restore",
+            {"sourceRevision": original["revision"], "currentRevision": revised["revision"]},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(restored["id"], original["id"])
+        self.assertEqual(restored["createdAt"], original["createdAt"])
+        self.assertEqual(restored["revision"], 3)
+        self.assertEqual(restored["name"], original["name"])
+        self.assertEqual(restored["status"], "draft")
+        self.assertEqual(restored["tests"][0]["status"], "not-run")
+        self.assertEqual(restored["tests"][0]["actual"], "")
+
+        with self.server.store.lock:
+            source = self.server.store.conn.execute(
+                "SELECT data FROM project_revisions WHERE project_id=? AND revision=?",
+                (original["id"], original["revision"]),
+            ).fetchone()
+            snapshot_count = self.server.store.conn.execute(
+                "SELECT COUNT(*) FROM project_revisions WHERE project_id=?",
+                (original["id"],),
+            ).fetchone()[0]
+        self.assertEqual(json.loads(source["data"]), original)
+        self.assertEqual(snapshot_count, 3)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertEqual([entry["revision"] for entry in history], [1, 2, 3])
+        self.assertEqual(history[-1]["action"], "restored")
+        self.assertTrue(history[-1]["restorable"])
+        self.assertIn("evidence reset", history[-1]["summary"])
+
+    def test_restore_rejects_stale_or_corrupt_source_without_writing(self):
+        original = self.create(name="Original")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Revised"),
+        )
+        self.assertEqual(status, 200)
+        status, _, error = self.request(
+            "POST",
+            f"/api/projects/{original['id']}/restore",
+            {"sourceRevision": 1, "currentRevision": 1},
+        )
+        self.assertEqual(status, 409)
+        self.assertEqual(self.server.store.get(original["id"]), revised)
+        self.assertEqual(len(self.server.store.history(original["id"])), 2)
+
+        with self.server.store.lock, self.server.store.conn:
+            self.server.store.conn.execute(
+                "UPDATE project_revisions SET sha256=? WHERE project_id=? AND revision=?",
+                ("0" * 64, original["id"], original["revision"]),
+            )
+        status, _, error = self.request(
+            "POST",
+            f"/api/projects/{original['id']}/restore",
+            {"sourceRevision": original["revision"], "currentRevision": revised["revision"]},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("unavailable", error["error"])
+        self.assertEqual(self.server.store.get(original["id"]), revised)
+        self.assertEqual(len(self.server.store.history(original["id"])), 2)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertFalse(history[0]["restorable"])
+
+    def test_pre_snapshot_database_gets_only_current_baseline(self):
+        original = self.create(name="Before snapshots")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Current state"),
+        )
+        self.assertEqual(status, 200)
+        with self.server.store.lock, self.server.store.conn:
+            self.server.store.conn.execute("DELETE FROM project_revisions WHERE project_id=?", (original["id"],))
+            self.server.store._migrate_current_baselines_locked()
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertFalse(history[0]["restorable"])
+        self.assertTrue(history[1]["restorable"])
+        self.assertTrue(history[1]["baseline"])
+        self.assertFalse(history[1]["action"] == "migration-baseline")
+        status, _, error = self.request(
+            "POST",
+            f"/api/projects/{original['id']}/restore",
+            {"sourceRevision": original["revision"], "currentRevision": revised["revision"]},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("unavailable", error["error"])
+        self.assertEqual(self.server.store.get(original["id"]), revised)
 
     def test_package_contract_has_target_file_for_each_kind(self):
         expected = {

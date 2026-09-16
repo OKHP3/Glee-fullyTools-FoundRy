@@ -100,7 +100,7 @@ def inventory_unavailable_warning(
             "catalog."
         )
     else:
-        label = f"canonical inventory catalog '{inventory_path}'"
+        label = f"canonical inventory catalog '{inventory_path.as_posix()}'"
         action = "Restore the canonical catalog or pass --inventory PATH."
     return (
         f"WARNING: {label} is unavailable ({reason}); catalog enrichment skipped. "
@@ -124,6 +124,19 @@ class InventoryEntry:
     full_description: str = ""
     primary_functions: list[str] = dc_field(default_factory=list)
     elevator_pitch: str = ""
+
+
+class DuplicateInventoryIDError(ValueError):
+    """Raised when the inventory contains more than one section for an ID."""
+
+    def __init__(self, entity_id: str, names: list[str]):
+        self.entity_id = entity_id
+        self.names = names
+        listed_names = ", ".join(names)
+        super().__init__(
+            f"duplicate inventory entity ID '#{entity_id}' found in "
+            f"{len(names)} sections: {listed_names}"
+        )
 
 
 def _strip_links(text: str) -> str:
@@ -157,6 +170,20 @@ def parse_inventory(
     sections = list(header_re.finditer(text))
     if not sections:
         return None
+
+    ids: dict[str, list[tuple[str, str]]] = {}
+    for section in sections:
+        section_id = section.group(1).lstrip("#")
+        section_name = _strip_links(section.group(2))
+        ids.setdefault(section_id.casefold(), []).append((section_id, section_name))
+
+    for matches in ids.values():
+        if len(matches) > 1:
+            first_id = matches[0][0]
+            raise DuplicateInventoryIDError(
+                first_id,
+                [section_name for _, section_name in matches],
+            )
 
     match_idx: int | None = None
     for i, m in enumerate(sections):
@@ -1586,6 +1613,9 @@ def main():
                 target_id=getattr(args, "id", "") or "",
                 target_name=args.name or "",
             )
+        except DuplicateInventoryIDError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
         except (OSError, UnicodeError) as exc:
             inventory_reason = (
                 getattr(exc, "strerror", None)
@@ -1623,4 +1653,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

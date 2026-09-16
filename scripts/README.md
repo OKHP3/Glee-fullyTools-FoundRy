@@ -31,6 +31,7 @@ as a canonical source.
 | [`check-registry.py`](check-registry.py) | Lightweight registry file presence check | Quick integrity check |
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
+| [`check-validator-lock.py`](check-validator-lock.py) | Compares direct validator pins with the reviewed lock and optionally reports newer index versions without rewriting files | Before refreshing validator dependencies, or via the weekly GitHub Actions review |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
 | [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
 | [`foundry-authoring-qa.mjs`](foundry-authoring-qa.mjs) | Runs the isolated browser journey for authoring, package inspection, recovery, themes and overflow | When a Playwright-compatible driver is installed |
@@ -91,6 +92,31 @@ python3 scripts/manifest-audit.py .
 
 ---
 
+### `check-validator-lock.py`
+
+Checks that the exact validator pins in `requirements.txt` still match the
+reviewed pins in `requirements-lock.txt`. The default check is offline and
+never rewrites either dependency file:
+
+```bash
+python3 scripts/check-validator-lock.py
+# Output: OK, or FAIL with the declared and locked versions that differ
+```
+
+To review newer versions available from pip's configured package index, opt in
+to the network check:
+
+```bash
+python3 scripts/check-validator-lock.py --check-updates
+```
+
+This reports newer versions for every package in the reviewed lock, but does
+not update the lock automatically. GitHub Actions runs this network check
+weekly and on manual dispatch in a separate non-blocking job, so pull-request
+manifest validation does not depend on package-index availability.
+
+---
+
 ### `foundry-sync.py`
 
 Checks this relay repository against the OKHP3 Tier 0→1→2 governance baseline.
@@ -129,7 +155,15 @@ Nested scope is deliberate: the application and ADR READMEs are maintained
 indexes, while `docs/application/pilots/*/README.md` are package handoff notes,
 `docs/delegation/2026-09-07-coop-pertition/README.md` is dated delegation
 lineage, and `snapshots/README.md` contains read-only historical records. Those
-documents are intentionally excluded from this affordable default scan. The
+documents are intentionally excluded from this affordable default scan. Use
+the opt-in pilot-package check when reviewing a handoff:
+
+```bash
+python3 scripts/check-markdown-links.py . --pilots
+```
+
+The pilot mode checks direct package directories with `project.json` and skips
+hidden, archived, historical, snapshot, and generated documentation. The
 generated `.agents/skills/README.md` catalog is maintained by its own catalog
 tooling. The `docs/**` and `scripts/tests/**` workflow filters include every
 maintained nested index listed above.

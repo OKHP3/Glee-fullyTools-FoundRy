@@ -2,7 +2,7 @@
   'use strict';
   const $ = (s, p = document) => p.querySelector(s);
   const $$ = (s, p = document) => [...p.querySelectorAll(s)];
-  const state = { bootstrap: { templates: [], skills: [], sources: [], universe: [] }, projects: [], current: null, dirty: false, library: 'active', pending: null, busy: false, validation: null, historyToken: 0, sourceToken: 0 };
+  const state = { bootstrap: { templates: [], skills: [], sources: [], universe: [] }, projects: [], current: null, dirty: false, library: 'active', pending: null, pendingRevision: null, busy: false, validation: null, historyToken: 0, sourceToken: 0 };
   const fields = ['name','kind','owner','version','purpose','description','audience','inputs','outputs','constraints','instructions'];
   const kinds = { 'custom-gpt':'Custom GPT', 'agent-skill':'Agent Skill', workflow:'Workflow', 'web-tool':'Web tool' };
   const api = async (path, options = {}) => {
@@ -80,7 +80,14 @@
     try {
       const data = await (await api(`/api/projects/${encodeURIComponent(id)}/history`)).json();
       if (token !== state.historyToken || id !== state.current?.id) return;
-      $('#history').innerHTML = data.history.map(h => `<li><strong>r${esc(h.revision)}</strong> · ${esc(h.action)}<br><small>${esc(h.summary)} · ${esc(new Date(h.at).toLocaleString())}</small></li>`).join('');
+      $('#history').innerHTML = data.history.map(h => {
+        const label = h.baseline ? ' · current-state baseline' : '';
+        const action = h.restorable && h.revision !== state.current.revision
+          ? `<button type="button" class="button secondary history-restore" data-revision="${esc(h.revision)}">Restore this version</button>`
+          : '';
+        return `<li><strong>r${esc(h.revision)}</strong> · ${esc(h.action)}${label}<br><small>${esc(h.summary)} · ${esc(new Date(h.at).toLocaleString())}</small>${action}</li>`;
+      }).join('');
+      $$('.history-restore').forEach(button => button.addEventListener('click', () => requestRestoreRevision(Number(button.dataset.revision))));
     } catch (_) {
       if (token === state.historyToken) $('#history').textContent = 'Revision history is unavailable right now.';
     }
@@ -156,6 +163,29 @@
       const project = await (await api(`/api/projects/${state.current.id}/duplicate`, {method:'POST', body:JSON.stringify({revision: state.current.revision})})).json();
       showSaved(project);
       status('Duplicated as a fresh draft. Its acceptance evidence needs a new test run.');
+      await refreshAfterSave();
+    } catch (error) { status(error.message, true); }
+    finally { setBusy(false); }
+  }
+  function requestRestoreRevision(revision) {
+    if (state.busy || !state.current || !Number.isInteger(revision)) return;
+    state.pendingRevision = revision;
+    $('#revision-restore-dialog').showModal();
+  }
+  async function restoreRevision() {
+    const sourceRevision = state.pendingRevision;
+    state.pendingRevision = null;
+    if (state.busy || !state.current || !Number.isInteger(sourceRevision)) return;
+    if (state.dirty && !(await save())) return;
+    const id = state.current.id;
+    setBusy(true);
+    try {
+      const project = await (await api(`/api/projects/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        body: JSON.stringify({sourceRevision, currentRevision: state.current.revision}),
+      })).json();
+      showSaved(project);
+      status(`Restored revision ${sourceRevision} as a new draft revision. Record fresh evidence before review.`);
       await refreshAfterSave();
     } catch (error) { status(error.message, true); }
     finally { setBusy(false); }
@@ -294,7 +324,7 @@
     button.textContent = next === 'dark' ? 'Day mode' : 'Night mode';
     button.setAttribute('aria-pressed', String(next === 'dark'));
   }
-  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#backup-button').addEventListener('click',backupWorkspace); $('#restore-button').addEventListener('click',() => $('#restore-file').click()); $('#restore-file').addEventListener('change',e => importWorkspace(e.target.files[0])); $('#theme-button').addEventListener('click',toggleTheme); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#duplicate-button').addEventListener('click',duplicateProject); $('#archive-button').addEventListener('click',toggleArchive); $('#delete-button').addEventListener('click',requestDelete); $('#validate-button').addEventListener('click',validate); $('#inspect-button').addEventListener('click',inspectPackage); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>{ state.sourceToken++; $('#source-viewer').hidden=true; }); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;fn();}else state.pending=null;}); $('#delete-dialog').addEventListener('close',()=>{if($('#delete-dialog').returnValue==='delete')deleteProject();}); $('#restore-dialog').addEventListener('close',()=>{if($('#restore-dialog').returnValue==='restore')restoreWorkspace();else state.pendingRestoreFile=null;}); applyTheme(); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
+  async function init() { $('#new-button').addEventListener('click',showNew); $('#import-button').addEventListener('click',() => $('#import-file').click()); $('#import-file').addEventListener('change',e => importFile(e.target.files[0])); $('#backup-button').addEventListener('click',backupWorkspace); $('#restore-button').addEventListener('click',() => $('#restore-file').click()); $('#restore-file').addEventListener('change',e => importWorkspace(e.target.files[0])); $('#theme-button').addEventListener('click',toggleTheme); $('#project-search').addEventListener('input',renderLibrary); $$('.tab').forEach(b => b.addEventListener('click',() => { state.library=b.dataset.library; $$('.tab').forEach(x => {x.classList.toggle('active',x===b);x.setAttribute('aria-selected',x===b);});renderLibrary(); })); $$('.editor-tab').forEach(b => b.addEventListener('click',()=>activatePanel(b.dataset.panel))); $('#project-form').addEventListener('submit',e => e.preventDefault()); $('#project-form').addEventListener('input',markDirty); $('#project-form').addEventListener('change',markDirty); $('#save-button').addEventListener('click',save); $('#duplicate-button').addEventListener('click',duplicateProject); $('#archive-button').addEventListener('click',toggleArchive); $('#delete-button').addEventListener('click',requestDelete); $('#validate-button').addEventListener('click',validate); $('#inspect-button').addEventListener('click',inspectPackage); $$('[data-export]').forEach(b => b.addEventListener('click',() => download(b.dataset.export))); $('#add-component').addEventListener('click',()=>{state.current.components.push({id:safeId(),name:'',purpose:'',dependsOn:[]});markDirty();renderComponents();}); $('#add-test').addEventListener('click',()=>{state.current.tests.push({id:safeId(),name:'',expected:'',actual:'',status:'not-run'});markDirty();renderTests();}); $('#close-source').addEventListener('click',()=>{ state.sourceToken++; $('#source-viewer').hidden=true; }); $('#confirm-dialog').addEventListener('close',()=>{if($('#confirm-dialog').returnValue==='leave'&&state.pending){const fn=state.pending;state.pending=null;fn();}else state.pending=null;}); $('#delete-dialog').addEventListener('close',()=>{if($('#delete-dialog').returnValue==='delete')deleteProject();}); $('#restore-dialog').addEventListener('close',()=>{if($('#restore-dialog').returnValue==='restore')restoreWorkspace();else state.pendingRestoreFile=null;}); $('#revision-restore-dialog').addEventListener('close',()=>{if($('#revision-restore-dialog').returnValue==='restore')restoreRevision();else state.pendingRevision=null;}); applyTheme(); window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
     try { const [boot, projects] = await Promise.all([api('/api/bootstrap'),api('/api/projects')]); state.bootstrap = await boot.json(); state.projects = (await projects.json()).projects || []; setConnection(true); renderTemplates(); renderLibrary(); renderUniverse(); } catch(e) { setConnection(false); $('#empty-state').querySelector('p:last-of-type').textContent = 'The local service is not running yet. Start it, then refresh this workspace.'; status(e.message,true); }
   }
   init();

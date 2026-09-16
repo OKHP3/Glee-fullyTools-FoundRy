@@ -65,6 +65,14 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         ledger.parent.mkdir(parents=True, exist_ok=True)
         ledger.write_text(text, encoding="utf-8")
 
+    def _mapping_ledger(self, row: str) -> str:
+        return (
+            "| ID | Legacy path | Signals | Classification | Candidate target | "
+            "Disposition |\n"
+            "|---|---|---|---|---|---|\n"
+            f"{row}"
+        )
+
     def _run_scaffold(
         self, directory: Path, *arguments: str
     ) -> subprocess.CompletedProcess[str]:
@@ -107,6 +115,53 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         assert entry is not None
         self.assertEqual("00", entry.entity_id)
         self.assertEqual("Example Toolbox", entry.name)
+
+    def test_duplicate_inventory_id_fails_before_import(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        duplicate_catalog = CATALOG_TEXT + """\
+
+# TOOLBOX 🧰 (Trunk🌳) \\#00 – Conflicting Toolbox
+
+### Full Description:
+A conflicting catalog entry that must not be imported.
+"""
+        (directory / CHECKER.CATALOG_PATH).write_text(
+            duplicate_catalog,
+            encoding="utf-8",
+        )
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+
+        with self.assertRaisesRegex(
+            scaffold.DuplicateInventoryIDError,
+            r"duplicate inventory entity ID '#00'.*Example Toolbox.*Conflicting Toolbox",
+        ):
+            scaffold.parse_inventory(
+                directory / CHECKER.CATALOG_PATH,
+                target_id="00",
+            )
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(directory / CHECKER.SCAFFOLD_PATH),
+                "--tier",
+                "toolbox",
+                "--name",
+                "Example Toolbox",
+                "--id",
+                "00",
+            ],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("duplicate inventory entity ID '#00'", result.stderr)
+        self.assertIn("Example Toolbox", result.stderr)
+        self.assertIn("Conflicting Toolbox", result.stderr)
 
     def test_scaffold_preserves_bom_catalog_metadata_in_generated_files(self):
         directory = self._make_repository()
@@ -284,6 +339,143 @@ class CheckInventoryCatalogTests(unittest.TestCase):
 
         self.assertTrue(any("candidate path to exist" in issue for issue in issues))
 
+    def test_executed_move_reports_each_malformed_path_field(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        cases = (
+            ("legacy", "legacy/example.md", "`docs/example.md`"),
+            ("candidate", "`legacy/example.md`", "docs/example.md"),
+        )
+        for index, (field_name, legacy_path, candidate_path) in enumerate(
+            cases,
+            start=1,
+        ):
+            with self.subTest(field_name=field_name):
+                self._set_ledger(
+                    directory,
+                    self._mapping_ledger(
+                        f"| X-{index:02d} | {legacy_path} | underscore | "
+                        f"ordinary documentation | {candidate_path} | "
+                        "**Executed 2026-09-09** |\n"
+                    ),
+                )
+
+                issues = CHECKER.check_filename_migration_ledger(directory)
+
+                self.assertTrue(
+                    any(
+                        f"row X-{index:02d}" in issue
+                        and field_name.capitalize() in issue
+                        and "malformed" in issue
+                        for issue in issues
+                    ),
+                    issues,
+                )
+
+    def test_short_executed_row_reports_missing_fields(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-02 | `legacy/example.md` | underscore | **Executed** |\n"
+            ),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "row X-02" in issue
+                and "malformed table row" in issue
+                and "Candidate target" in issue
+                and "Disposition" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
+    def test_short_rows_in_other_tables_are_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            "| Batch | Rows | Recommended order | Required approval and checks |\n"
+            "|---|---|---|---|\n"
+            "| B0 | X-01 | First | Confirm |\n",
+        )
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_ambiguous_execution_disposition_is_reported(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-03 | `legacy/example.md` | underscore | "
+                "ordinary documentation | `docs/example.md` | "
+                "**Execution pending** |\n"
+            ),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "row X-03" in issue
+                and "Disposition field" in issue
+                and "ambiguous" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
+    def test_executed_move_rejects_paths_outside_repository(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        (directory / "docs/example.md").parent.mkdir(parents=True, exist_ok=True)
+        (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
+
+        cases = (
+            ("legacy", "/tmp/legacy/example.md", "docs/example.md", "absolute"),
+            ("legacy", "C:/outside/legacy.md", "docs/example.md", "absolute"),
+            ("legacy", "C:legacy.md", "docs/example.md", "absolute"),
+            ("legacy", r"\outside\legacy.md", "docs/example.md", "absolute"),
+            ("legacy", "../outside/legacy.md", "docs/example.md", "outside"),
+            ("candidate", "legacy/example.md", "/tmp/candidate.md", "absolute"),
+            ("candidate", "legacy/example.md", "../outside/candidate.md", "outside"),
+        )
+        for index, (field_name, legacy_path, candidate_path, reason) in enumerate(
+            cases,
+            start=1,
+        ):
+            with self.subTest(field_name=field_name, reason=reason):
+                self._set_ledger(
+                    directory,
+                    self._mapping_ledger(
+                        f"| X-{index:02d} | `{legacy_path}` | underscore | "
+                        f"ordinary documentation | `{candidate_path}` | "
+                        "**Executed 2026-09-09** |\n"
+                    ),
+                )
+
+                issues = CHECKER.check_filename_migration_ledger(directory)
+
+                self.assertTrue(
+                    any(
+                        field_name in issue
+                        and (
+                            "absolute paths are not allowed" in issue
+                            if reason == "absolute"
+                            else "resolves outside the repository root" in issue
+                        )
+                        for issue in issues
+                    ),
+                    issues,
+                )
+
     def test_executed_move_reports_legacy_path_that_remains(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)
@@ -311,6 +503,19 @@ class CheckInventoryCatalogTests(unittest.TestCase):
         (directory / "docs/example.md").write_text("moved\n", encoding="utf-8")
         (directory / "legacy/example.md").parent.mkdir(parents=True)
         (directory / "legacy/example.md").write_text("retained source\n", encoding="utf-8")
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
+    def test_not_executed_disposition_is_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            EXECUTED_LEDGER.replace(
+                "**Executed 2026-09-09**",
+                "**Not executed** — awaiting approval",
+            ),
+        )
 
         self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
 

@@ -3,14 +3,22 @@ name: Technology version audit
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 9 1 * *"
+    - cron: "17 9 * * 1"
+  pull_request:
+    paths:
+      - 'scripts/audit-technology-versions.py'
+      - 'scripts/tests/test_technology_versions.py'
+      - '.github/workflows/technology-version-audit.yml'
+      - '.github/dependabot.yml'
 
 permissions:
   contents: read
 
 jobs:
   audit:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -18,5 +26,23 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.x"
+          check-latest: true
+      - name: Set up current Node LTS
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+          check-latest: true
       - name: Audit technology versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/audit-technology-versions.py
+
+  test-auditor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s scripts/tests -p 'test_technology_versions.py' -v

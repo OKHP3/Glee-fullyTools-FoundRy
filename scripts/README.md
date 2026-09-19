@@ -32,7 +32,7 @@ as a canonical source.
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`check-validator-lock.py`](check-validator-lock.py) | Compares direct validator pins with the reviewed lock and optionally reports newer index versions without rewriting files | Before refreshing validator dependencies, or via the weekly GitHub Actions review |
-| [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
+| [`audit-technology-versions.py`](audit-technology-versions.py) | Checks stable Mermaid, Python-lock, Actions and host-runtime releases; optionally prepares a reviewed Mermaid candidate | Weekly via GitHub Actions, or on demand; see [technology inventory](../docs/technology-inventory.md) |
 | [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
 | [`foundry-authoring-qa.mjs`](foundry-authoring-qa.mjs) | Runs the isolated browser journey for authoring, package inspection, recovery, themes and overflow | When a Playwright-compatible driver is installed |
 | [`foundry-release-check.py`](foundry-release-check.py) | Runs the owner-local application release gate without publishing or deploying | Before treating application changes as locally releasable |

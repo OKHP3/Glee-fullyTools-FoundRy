@@ -45,6 +45,9 @@ jobs:
       - name: Check manifest validation requirements
         run: python -m unittest discover -s scripts/tests -p 'test_manifest_validators.py' -v
         if: steps.changes.outputs.manifest == 'true'
+      - name: Check declared and locked dependency agreement
+        run: python scripts/check-validator-lock.py
+        if: steps.changes.outputs.manifest == 'true'
       - name: Validate manifest schema
         run: python scripts/validate-manifest.py
         if: steps.changes.outputs.manifest == 'true'

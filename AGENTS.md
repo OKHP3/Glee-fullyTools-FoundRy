@@ -108,7 +108,8 @@ The protocol does not launch agents, expand repository scope or authorize charge
 - `inventory/`: human-readable entity catalog that complements the canonical registry.
 - `docs/`: narrative, technical, and instruction-structure documentation, including
   source-format `.docx` and `.pdf` files, plus `technology-inventory.md`, the
-  source list consumed by `scripts/audit-technology-versions.py`.
+  human inventory and update policy. `scripts/audit-technology-versions.py` discovers
+  monitored pins from requirements, workflow files and the Mermaid source template.
 - `snapshots/`: dated historical captures. The latest local snapshot is
   `snapshots/2025-09-14/`. Treat snapshots as read-only lineage evidence.
 - `web-templates/`: HTML/CSS/JavaScript template assets for child repositories.
@@ -215,11 +216,16 @@ python3 scripts/sync-report.py
 python3 scripts/audit-technology-versions.py
 ```
 
-`audit-technology-versions.py` checks `docs/technology-inventory.md` entries
-against current upstream versions. It also runs on a monthly schedule via
+`audit-technology-versions.py` checks the Mermaid pin, Python dependency lock,
+workflow action references and executing-host runtimes against stable publisher
+releases. It also runs on a weekly schedule via
 `.github/workflows/technology-version-audit.yml` (with `.github/dependabot.yml`
-alongside it for dependency PRs). Neither workflow has produced a verified run
-in this checkout; treat their output as unconfirmed until a run is observed.
+alongside it for weekly pip and Actions PRs). Exit 1 reports drift; exit 2 means
+incomplete evidence. The optional `--prepare-mermaid` writes only a version
+candidate; major updates require `--allow-major` after migration review. See
+`docs/technology-inventory.md` for coverage, host boundaries and activation steps.
+Application CI tests Python 3.11 and latest stable Python 3; the reviewed hashed
+maintenance dependencies remain specific to Ubuntu Python 3.11.
 
 The filename normalizer is dry-run by default. Do not pass `--apply` without an
 explicit request because the current dry run proposes 12 renames, including a

@@ -38,6 +38,10 @@ evidence from live performance and publication claims.
 
 ## Application and research
 
+The [technology inventory and update policy](technology-inventory.md) records
+declared, Windows and Replit versions, publisher release sources, weekly dependency
+tracking, and the separate adoption steps for each host.
+
 The [application guide](application/README.md), [implementation plan](application/implementation-plan.md)
 and [seven-element research report](research/okhp3-universe-2026-09-07/report.html)
 document the September 2026 owner-authorized application transition. Historical

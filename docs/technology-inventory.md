@@ -40,11 +40,11 @@ link is maintained by the software publisher, package publisher or standards bod
 | npm | Windows and Replit **11.6.2**; skill test command wrapper, not an app build requirement. | **12.0.2**. [npm package metadata](https://registry.npmjs.org/npm/latest) | Follow supported Node/npm combinations. Review major npm changes independently. |
 | pip | Windows default Python **25.1.1**; explicit 3.13 **26.1.2**; Replit **25.0.1**. Installs maintenance dependencies only. | **26.2.1**. [PyPA package metadata](https://pypi.org/pypi/pip/json) | Upgrade in isolated validation environments; record the selected interpreter. |
 | Playwright and playwright-core | Optional browser QA imports; no repository pin. Neither package resolves from the initial Windows repository environment. This does not exclude installations in unrelated tool environments. | Both **1.63.0**. [Playwright](https://registry.npmjs.org/playwright/latest), [playwright-core](https://registry.npmjs.org/playwright-core/latest) | Pin a tested driver and matching browser when formalizing browser CI. Optional QA remains an explicit gap, not a green check. |
-| Mermaid | Exact CDN pin **11.17.2** in `web-templates/index.html`; GitHub-rendered Markdown diagrams use GitHub's separately managed renderer. | **12.0.0**. [npm metadata](https://registry.npmjs.org/mermaid/latest), [publisher release](https://github.com/mermaid-js/mermaid/releases/tag/mermaid%4012.0.0) | Weekly audit and candidate updater. Review the major migration, render representative diagrams, then merge and propagate to consuming repositories. |
+| Mermaid | Exact CDN pin **12.0.0** in `web-templates/index.html`; GitHub-rendered Markdown diagrams use GitHub's separately managed renderer. | **12.0.0**. [npm metadata](https://registry.npmjs.org/mermaid/latest), [publisher release](https://github.com/mermaid-js/mermaid/releases/tag/mermaid%4012.0.0) | Weekly audit and candidate updater. Review the major migration, render representative diagrams, then merge and propagate to consuming repositories. |
 
 Mermaid 12 targets ES2024 and Safari 17.4+ and declares Node 22.12+ for npm
-consumers. These are material compatibility changes, so this audit retains
-the existing template pin while providing a controlled migration route.
+consumers. These are material compatibility changes, and the template now explicitly retains the prior Dagre layout and classic look.
+A Chromium comparison rendered flowchart links and sequence diagrams successfully under both 11.17.2 and 12.0.0. Safari and Firefox were not tested.
 The application itself does not import Mermaid.
 
 ## Python maintenance dependencies
@@ -203,5 +203,4 @@ The workflow supplies its existing read-only GitHub token only to GitHub API URL
 | New scheduled automation is active | Not established by local files | Activation requires merging these workflow/configuration changes to the default branch | Verify the first scheduled/manual run and first Dependabot PR after merge. |
 | Automatic updates of every host or service | Not provided | Host installs and hosted services are separately owned | Execute the per-host adoption step; preserve local work and private databases. |
 
-Recommended next action: review and merge the tracking change, then handle Mermaid
-12 and the Windows release-candidate interpreter as separate tested upgrades.
+The September 20 maintenance pass adopted Mermaid 12 after the bounded browser comparison above. Host interpreter migration remains separate.

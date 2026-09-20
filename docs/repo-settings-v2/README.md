@@ -12,7 +12,9 @@ universal family. Version 2 is the owner's requested iteration label; the previo
 - 23 passing offline tests and separate evidence, outcome, safety, adversarial
   and final adjudication contexts. Shared model/source limits are recorded.
 - Graduation: 11/12, GO for local candidate routing; live operational acceptance held.
-- All 14 package files match across source, publication mirror and Skillz.
+- September 20, 2026 verification: all 14 committed package files match across the source and publication mirror. Skillz moved its active package to `universal/okhp3-repository-settings`; current distribution equality is not asserted here.
+
+The final inventory was corrected on September 20, 2026 to hash committed Git blob bytes at `94618ccc9b0c1d0c90752dee4582d76d4c5ce3f3`, avoiding checkout line-ending variation. The promotion manifest uses the same corrected inventory and defines its aggregate encoding. Earlier reviewer JSON remains historical evidence; its checkout-based hash assertions are superseded by this correction. Prior behavioral test results retain their original scope.
 
 ## Evidence and continuation
 

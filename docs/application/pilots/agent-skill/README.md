@@ -27,7 +27,7 @@ small enough to review quickly.
 ## Suggested validation
 
 1. Import `project.json` into the FoundRy application.
-2. Export the project as `SKILL.md` and inspect the generated frontmatter.
+2. Export the project as a ZIP package, then inspect its `SKILL.md` and generated front matter.
 3. Check that the draft still names a bounded trigger, inputs, method, checks, and handoff.
 4. Confirm the acceptance cases are specific, observable, and still marked `not-run`.
 

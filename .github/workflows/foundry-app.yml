@@ -22,6 +22,8 @@ on:
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
       - '.agents/skills/README.md'
       - '.agents/skills/okhp3-skill-cataloger/**'
+      - '.agents/skills/okhp3-replit-repl-janitor/**'
+      - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
   push:
     branches: [main]
     paths:
@@ -44,6 +46,8 @@ on:
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
       - '.agents/skills/README.md'
       - '.agents/skills/okhp3-skill-cataloger/**'
+      - '.agents/skills/okhp3-replit-repl-janitor/**'
+      - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
   workflow_dispatch:
   schedule:
     - cron: '47 9 * * 1'
@@ -87,6 +91,10 @@ jobs:
       - name: Test maintenance scripts
         if: matrix.python == '3.11'
         run: python -m unittest discover -s scripts/tests -v
+      - name: Test reviewed maintenance packages
+        run: |
+          python -m unittest discover -s .agents/skills/okhp3-replit-repl-janitor/tests -v
+          python -m unittest discover -s .agents/skills/okhp3-replit-free-mode-autonomy/benchmarks -p test_native_telemetry.py -v
       - name: Exercise the application and exported packages
         run: python -m unittest discover -s app/tests -v
       - name: Check source syntax and whitespace

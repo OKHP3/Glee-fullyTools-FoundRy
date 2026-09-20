@@ -473,7 +473,7 @@
       "execution_mode": "Free Mode",
       "evidence_tier": "live",
       "evidence_note": "Tool-backed isolated fixture execution with filesystem inspection and test-process result; no native host telemetry claimed.",
-      "isolated_workspace": "/tmp/free-mode-fixture.buEMpo",
+      "isolated_workspace": "isolated temporary workspace (path omitted)",
       "changed_files": [
         "src/usage/formatRemaining.js",
         "src/usage/formatRemaining.test.js"

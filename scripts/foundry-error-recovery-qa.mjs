@@ -20,7 +20,7 @@ const waitFor = async (fn, timeout = 5000, interval = 50) => {
 const listen = server => new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve(server.address().port)); });
 
 let playwright;
-try { playwright = await import('playwright'); }
+try { playwright = await import(process.env.PLAYWRIGHT_MODULE_URL || 'playwright'); }
 catch (_) { console.log('NOT RUN  Browser driver unavailable: install/use an installed Playwright driver to execute browser assertions.'); process.exitCode = 2; }
 
 if (playwright) {
@@ -33,26 +33,28 @@ if (playwright) {
   const dataDir = await mkdtemp(join(tmpdir(), 'foundry-error-recovery-'));
   const appPortServer = createServer();
   const appPort = await listen(appPortServer); appPortServer.close();
-  const app = spawn('python3', ['-m', 'app.server', '--port', String(appPort), '--data-dir', dataDir], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  const app = spawn(process.env.FOUNDRY_PYTHON || 'python3', ['-m', 'app.server', '--port', String(appPort), '--data-dir', dataDir], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
   const { request: httpRequest } = await import('node:http');
   const proxy = createServer();
   proxy.on('request', (req, res) => {
     if (req.url === '/__qa__/fail-next-save') { proxy.failNextSave = true; res.writeHead(204); return res.end(); }
     const headers = { ...req.headers, host: `127.0.0.1:${appPort}` };
+    if (headers.origin) headers.origin = `http://127.0.0.1:${appPort}`;
     if (proxy.failNextSave && req.method === 'PUT' && req.url.startsWith('/api/projects/')) { proxy.failNextSave = false; res.writeHead(503, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ error: 'synthetic save outage' })); }
     const upstream = httpRequest({ hostname: '127.0.0.1', port: appPort, path: req.url, method: req.method, headers }, response => { res.writeHead(response.statusCode, response.headers); response.pipe(res); });
     upstream.on('error', error => { res.writeHead(502); res.end(String(error)); }); req.pipe(upstream);
   });
   const proxyPort = await listen(proxy);
-  const browser = await playwright.chromium.launch({ executablePath, headless: true });
-  const page = await browser.newPage();
+  let browser;
   try {
+    browser = await playwright.chromium.launch({ executablePath, headless: true });
+    const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${proxyPort}/`, { waitUntil: 'domcontentloaded' });
     await waitFor(() => page.locator('#connection').textContent().then(text => text.includes('ready')));
     assert((await page.title()) === 'Glee-fully FoundRy', 'unexpected page title');
     assert((await page.locator('body').innerText()).includes('Make room for the next useful thing.'), 'page is blank');
 
-    await page.locator('#new-button').click(); await page.locator('[data-template="custom-gpt"]').first().click();
+    await page.locator('#new-button').click(); await page.locator('#template-dialog [data-template="custom-gpt"]').click();
     await waitFor(() => page.locator('#editor').isVisible());
     const name = page.locator('[name="name"]'); await name.fill('Recovery draft');
     await page.request.get(`http://127.0.0.1:${proxyPort}/__qa__/fail-next-save`);
@@ -76,7 +78,8 @@ if (playwright) {
     const invalid = join(dataDir, 'invalid-project.json'); await writeFile(invalid, '{ not project json');
     await page.locator('#import-button').click();
     await page.locator('#import-file').setInputFiles(invalid);
-    await waitFor(() => page.locator('#message').textContent().then(t => t.includes('Unexpected token')));
+    await page.locator('#confirm-dialog [value="leave"]').click();
+    await waitFor(() => page.locator('#message').textContent().then(t => /JSON|Unexpected|Expected/.test(t)));
     assert(await name.inputValue() === 'Stale local edit', 'invalid import replaced current draft');
     assert(await page.locator('#save-button').isEnabled(), 'busy state did not recover after invalid import');
     record('invalid import preserves current draft and recovers busy state', 'PASS');
@@ -91,7 +94,11 @@ if (playwright) {
     record('browser recovery assertions', 'FINDING', error.message);
     process.exitCode = 1;
   } finally {
-    await browser.close(); proxy.close(); app.kill('SIGTERM'); await rm(dataDir, { recursive: true, force: true });
+    if (browser) await browser.close().catch(() => {});
+    await new Promise(resolve => proxy.close(resolve));
+    const stopped = new Promise(resolve => { if (app.exitCode !== null || app.signalCode !== null) resolve(); else { app.once('exit', resolve); app.once('error', resolve); } });
+    app.kill('SIGTERM'); await stopped;
+    await rm(dataDir, { recursive: true, force: true });
   }
   }
 }

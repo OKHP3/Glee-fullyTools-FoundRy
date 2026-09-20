@@ -9,8 +9,7 @@ This repository now contains an owner-local Glee-fully builder application under
 Private Replit runtime, branch and deployment state could not be verified during
 the September 7, 2026 research. Do not infer GitHub/Replit parity from this file.
 A hosted preview or deployment requires authentication and an explicit hosting
-boundary before adapting the loopback service. The GitHub source repository is intentionally public. Serve only the application
-allowlist; keep the repository root and local working data outside that boundary.
+boundary before adapting the loopback service. The GitHub source repository is intentionally public. Serve only the application allowlist; keep the repository root and local working data outside that boundary.
 
 ## Shared agent work
 

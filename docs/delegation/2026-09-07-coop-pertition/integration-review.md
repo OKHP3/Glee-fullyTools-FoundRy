@@ -22,16 +22,14 @@ The suite emitted one `ResourceWarning` for an unclosed SQLite connection in
 the F08 boundary test. The assertions passed, but that warning is a follow-up
 test-hygiene finding, not evidence of an application defect.
 
-## Pending or excluded FoundRy work
+## Initial pending findings (superseded by final disposition below)
 
 - F07: correction requested for an EOF whitespace failure from `git diff --check`.
 - F09: correction requested to remove host-specific driver paths.
 - F10: correction requested so unavailable browsers report `NOT RUN` and the
   temporary fixture does not claim a pass.
-- F13: no committed deliverable at review time.
-- F13: no committed deliverable was available at the initial review point. Its
-  worker source evidence must be reconciled before assigning a final disposition.
-- F17: correction requested to remove a machine-specific path from the proposal.
+- F13: initially unavailable; later accepted through the integrated workflow pilot in PR #10.
+- F17: initial machine-specific path correction was completed before its accepted integration in PR #9.
 
 ## Addendum: pilot import review correction
 

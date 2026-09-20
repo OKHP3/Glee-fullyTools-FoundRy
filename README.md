@@ -1,6 +1,6 @@
 # Glee-fullyTools-FoundRy
 
-**A public-source, locally run workspace for designing, evaluating and packaging Glee-fully systems and tools.**
+**A publicly visible, proprietary, locally run workspace for designing, evaluating and packaging Glee-fully systems and tools.**
 
 The owner-authorized application adds durable project records and useful exports to
 this repository's existing canon, prompts, templates and evaluation material.
@@ -21,6 +21,9 @@ archive/restore, confirmed delete, and validated whole-workspace backup/restore.
 Web-tool packages include a runnable record-management starter and the authored
 specification. Review-ready is a working-record check, not PME certification or
 permission to publish.
+
+Source visibility does not grant unrestricted reuse. The proprietary terms in
+[LICENSE.md](LICENSE.md) govern use; its historical private-repository label does not describe current GitHub visibility. Private workbench records remain local.
 
 ## Working across agent hosts
 

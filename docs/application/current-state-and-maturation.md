@@ -1,6 +1,6 @@
 # Current state and maturation roadmap
 
-## September 8 closeout update
+## September 8, 2026 closeout update
 
 The assessment and staged roadmap below preserve the original baseline and
 proposals. The application and all 26 coop-pertition deliverables are now merged.

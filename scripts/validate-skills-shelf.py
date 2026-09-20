@@ -93,7 +93,7 @@ def validate_shelf(shelf) -> list[ValidationError]:
 
             if not isinstance(source_path, str) or not source_path.strip():
                 errors.append(ValidationError(f"{path}.sourcePath", "must be a non-empty string"))
-            elif source_path.startswith(("/", "\\")) or ".." in source_path.split("/"):
+            elif source_path.startswith(("/", "\\")) or any(part in {".", ".."} for part in source_path.replace("\\", "/").split("/")):
                 errors.append(ValidationError(f"{path}.sourcePath", "must be a safe relative path"))
 
             if not isinstance(revision, str) or not FULL_REVISION_RE.fullmatch(revision):

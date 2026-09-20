@@ -18,10 +18,11 @@
       "branch": "codex/coop-f01",
       "thread_id": "01a07e81-c2d7-7970-b240-6a3e87b516f3",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F02",
@@ -39,10 +40,11 @@
       "branch": "codex/coop-f02",
       "thread_id": "01a07e81-f68e-7b60-bab1-e46bfdae7cd7",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F03",
@@ -60,10 +62,11 @@
       "branch": "codex/coop-f03",
       "thread_id": "01a07e81-f8b2-7de0-8665-a5098ad7f394",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F04",
@@ -81,10 +84,11 @@
       "branch": "codex/coop-f04",
       "thread_id": "01a07e81-f8b4-7d61-8d63-9f6cf1fdcb31",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F05",
@@ -104,10 +108,11 @@
       "branch": "codex/coop-f05",
       "thread_id": "01a07e81-fe36-7681-807c-08a0d91ce4d5",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F06",
@@ -126,10 +131,11 @@
       "branch": "codex/coop-f06",
       "thread_id": "01a07e82-0109-7021-9a2a-04740a4cb179",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F07",
@@ -147,10 +153,11 @@
       "branch": "codex/coop-f07",
       "thread_id": "01a07e82-0576-78b1-bcfc-0512864e15b4",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F08",
@@ -168,10 +175,11 @@
       "branch": "codex/coop-f08",
       "thread_id": "01a07e82-07e4-72d2-aaa5-1c3eb5b751a8",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F09",
@@ -190,10 +198,11 @@
       "branch": "codex/coop-f09",
       "thread_id": "01a07e82-092c-77c2-8e21-b2c5395513a2",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F10",
@@ -212,10 +221,11 @@
       "branch": "codex/coop-f10",
       "thread_id": "01a07e82-0dc6-71e3-ac22-45da99202aff",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F11",
@@ -234,10 +244,11 @@
       "branch": "codex/coop-f11",
       "thread_id": "01a07e82-1210-72b0-9f57-69f7e1aa19f8",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "2f9ca53df464310c655fa060e843483d05e61320",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F12",
@@ -256,10 +267,11 @@
       "branch": "codex/coop-f12",
       "thread_id": "01a07e82-14c2-7e50-b28f-00d614a2b9b4",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "2f9ca53df464310c655fa060e843483d05e61320",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F13",
@@ -278,10 +290,11 @@
       "branch": "codex/coop-f13",
       "thread_id": "01a07e82-1646-77e0-8abd-be4dec2dc274",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "2f9ca53df464310c655fa060e843483d05e61320",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F14",
@@ -300,10 +313,11 @@
       "branch": "codex/coop-f14",
       "thread_id": "01a07e82-1c92-7703-a2d7-9f67bfe6780b",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "2f9ca53df464310c655fa060e843483d05e61320",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F15",
@@ -321,10 +335,11 @@
       "branch": "codex/coop-f15",
       "thread_id": "01a07e82-1fb1-7283-ace7-7317a26cd696",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F16",
@@ -342,10 +357,11 @@
       "branch": "codex/coop-f16",
       "thread_id": "01a07e82-22c2-7c71-b304-230d25da1c82",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F17",
@@ -363,10 +379,11 @@
       "branch": "codex/coop-f17",
       "thread_id": "01a07e82-25fd-7441-a7dd-92f2fd14e59a",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F18",
@@ -384,10 +401,11 @@
       "branch": "codex/coop-f18",
       "thread_id": "01a07e82-2b97-71e0-bc9a-b5cb3fa34d48",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F19",
@@ -405,10 +423,11 @@
       "branch": "codex/coop-f19",
       "thread_id": "01a07e82-2e11-7903-aed6-6ad77ee86996",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "F20",
@@ -427,10 +446,11 @@
       "branch": "codex/coop-f20",
       "thread_id": "01a07e82-3127-7992-be56-b0a6205e099e",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "53caa7e8c1114c98481d1521086aa60846990dbc",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W01",
@@ -448,10 +468,11 @@
       "branch": "codex/coop-w01",
       "thread_id": "01a07e82-383f-71a0-bbf1-7670b550776b",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W02",
@@ -469,10 +490,11 @@
       "branch": "codex/coop-w02",
       "thread_id": "01a07e82-3b02-78c3-8efa-1ae1f71e240d",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W03",
@@ -491,10 +513,11 @@
       "branch": "codex/coop-w03",
       "thread_id": "01a07e82-3daf-7a31-8010-070f56221a26",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W04",
@@ -512,10 +535,11 @@
       "branch": "codex/coop-w04",
       "thread_id": "01a07e82-442f-7a61-bf84-7c616435fd77",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W05",
@@ -533,10 +557,11 @@
       "branch": "codex/coop-w05",
       "thread_id": "01a07e82-4484-78c0-a101-f09442fc1d2b",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.4-mini",
-      "dispatch_verified_effort": "low"
+      "dispatch_verified_effort": "low",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     },
     {
       "id": "W06",
@@ -555,10 +580,11 @@
       "branch": "codex/coop-w06",
       "thread_id": "01a07e82-4bcc-7140-83f0-3f0c74b3f591",
       "client_thread_id": null,
-      "head_sha": null,
+      "head_sha": "c89d6ee29562682c9abfb36448d20c5d87f09efe",
       "review": "accepted; see integration-review.md final disposition",
       "dispatch_verified_model": "gpt-5.6-luna",
-      "dispatch_verified_effort": "medium"
+      "dispatch_verified_effort": "medium",
+      "revision_evidence": "Integrated merge commit containing accepted deliverable; original per-worker dispatch base was not recorded."
     }
   ]
 }

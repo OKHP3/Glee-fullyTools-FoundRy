@@ -55,6 +55,15 @@ class SkillShelfValidatorTests(unittest.TestCase):
         self.assertTrue(any(".url" in error.path for error in errors))
         self.assertTrue(any(".revision" in error.path for error in errors))
 
+    def test_rejects_windows_traversal_and_dot_segments(self):
+        for source_path in (r"skills\..\private\SKILL.md", "skills/./SKILL.md", "skills/../SKILL.md"):
+            with self.subTest(source_path=source_path):
+                shelf = [{"id": "alpha", "name": "Alpha", "description": "One",
+                          "url": "https://example.com/a", "sourcePath": source_path,
+                          "revision": "a" * 40}]
+                errors = VALIDATOR.validate_shelf(shelf)
+                self.assertTrue(any(".sourcePath" in error.path for error in errors))
+
     def test_rejects_unknown_shape(self):
         errors = VALIDATOR.validate_shelf({"id": "not-a-list"})
         self.assertEqual(errors[0].path, "(root)")

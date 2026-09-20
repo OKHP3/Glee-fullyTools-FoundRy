@@ -5,10 +5,15 @@ import unittest
 import zipfile
 from io import BytesIO
 
-from app.tests.test_server import ServiceTests
+from app.tests import test_server
 
 
-class ExportBoundaryTests(ServiceTests):
+class ExportBoundaryTests(unittest.TestCase):
+    setUp = test_server.ServiceTests.setUp
+    tearDown = test_server.ServiceTests.tearDown
+    request = test_server.ServiceTests.request
+    create = test_server.ServiceTests.create
+    project = test_server.ServiceTests.project
     def test_unicode_long_text_and_archive_paths_survive_export(self):
         name = "Glee Δossier ../unsafe/🪴✨"
         long_description = "".join([

@@ -62,3 +62,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `manifest.yaml` foundry metadata
 - `README.md` scope and responsibilities
 - Governance framework and Canon system
+
+## 2026-09-20: Reviewed maintenance corrections
+
+- Bind cleanup plans to reviewed remote SHAs, protect checked-out branches, and isolate native telemetry runs.
+- Correct local runner paths, catalog identity, committed-byte evidence hashes, and accepted task revisions.
+- Repair Windows path handling, QA proxy origins and process cleanup; use Python for ZIP extraction.
+- Remove duplicate inherited export tests and report unavailable Windows symlink privileges explicitly.
+- Reconcile historical visibility and pilot handoff wording without changing license grants or private-state boundaries.
+- Update the source template to Mermaid 12 with explicit Dagre layout and classic look after a bounded Chromium comparison.

@@ -16,7 +16,7 @@
     {"id":"intake","name":"Request intake","purpose":"Record the supplied request and stated outcome.","dependsOn":[]},
     {"id":"clarify","name":"Clarification","purpose":"Identify material missing information.","dependsOn":["intake"]},
     {"id":"scope","name":"Scope check","purpose":"Confirm the request remains bounded.","dependsOn":["clarify"]},
-    {"id":"exception","name":"Exception path","purpose":"Record a scope or evidence exception for review.","dependsOn":["scope"]},
+    {"id":"exception","name":"Exception check","purpose":"Check for scope or evidence exceptions and record any that need review.","dependsOn":["scope"]},
     {"id":"draft","name":"Draft preparation","purpose":"Prepare the bounded result and open questions.","dependsOn":["scope","exception"]},
     {"id":"handoff","name":"Review handoff","purpose":"Deliver the draft with evidence status and next action.","dependsOn":["draft"]}
   ],

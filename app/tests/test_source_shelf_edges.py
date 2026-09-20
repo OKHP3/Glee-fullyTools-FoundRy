@@ -63,7 +63,12 @@ class SourceShelfEdgeTests(unittest.TestCase):
                         path.unlink()
 
     def test_symlink_traversal_and_encoded_path_boundaries_stay_blocked(self):
-        self.write_source_tree(symlinked=True)
+        try:
+            self.write_source_tree(symlinked=True)
+        except OSError as error:
+            if getattr(error, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege unavailable")
+            raise
         for source_id in SOURCES:
             with self.subTest(source_id=source_id):
                 status, body = self.request(f"/api/sources/{source_id}")

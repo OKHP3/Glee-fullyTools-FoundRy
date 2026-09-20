@@ -91,7 +91,7 @@ async function run() {
   const temp = await mkdtemp(join(tmpdir(), 'foundry-starter-qa-'));
   const dataDir = join(temp, 'data');
   const appPort = await freePort();
-  const app = spawn('python3', ['-m', 'app.server', '--port', String(appPort), '--data-dir', dataDir], { cwd: root, stdio: 'ignore' });
+  const app = spawn(process.env.FOUNDRY_PYTHON || 'python3', ['-m', 'app.server', '--port', String(appPort), '--data-dir', dataDir], { cwd: root, stdio: 'ignore' });
   let staticServer;
   let browser;
   try {
@@ -101,9 +101,9 @@ async function run() {
     const zip = await (await fetch(`http://127.0.0.1:${appPort}/api/projects/${created.id}/export?format=zip`)).arrayBuffer();
     const zipPath = join(temp, 'starter.zip');
     await writeFile(zipPath, Buffer.from(zip));
-    execFileSync('unzip', ['-q', zipPath, '-d', join(temp, 'package')]);
+    execFileSync(process.env.FOUNDRY_PYTHON || 'python3', ['-m', 'zipfile', '-e', zipPath, join(temp, 'package')]);
     const staticPort = await freePort();
-    staticServer = spawn('python3', ['-m', 'http.server', String(staticPort), '--bind', '127.0.0.1'], { cwd: join(temp, 'package'), stdio: 'ignore' });
+    staticServer = spawn(process.env.FOUNDRY_PYTHON || 'python3', ['-m', 'http.server', String(staticPort), '--bind', '127.0.0.1'], { cwd: join(temp, 'package'), stdio: 'ignore' });
     const staticUrl = `http://127.0.0.1:${staticPort}/index.html`;
     await waitFor(staticUrl);
 

@@ -7,11 +7,12 @@ import { createRequire } from "node:module";
 import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import net from "node:net";
 
 const require = createRequire(import.meta.url);
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
 const projectName = "F09 synthetic authoring draft";
 
 function loadPlaywright() {
@@ -67,10 +68,11 @@ async function main() {
   const dataDir = await mkdtemp(join(tmpdir(), "foundry-f09-data-"));
   const evidenceDir = await mkdtemp(join(tmpdir(), "foundry-f09-evidence-"));
   const port = await freePort();
-  const server = spawn("python3", ["-m", "app.server", "--port", String(port), "--data-dir", dataDir], {
+  const server = spawn(process.env.FOUNDRY_PYTHON || "python3", ["-m", "app.server", "--port", String(port), "--data-dir", dataDir], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
   });
+  const serverExit = new Promise(resolve => { server.once("exit", resolve); server.once("error", resolve); });
   const serverErrors = [];
   server.stderr.on("data", chunk => serverErrors.push(String(chunk)));
   let browser;
@@ -208,7 +210,7 @@ async function main() {
   } finally {
     if (browser) await browser.close().catch(() => {});
     server.kill("SIGTERM");
-    await new Promise(resolve => server.once("exit", resolve));
+    await serverExit;
     await rm(dataDir, { recursive: true, force: true });
     // Keep evidence local for review. It is intentionally outside the repository.
   }

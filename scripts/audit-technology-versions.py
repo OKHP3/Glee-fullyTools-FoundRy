@@ -126,7 +126,7 @@ def targets(root: Path) -> list[dict]:
     add("Python (this host)", platform.python_version(), "python", PYTHON_URL, "host", "executing interpreter")
     add("SQLite (this host)", sqlite3.sqlite_version, "sqlite", SQLITE_URL, "host", "sqlite3.sqlite_version")
     node = command_version("node", "--version")
-    add("Node.js LTS (this host)", node, "node-lts", NODE_URL, "host", "node --version")
+    add("Node.js (this host)", node, "node-host", NODE_URL, "host", "node --version")
     add("Node.js Current", node, "node", NODE_URL, "informational", "stable Current channel; LTS preferred")
     add("npm (this host)", command_version("npm", "--version"), "npm", "https://registry.npmjs.org/npm/latest", "host", "npm --version")
     add("pip (this interpreter)", importlib.metadata.version("pip"), "pypi", "https://pypi.org/pypi/pip/json", "host", "interpreter package metadata")
@@ -149,7 +149,16 @@ def compare(current: str, newest: str, policy: str) -> str:
 def check(row: dict) -> dict:
     row = row.copy()
     try:
-        row["latest"] = latest(row["kind"], row["source"])
+        if row["kind"] == "node-host":
+            releases = json.loads(get_text(row["source"]))
+            installed_major = version(row["current"])[0]
+            is_lts = any(item.get("lts") and version(item["version"])[0] == installed_major
+                         for item in releases)
+            row["name"] = "Node.js LTS (this host)" if is_lts else "Node.js non-LTS (this host)"
+            candidates = [item["version"] for item in releases if not is_lts or item.get("lts")]
+            row["latest"] = max(candidates, key=version).removeprefix("v")
+        else:
+            row["latest"] = latest(row["kind"], row["source"])
         row["status"] = compare(row["current"], row["latest"], row["policy"])
     except (OSError, ValueError, KeyError, TypeError) as error:
         row["status"] = "unknown"

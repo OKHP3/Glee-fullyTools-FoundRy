@@ -65,6 +65,26 @@ class TechnologyVersionsTests(unittest.TestCase):
             self.assertEqual(AUDIT.latest('node', 'unused'), '26.9.0')
             self.assertEqual(AUDIT.latest('node-lts', 'unused'), '24.21.0')
 
+    def test_installed_node_uses_its_actual_release_channel(self):
+        payload = [{"version": "v26.9.0", "lts": False},
+                   {"version": "v25.0.0", "lts": False},
+                   {"version": "v24.21.0", "lts": "Krypton"},
+                   {"version": "v22.20.0", "lts": "Jod"}]
+        for installed, expected_latest, expected_name, status in [
+            ("26.9.0", "26.9.0", "Node.js non-LTS (this host)", "current"),
+            ("25.0.0", "26.9.0", "Node.js non-LTS (this host)", "update available"),
+            ("24.21.0", "24.21.0", "Node.js LTS (this host)", "current"),
+            ("22.20.0", "24.21.0", "Node.js LTS (this host)", "update available"),
+        ]:
+            with self.subTest(installed=installed), patch.object(AUDIT, "get_text", return_value=json.dumps(payload)):
+                row = AUDIT.check(dict(kind="node-host", source="unused", current=installed, policy="host"))
+                self.assertEqual((row["latest"], row["name"], row["status"]), (expected_latest, expected_name, status))
+                self.assertEqual(AUDIT.exit_code([row]), 0)
+                self.assertEqual(AUDIT.exit_code([row], True), int(status == "update available"))
+        with patch.object(AUDIT, "get_text", return_value="[]"):
+            row = AUDIT.check(dict(kind="node-host", source="unused", current="26.9.0", policy="host"))
+            self.assertEqual(AUDIT.exit_code([row]), 2)
+
     def test_python_excludes_prerelease_and_compares_numerically(self):
         html = '<a>Python 3.14.7</a><a>Python 3.15.0rc2</a><a>Python 3.9.25</a>'
         with patch.object(AUDIT, 'get_text', return_value=html):

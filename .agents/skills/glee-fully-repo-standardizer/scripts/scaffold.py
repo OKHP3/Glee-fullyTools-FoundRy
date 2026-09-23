@@ -108,6 +108,37 @@ def inventory_unavailable_warning(
     )
 
 
+def inventory_no_match_warning(
+    inventory_path: Path,
+    *,
+    target_id: str,
+    target_name: str,
+    explicit: bool,
+    supplied_path: str = "",
+) -> str:
+    """Describe a readable catalog that lacks the requested entity."""
+    label = (
+        f"inventory override '{supplied_path}'"
+        if explicit
+        else f"canonical inventory catalog '{inventory_path}'"
+    )
+    requested_identifiers = []
+    if target_id:
+        requested_identifiers.append(f"id='{target_id}'")
+    if target_name:
+        requested_identifiers.append(f"name='{target_name}'")
+    request = " or ".join(requested_identifiers)
+    action = (
+        "Check the supplied catalog or the requested ID/name."
+        if explicit
+        else "Check the requested ID/name or pass --inventory PATH."
+    )
+    return (
+        f"WARNING: {label} is available but has no matching entity for {request}; "
+        f"catalog enrichment skipped — using stubs. {action}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Inventory data structures and parser
 # ---------------------------------------------------------------------------
@@ -1602,6 +1633,16 @@ def main():
                 supplied_path=args.inventory_path,
             )
         )
+    elif inv is None and not args.quiet and not args.as_json:
+        print(
+            inventory_no_match_warning(
+                inv_path,
+                target_id=args.id or "",
+                target_name=args.name or "",
+                explicit=bool(args.inventory_path),
+                supplied_path=args.inventory_path,
+            )
+        )
 
     if not args.quiet and not args.as_json:
         if inv:
@@ -1613,9 +1654,6 @@ def main():
                 args.parent = inv.parent_name
             if inv.parent_url and not args.parent_url:
                 args.parent_url = inv.parent_url
-        elif args.inventory_path:
-            print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
-
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
                  quiet=args.quiet, as_json=args.as_json, inv=inv)
 

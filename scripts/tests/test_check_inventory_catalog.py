@@ -263,6 +263,43 @@ A conflicting catalog entry that must not be imported.
         self.assertIn(CHECKER.CATALOG_PATH.as_posix(), result.stdout)
         self.assertIn("catalog enrichment skipped", result.stdout)
         self.assertIn("pass --inventory PATH", result.stdout)
+        self.assertNotIn("no matching entity", result.stdout)
+
+    def test_readable_default_catalog_without_match_explains_stub_fallback(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        result = self._run_scaffold(
+            directory, "--id", "99", "--name", "Unknown Toolbox"
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("WARNING: canonical inventory catalog", result.stdout)
+        self.assertIn(CHECKER.CATALOG_PATH.as_posix(), result.stdout)
+        self.assertIn("is available but has no matching entity", result.stdout)
+        self.assertIn("id='99' or name='Unknown Toolbox'", result.stdout)
+        self.assertIn("catalog enrichment skipped — using stubs", result.stdout)
+        self.assertNotIn("is unavailable", result.stdout)
+
+    def test_readable_override_without_match_names_path_and_requested_entity(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        explicit = directory / "alternate-catalog.md"
+        explicit.write_text(CATALOG_TEXT, encoding="utf-8")
+
+        result = self._run_scaffold(
+            directory, "--inventory", str(explicit),
+            "--id", "99", "--name", "Unknown Toolbox",
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn(f"inventory override '{explicit}'", result.stdout)
+        self.assertIn(
+            "no matching entity for id='99' or name='Unknown Toolbox'",
+            result.stdout,
+        )
+        self.assertIn("Check the supplied catalog", result.stdout)
+        self.assertNotIn("is unavailable", result.stdout)
 
     def test_unreadable_explicit_catalog_warns_with_supplied_path(self):
         directory = self._make_repository()
@@ -276,6 +313,7 @@ A conflicting catalog entry that must not be imported.
         self.assertIn(f"inventory override '{explicit}'", result.stdout)
         self.assertIn("file is not valid UTF-8", result.stdout)
         self.assertIn("catalog enrichment skipped", result.stdout)
+        self.assertNotIn("no matching entity", result.stdout)
 
     def test_quiet_mode_keeps_catalog_warning_suppressed(self):
         directory = self._make_repository()
@@ -299,6 +337,25 @@ A conflicting catalog entry that must not be imported.
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertNotIn("WARNING:", result.stdout)
         self.assertIsInstance(json.loads(result.stdout), dict)
+
+    def test_no_match_keeps_quiet_and_json_output_contracts(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        for mode in ("--quiet", "--json"):
+            with self.subTest(mode=mode):
+                result = self._run_scaffold(
+                    directory, "--id", "99", "--name", "Unknown Toolbox", mode
+                )
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertNotIn("no matching entity", result.stdout)
+                self.assertNotIn("WARNING:", result.stdout)
+                self.assertEqual("", result.stderr)
+                if mode == "--quiet":
+                    self.assertIn("DRY RUN COMPLETE", result.stdout)
+                else:
+                    data = json.loads(result.stdout)
+                    self.assertEqual("Unknown Toolbox", data["name"])
+                    self.assertNotIn("inventory_warning", data)
 
     def test_missing_documented_reference_is_reported(self):
         directory = self._make_repository()

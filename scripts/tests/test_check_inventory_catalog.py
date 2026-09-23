@@ -29,6 +29,46 @@ An example toolbox used by the regression check.
 📒 A complete example toolbox for exercising catalog imports.
 """
 
+TOOL_CATALOG_TEXT = """\
+# TOOL 🪚 (Branch🌵): \\#01 – Example Tool
+
+🌐 [https://chatgpt.com/g/example-tool](https://chatgpt.com/g/example-tool)
+
+**🧰 Parent Toolbox (Trunk🌳):** [*Example Toolbox*](https://chatgpt.com/g/example-toolbox)
+
+### Full Description:
+An example tool used by the regression check.
+
+### Primary Functions:
+🪚FUNCTION⚙️ (🌵Branch): Route an example request
+🧭FUNCTION⚙️ (🌵Branch): Compare example options
+
+### Elevator Pitch:
+📒 **Example Tool** is a focused category guide for the regression check.
+
+---
+"""
+
+TOOLETTE_CATALOG_TEXT = """\
+# TOOL-ETTE 🔩 (Twig🌿): \\#01a – Example Tool-ette
+
+🌐 [https://chatgpt.com/g/example-toolette](https://chatgpt.com/g/example-toolette)
+
+**🪚 Parent Tool (Branch🌵):** [*Example Tool*](https://chatgpt.com/g/example-tool)
+
+### Full Description:
+An example Tool-ette used by the regression check.
+
+### Primary Functions:
+🔩FUNCTION⚙️ (🌿Twig): Process an example input
+🧩FUNCTION⚙️ (🌿Twig): Export an example result
+
+### Elevator Pitch:
+📒 **Example Tool-ette** is a focused task assistant for the regression check.
+
+---
+"""
+
 EXECUTED_LEDGER = """\
 | ID | Legacy path | Signals | Classification | Candidate target | Disposition |
 |---|---|---|---|---|---|
@@ -37,11 +77,11 @@ EXECUTED_LEDGER = """\
 
 
 class CheckInventoryCatalogTests(unittest.TestCase):
-    def _make_repository(self) -> Path:
+    def _make_repository(self, catalog_text: str = CATALOG_TEXT) -> Path:
         directory = Path(tempfile.mkdtemp())
         catalog = directory / CHECKER.CATALOG_PATH
         catalog.parent.mkdir(parents=True)
-        catalog.write_text(CATALOG_TEXT, encoding="utf-8")
+        catalog.write_text(catalog_text, encoding="utf-8")
 
         for relative_path, count in CHECKER.DOCUMENTED_REFERENCES.items():
             document = directory / relative_path
@@ -206,6 +246,90 @@ A conflicting catalog entry that must not be imported.
             "A complete example toolbox for exercising catalog imports.", overview
         )
         self.assertIn("Perform the example action", functions)
+
+    def test_scaffold_preserves_tool_and_toolette_catalog_metadata_in_generated_files(self):
+        cases = (
+            (
+                "tool",
+                "Example Tool",
+                "01",
+                TOOL_CATALOG_TEXT,
+                "An example tool used by the regression check.",
+                ("Route an example request", "Compare example options"),
+                "is a focused category guide for the regression check.",
+            ),
+            (
+                "toolette",
+                "Example Tool-ette",
+                "01a",
+                TOOLETTE_CATALOG_TEXT,
+                "An example Tool-ette used by the regression check.",
+                ("Process an example input", "Export an example result"),
+                "is a focused task assistant for the regression check.",
+            ),
+        )
+
+        for (
+            tier,
+            name,
+            entity_id,
+            catalog_text,
+            description_text,
+            functions_text,
+            pitch_text,
+        ) in cases:
+            with self.subTest(tier=tier):
+                directory = self._make_repository(catalog_text)
+                self.addCleanup(shutil.rmtree, directory)
+
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(directory / CHECKER.SCAFFOLD_PATH),
+                        "--tier",
+                        tier,
+                        "--name",
+                        name,
+                        "--id",
+                        entity_id,
+                    ],
+                    cwd=directory,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertIn(
+                    f"Inventory match: #{entity_id} — {name}",
+                    result.stdout,
+                )
+                generated = {
+                    relative_path: (directory / relative_path).read_text(
+                        encoding="utf-8"
+                    )
+                    for relative_path in (
+                        "gpt/description.md",
+                        "gpt/instructions.md",
+                        "docs/overview.md",
+                        "docs/functions.md",
+                    )
+                }
+
+                self.assertIn(name, generated["gpt/instructions.md"])
+                self.assertIn(name, generated["docs/overview.md"])
+                self.assertIn(name, generated["docs/functions.md"])
+                self.assertIn(description_text, generated["gpt/description.md"])
+                self.assertIn(pitch_text, generated["docs/overview.md"])
+                for function_text in functions_text:
+                    self.assertIn(function_text, generated["docs/functions.md"])
+
+                if tier == "toolette":
+                    self.assertIn(
+                        description_text, generated["gpt/instructions.md"]
+                    )
+                    for function_text in functions_text:
+                        self.assertIn(function_text, generated["gpt/instructions.md"])
 
     def test_scaffold_defaults_to_catalog_in_its_repository(self):
         directory = self._make_repository()

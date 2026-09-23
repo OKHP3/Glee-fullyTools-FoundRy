@@ -161,6 +161,8 @@ async function main() {
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "desktop view has no horizontal overflow");
     await page.setViewportSize({ width: 390, height: 844 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "narrow mobile view has no horizontal overflow");
+    const mobileScreenshot = "mobile-390x844.png";
+    await page.screenshot({ path: join(evidenceDir, mobileScreenshot), fullPage: false });
     await page.locator("#new-button").focus();
     await page.keyboard.press("Enter");
     await page.locator("#template-dialog").waitFor({ state: "visible" });
@@ -200,6 +202,7 @@ async function main() {
     await writeFile(join(evidenceDir, "result.json"), JSON.stringify({
        status: "PASS", sourceSha: process.env.FOUNDRY_SOURCE_SHA || "not-provided", url,
        evidenceDir, checks: ["create", "edit", "save", "reopen", "package inspection", "backup", "duplicate", "archive", "restore", "delete", "theme", "desktop overflow", "390px mobile overflow", "keyboard activation", "export", "import", "workspace restore", "reload persistence", "console health"],
+       mobileScreenshot: { file: mobileScreenshot, viewport: { width: 390, height: 844 } },
     }, null, 2));
     console.log(`PASS: browser authoring journey completed against ${url}`);
     console.log(`EVIDENCE: ${evidenceDir}`);

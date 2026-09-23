@@ -66,7 +66,10 @@ async function main() {
   }
 
   const dataDir = await mkdtemp(join(tmpdir(), "foundry-f09-data-"));
-  const evidenceDir = await mkdtemp(join(tmpdir(), "foundry-f09-evidence-"));
+  // CI can provide a dedicated root to collect evidence without collecting the
+  // temporary database. mkdtemp still gives each run its own directory.
+  const evidenceDir = await mkdtemp(join(process.env.FOUNDRY_EVIDENCE_ROOT || tmpdir(), "foundry-f09-evidence-"));
+  console.log(`EVIDENCE: ${evidenceDir}`);
   const port = await freePort();
   const server = spawn(process.env.FOUNDRY_PYTHON || "python3", ["-m", "app.server", "--port", String(port), "--data-dir", dataDir], {
     cwd: root,
@@ -205,7 +208,6 @@ async function main() {
        mobileScreenshot: { file: mobileScreenshot, viewport: { width: 390, height: 844 } },
     }, null, 2));
     console.log(`PASS: browser authoring journey completed against ${url}`);
-    console.log(`EVIDENCE: ${evidenceDir}`);
   } catch (error) {
     console.error(`FAIL: ${error.message}`);
     if (serverErrors.length) console.error(`SERVER: ${serverErrors.join("").trim()}`);

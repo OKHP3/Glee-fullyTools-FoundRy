@@ -140,6 +140,19 @@ def inventory_no_match_warning(
     )
 
 
+def inventory_name_mismatch_warning(
+    *,
+    target_id: str,
+    target_name: str,
+    catalog_name: str,
+) -> str:
+    """Describe a name that disagrees with the entry selected by its ID."""
+    return (
+        f"WARNING: supplied name '{target_name}' does not match catalog entry "
+        f"#{target_id} named '{catalog_name}'; using catalog metadata selected by ID."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Inventory data structures and parser
 # ---------------------------------------------------------------------------
@@ -1605,6 +1618,7 @@ def main():
         if not args.quiet and not args.as_json:
             print(f"Tier auto-detected: {args.tier}")
 
+    name_was_supplied = bool(args.name)
     if not args.name:
         args.name = existing.get("name") or root.name.replace("-", " ").title()
 
@@ -1652,6 +1666,21 @@ def main():
                 target_name=args.name or "",
                 explicit=bool(args.inventory_path),
                 supplied_path=args.inventory_path,
+            )
+        )
+    elif (
+        inv
+        and args.id
+        and name_was_supplied
+        and inv.name.casefold() != args.name.casefold()
+        and not args.quiet
+        and not args.as_json
+    ):
+        print(
+            inventory_name_mismatch_warning(
+                target_id=args.id,
+                target_name=args.name,
+                catalog_name=inv.name,
             )
         )
 

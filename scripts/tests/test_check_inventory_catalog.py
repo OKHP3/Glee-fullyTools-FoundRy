@@ -331,6 +331,49 @@ A conflicting catalog entry that must not be imported.
                     for function_text in functions_text:
                         self.assertIn(function_text, generated["gpt/instructions.md"])
 
+    def test_matching_name_and_id_do_not_warn(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        result = self._run_scaffold(directory)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("does not match catalog entry", result.stdout)
+        self.assertIn("Inventory match: #00 — Example Toolbox", result.stdout)
+
+    def test_mismatching_name_and_id_warn_but_still_import_catalog_metadata(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        result = self._run_scaffold(directory, "--name", "Different Toolbox")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn(
+            "WARNING: supplied name 'Different Toolbox' does not match "
+            "catalog entry #00 named 'Example Toolbox'; using catalog metadata "
+            "selected by ID.",
+            result.stdout,
+        )
+        self.assertIn("Inventory match: #00 — Example Toolbox", result.stdout)
+        self.assertIn("Pre-filling: description, overview, functions, instructions", result.stdout)
+
+    def test_mismatching_name_keeps_quiet_and_json_output_contracts(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        for mode in ("--quiet", "--json"):
+            with self.subTest(mode=mode):
+                result = self._run_scaffold(
+                    directory, "--name", "Different Toolbox", mode
+                )
+
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertNotIn("does not match catalog entry", result.stdout)
+                self.assertEqual("", result.stderr)
+                if mode == "--json":
+                    data = json.loads(result.stdout)
+                    self.assertEqual("Different Toolbox", data["name"])
+
     def test_scaffold_defaults_to_catalog_in_its_repository(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

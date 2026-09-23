@@ -34,6 +34,28 @@ MANIFEST_VALIDATOR_SCRIPTS = (
     ROOT / "scripts" / "validate-manifest.py",
     ROOT / "scripts" / "manifest-audit.py",
 )
+MANIFEST_CHANGE_PATHS = (
+    "manifest.yaml",
+    "schemas/example.json",
+    "scripts/example.py",
+    "requirements.txt",
+    "requirements-lock.txt",
+    ".github/workflows/manifest-validation.yml",
+)
+UNRELATED_CHANGE_PATHS = (
+    "README.md",
+    "docs/example.md",
+    "app/example.py",
+    ".github/workflows/foundry-app.yml",
+)
+CONDITIONAL_MANIFEST_STEPS = (
+    "Set up Python",
+    "Install manifest validation dependencies",
+    "Check manifest validation requirements",
+    "Check declared and locked dependency agreement",
+    "Validate manifest schema",
+    "Audit manifest governance fields",
+)
 IMPORT_TO_REQUIREMENT = {"yaml": "pyyaml", "jsonschema": "jsonschema"}
 LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES = {
     "attrs",
@@ -59,6 +81,30 @@ def load_lock_checker():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def manifest_change_pattern(workflow: str) -> re.Pattern[str]:
+    """Extract the file-routing regex from the workflow's change step."""
+
+    match = re.search(r"grep -Eq \\\n\s+'([^']+)'", workflow)
+    if match is None:
+        raise AssertionError("manifest workflow must define a change-routing regex")
+    return re.compile(match.group(1))
+
+
+def workflow_step(workflow: str, name: str) -> str:
+    """Return one named workflow step, including its conditions."""
+
+    marker = f"      - name: {name}\n"
+    start = workflow.find(marker)
+    if start == -1:
+        raise AssertionError(f"manifest workflow is missing step {name!r}")
+    end = workflow.find("\n      - name:", start + len(marker))
+    if end == -1:
+        end = len(workflow)
+    return workflow[start:end]
+
+
 EXACT_PIN = re.compile(r"^==\s*(?![=<>!~])[^;\s]+(?:\s*;\s*.+)?$")
 HASH_OPTION = re.compile(r"^--hash=sha256:[0-9a-fA-F]{64}$")
 HASH_OPTIONS = re.compile(r"\s+--hash=\S+")
@@ -404,6 +450,43 @@ class ManifestValidatorTests(unittest.TestCase):
             "python -m pip install --require-hashes -r requirements-lock.txt",
             workflow,
         )
+
+    def test_manifest_workflow_triggers_for_every_pull_request(self) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertRegex(workflow, r"(?m)^  pull_request:\s*\{\}\s*$")
+        self.assertNotRegex(workflow, r"(?m)^\s+paths(?:-ignore)?:")
+
+    def test_manifest_workflow_routes_every_manifest_related_path_to_validation(
+        self,
+    ) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+        routing_pattern = manifest_change_pattern(workflow)
+
+        for path in MANIFEST_CHANGE_PATHS:
+            with self.subTest(path=path):
+                self.assertRegex(path, routing_pattern)
+
+    def test_manifest_workflow_keeps_unrelated_pull_requests_successful(
+        self,
+    ) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+        routing_pattern = manifest_change_pattern(workflow)
+        change_step = workflow_step(
+            workflow, "Check whether manifest validation is required"
+        )
+
+        for path in UNRELATED_CHANGE_PATHS:
+            with self.subTest(path=path):
+                self.assertNotRegex(path, routing_pattern)
+        self.assertIn('echo "manifest=false"', change_step)
+
+        for name in CONDITIONAL_MANIFEST_STEPS:
+            with self.subTest(step=name):
+                self.assertIn(
+                    "if: steps.changes.outputs.manifest == 'true'",
+                    workflow_step(workflow, name),
+                )
 
     def test_manifest_validator_lock_requires_hashes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -29,6 +29,7 @@ Options:
     --overwrite     Overwrite existing files (default: skip existing)
     --quiet         Suppress output except errors and final summary
     --json          Output machine-readable JSON summary to stdout
+    --catalog-health  With --json, include catalog availability and match status
 """
 
 from __future__ import annotations
@@ -1438,6 +1439,7 @@ def run_scaffold(
     quiet: bool,
     as_json: bool,
     inv: InventoryEntry | None = None,
+    catalog_health: dict | None = None,
 ) -> None:
     created_dirs = []
     written_files = []
@@ -1491,6 +1493,8 @@ def run_scaffold(
             "overwritten_files": overwritten_files,
             "todo_files": todo_files,
         }
+        if catalog_health is not None:
+            result["catalog_health"] = catalog_health
         print(json.dumps(result, indent=2))
         return
 
@@ -1566,6 +1570,11 @@ def main():
     parser.add_argument("--quiet", action="store_true", help="Minimal output")
     parser.add_argument("--json", action="store_true", dest="as_json", help="JSON output")
     parser.add_argument(
+        "--catalog-health",
+        action="store_true",
+        help="Include catalog health in JSON output (requires --json)",
+    )
+    parser.add_argument(
         "--inventory",
         dest="inventory_path",
         default="",
@@ -1578,6 +1587,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if args.catalog_health and not args.as_json:
+        parser.error("--catalog-health requires --json")
     root = Path.cwd()
 
     if args.audit:
@@ -1654,8 +1665,17 @@ def main():
                 args.parent = inv.parent_name
             if inv.parent_url and not args.parent_url:
                 args.parent_url = inv.parent_url
+    catalog_health = None
+    if args.catalog_health:
+        catalog_health = {
+            "available": inventory_reason is None,
+            "source_kind": "override" if args.inventory_path else "canonical",
+            "path": str(inv_path),
+            "reason": inventory_reason or ("no matching entity" if inv is None else None),
+        }
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
-                 quiet=args.quiet, as_json=args.as_json, inv=inv)
+                 quiet=args.quiet, as_json=args.as_json, inv=inv,
+                 catalog_health=catalog_health)
 
 
 if __name__ == "__main__":

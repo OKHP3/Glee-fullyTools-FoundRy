@@ -357,6 +357,62 @@ A conflicting catalog entry that must not be imported.
                     self.assertEqual("Unknown Toolbox", data["name"])
                     self.assertNotIn("inventory_warning", data)
 
+    def test_catalog_health_is_opt_in_and_preserves_plain_json_bytes(self):
+        cases = (
+            ("usable", None, (), True, "canonical", None),
+            ("missing", "missing", (), False, "canonical", "file does not exist"),
+            ("unreadable", "unreadable", (), False, "canonical", "file is not valid UTF-8"),
+            ("no_match", None, ("--id", "99", "--name", "Unknown Toolbox"),
+             True, "canonical", "no matching entity"),
+            ("override", None, ("--inventory", "alternate-catalog.md"),
+             True, "override", None),
+        )
+        for label, catalog_state, extra, available, source_kind, reason in cases:
+            with self.subTest(label=label):
+                directory = self._make_repository()
+                self.addCleanup(shutil.rmtree, directory)
+                catalog = directory / CHECKER.CATALOG_PATH
+                if catalog_state == "missing":
+                    catalog.unlink()
+                elif catalog_state == "unreadable":
+                    catalog.write_bytes(b"\xffsecret catalog text")
+                if label == "override":
+                    (directory / "alternate-catalog.md").write_text(
+                        CATALOG_TEXT, encoding="utf-8"
+                    )
+
+                plain = self._run_scaffold(directory, *extra, "--json")
+                opted = self._run_scaffold(
+                    directory, *extra, "--json", "--catalog-health"
+                )
+                self.assertEqual(0, plain.returncode, plain.stderr)
+                self.assertEqual(0, opted.returncode, opted.stderr)
+                self.assertEqual("", plain.stderr)
+                self.assertEqual("", opted.stderr)
+                baseline = json.loads(plain.stdout)
+                enriched = json.loads(opted.stdout)
+                self.assertNotIn("catalog_health", baseline)
+                health = enriched.pop("catalog_health")
+                self.assertEqual(
+                    {"available": available, "source_kind": source_kind,
+                     "path": "alternate-catalog.md"
+                     if source_kind == "override" else str(catalog),
+                     "reason": reason},
+                    health,
+                )
+                self.assertEqual(plain.stdout, json.dumps(enriched, indent=2) + "\n")
+                self.assertNotIn("secret catalog text", opted.stdout)
+
+    def test_catalog_health_requires_json(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        result = self._run_scaffold(directory, "--catalog-health")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("--catalog-health requires --json", result.stderr)
+        self.assertEqual("", result.stdout)
+
     def test_missing_documented_reference_is_reported(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

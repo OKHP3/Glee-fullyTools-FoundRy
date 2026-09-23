@@ -229,7 +229,17 @@ python3 $SCRIPT --audit
 
 # JSON report of what would be created
 python3 $SCRIPT --tier toolette --name NAME --id ID --json
+
+# Opt in to catalog diagnostics for automation (does not change plain --json)
+python3 $SCRIPT --tier toolette --name NAME --id ID --dry-run --json --catalog-health
 ```
+
+`--catalog-health` requires `--json`. Its `catalog_health` object reports
+`available` (whether the catalog was readable), `source_kind` (`canonical` or
+`override`), `path`, and `reason` (`null` on a match, or a short reason for
+skipped enrichment). A readable catalog with no matching entity is available,
+but reports `no matching entity` as its reason. Without the flag, JSON keeps
+its existing shape.
 
 ---
 

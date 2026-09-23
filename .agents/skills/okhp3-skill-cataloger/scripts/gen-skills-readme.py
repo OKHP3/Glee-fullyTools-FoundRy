@@ -2,7 +2,7 @@
 """
 gen-skills-readme.py — okhp3-skill-cataloger v1.6.1
 OverKill Hill P³ · https://overkillhill.com · https://github.com/OKHP3
-=======================================================
+-------------------------------------------------------
 Bundled with the okhp3-skill-cataloger Agent Skill.
 Canonical source: scripts/gen-skills-readme.py at project root.
 Keep both copies in sync when updating.

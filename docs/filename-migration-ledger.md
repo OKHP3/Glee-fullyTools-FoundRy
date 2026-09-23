@@ -276,6 +276,4 @@ record: every row marked **Executed** must have an existing candidate target and
 an absent legacy path. A row may keep its legacy path only when its disposition
 explicitly documents intentional retention. Non-executed `Retain by default`
 source-material rows and the historical legacy-path column are not treated as
-completed moves. Rows with missing table fields, missing Markdown code spans in
-the path fields, or ambiguous execution wording are reported as malformed
-instead of being treated as completed moves.
+completed moves.

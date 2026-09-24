@@ -81,7 +81,10 @@ index link scan. Catalog mode checks the links emitted inside the
 `SKILLS_CATALOG_START` and `SKILLS_CATALOG_END` markers. Full-index mode also
 checks links emitted inside the `FAMILIES_TABLE_START` and
 `FAMILIES_TABLE_END` markers. Both checks report the source README, line, and
-broken destination, and neither scans other repository documentation.
+broken destination, and neither scans other repository documentation. A full
+`--check` also warns when eligible family directories exist but the root
+README lacks either Families table marker; the warning names both expected
+marker strings. Empty full-index roots and catalog mode do not emit this warning.
 
 ## Choosing a mode
 

@@ -149,6 +149,85 @@ class CatalogLinkValidationTests(unittest.TestCase):
             self.assertIn("generated family link", result.stderr)
             self.assertIn("missing/FAMILY.md", result.stderr)
 
+    def test_full_check_warns_when_family_markers_are_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "family" / "skill" / "SKILL.md").parent.mkdir(parents=True)
+            (root / "family" / "skill" / "SKILL.md").write_text(
+                "---\n"
+                "name: skill\n"
+                "description: A test skill\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (root / "README.md").write_text("# Distribution\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--full", "--check"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertIn("Warnings:", result.stdout)
+            self.assertIn("root README README.md", result.stdout)
+            self.assertIn(CATALOGER.FAMILIES_TABLE_START, result.stdout)
+            self.assertIn(CATALOGER.FAMILIES_TABLE_END, result.stdout)
+            self.assertIn("generated family links", result.stdout)
+
+    def test_full_check_keeps_empty_distribution_root_quiet(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--full", "--check"],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertIn("Check passed.", result.stdout)
+            self.assertNotIn(CATALOGER.FAMILIES_TABLE_START, result.stdout)
+            self.assertNotIn(CATALOGER.FAMILIES_TABLE_END, result.stdout)
+
+    def test_catalog_check_does_not_warn_about_family_markers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            skills_dir = root / ".agents" / "skills"
+            skill_dir = skills_dir / "skill"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\n"
+                "name: skill\n"
+                "description: A test skill\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (skills_dir / "README.md").write_text(
+                f"{CATALOGER.START_MARKER}\n"
+                f"{CATALOGER.END_MARKER}\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--skills-dir",
+                    str(skills_dir),
+                    "--check",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertNotIn("Families table markers", result.stdout)
+
     def test_catalog_check_reports_missing_link_for_ci(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

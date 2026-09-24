@@ -140,10 +140,11 @@ reviewing a package handoff:
 python3 scripts/check-markdown-links.py . --pilots
 ```
 
-The pilot mode checks direct package directories with `project.json` and skips
-hidden, archived, historical, snapshot, and generated documentation. The local
-release gate runs this pilot check before a package is treated as ready for
-handoff; the default maintained-index scan remains unchanged.
+The pilot mode checks direct package directories with both `project.json` and
+`README.md`, reports incomplete handoffs that contain only one of those files,
+and skips hidden, archived, historical, snapshot, and generated documentation.
+The local release gate runs this pilot check before a package is treated as
+ready for handoff; the default maintained-index scan remains unchanged.
 
 External URLs, anchor-only links, and explicit placeholder tokens
 (`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`, `your-path`,

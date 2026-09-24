@@ -250,7 +250,7 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
 
 
 def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
-    """Return direct pilot-package README paths, excluding non-package surfaces."""
+    """Return complete direct pilot-package README paths."""
     pilot_root = root / PILOT_DOCUMENT_ROOT
     if not pilot_root.is_dir():
         return ()
@@ -262,12 +262,45 @@ def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
             or package_dir.name.startswith(".")
             or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
             or not (package_dir / "project.json").is_file()
+            or not (package_dir / "README.md").is_file()
         ):
             continue
         documents.append(
             (PILOT_DOCUMENT_ROOT / package_dir.name / "README.md").as_posix()
         )
     return tuple(documents)
+
+
+def discover_pilot_package_issues(root: pathlib.Path) -> tuple[LinkIssue, ...]:
+    """Report direct pilot packages with exactly one required handoff file."""
+    pilot_root = root / PILOT_DOCUMENT_ROOT
+    if not pilot_root.is_dir():
+        return ()
+
+    issues: list[LinkIssue] = []
+    for package_dir in sorted(pilot_root.iterdir()):
+        if (
+            not package_dir.is_dir()
+            or package_dir.name.startswith(".")
+            or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
+        ):
+            continue
+
+        has_manifest = (package_dir / "project.json").is_file()
+        has_readme = (package_dir / "README.md").is_file()
+        if has_manifest == has_readme:
+            continue
+
+        missing_file = "README.md" if has_manifest else "project.json"
+        issues.append(
+            LinkIssue(
+                source=package_dir.relative_to(root),
+                line=0,
+                destination=missing_file,
+                reason="pilot package missing handoff file",
+            )
+        )
+    return tuple(issues)
 
 
 def _workflow_value_without_comment(value: str, line_number: int) -> str:
@@ -520,11 +553,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.pilots:
         documents = discover_pilot_documents(root)
+        discovery_issues = discover_pilot_package_issues(root)
     else:
         documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
+        discovery_issues = ()
     result = scan(root, documents)
+    result.issues = [*discovery_issues, *result.issues]
     if result.issues:
-        print("FAIL broken Markdown links:")
+        heading = (
+            "FAIL pilot package validation:"
+            if args.pilots
+            else "FAIL broken Markdown links:"
+        )
+        print(heading)
         for issue in result.issues:
             location = f"{issue.source}:{issue.line}" if issue.line else str(issue.source)
             print(f"  - {location}: {issue.destination!r} ({issue.reason})")

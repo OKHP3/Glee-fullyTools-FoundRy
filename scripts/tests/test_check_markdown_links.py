@@ -44,7 +44,7 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             CHECKER.DEFAULT_DOCUMENTS,
         )
 
-    def test_pilot_discovery_covers_packages_but_not_generated_or_nested_docs(self):
+    def test_pilot_discovery_covers_complete_packages_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             pilots = root / CHECKER.PILOT_DOCUMENT_ROOT
@@ -74,6 +74,65 @@ class CheckMarkdownLinksTests(unittest.TestCase):
                 ),
                 CHECKER.discover_pilot_documents(root),
             )
+
+    def test_pilot_discovery_reports_one_missing_handoff_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pilots = root / CHECKER.PILOT_DOCUMENT_ROOT
+
+            readme_only = pilots / "readme-only"
+            readme_only.mkdir(parents=True)
+            (readme_only / "README.md").write_text("# Notes\n", encoding="utf-8")
+
+            manifest_only = pilots / "manifest-only"
+            manifest_only.mkdir()
+            (manifest_only / "project.json").write_text("{}\n", encoding="utf-8")
+
+            complete = pilots / "complete"
+            complete.mkdir()
+            (complete / "project.json").write_text("{}\n", encoding="utf-8")
+            (complete / "README.md").write_text("# Complete\n", encoding="utf-8")
+
+            self.assertEqual(
+                (
+                    CHECKER.LinkIssue(
+                        Path("docs/application/pilots/manifest-only"),
+                        0,
+                        "README.md",
+                        "pilot package missing handoff file",
+                    ),
+                    CHECKER.LinkIssue(
+                        Path("docs/application/pilots/readme-only"),
+                        0,
+                        "project.json",
+                        "pilot package missing handoff file",
+                    ),
+                ),
+                CHECKER.discover_pilot_package_issues(root),
+            )
+            self.assertEqual(
+                ("docs/application/pilots/complete/README.md",),
+                CHECKER.discover_pilot_documents(root),
+            )
+
+    def test_pilot_discovery_excludes_hidden_and_reserved_directories_from_warnings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pilots = root / CHECKER.PILOT_DOCUMENT_ROOT
+            for package_name in (
+                ".hidden",
+                "archive",
+                "archives",
+                "generated",
+                "historical",
+                "snapshots",
+            ):
+                package = pilots / package_name
+                package.mkdir(parents=True)
+                (package / "README.md").write_text("# Excluded\n", encoding="utf-8")
+
+            self.assertEqual((), CHECKER.discover_pilot_package_issues(root))
+            self.assertEqual((), CHECKER.discover_pilot_documents(root))
 
     def test_pilot_scan_reports_broken_link_without_broadening_default_scope(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -124,6 +183,25 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             )
             self.assertIn("'missing.md'", output.getvalue())
             self.assertIn("target does not exist", output.getvalue())
+
+    def test_pilot_cli_reports_missing_handoff_file_with_package_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "docs/application/pilots/incomplete"
+            package.mkdir(parents=True)
+            (package / "README.md").write_text("# Incomplete\n", encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = CHECKER.main([str(root), "--pilots"])
+
+            self.assertEqual(1, status)
+            self.assertIn("FAIL pilot package validation:", output.getvalue())
+            self.assertIn(
+                "docs/application/pilots/incomplete", output.getvalue()
+            )
+            self.assertIn("'project.json'", output.getvalue())
+            self.assertIn("pilot package missing handoff file", output.getvalue())
 
     def test_workflow_filters_cover_every_default_document(self):
         root = Path(__file__).parents[2]

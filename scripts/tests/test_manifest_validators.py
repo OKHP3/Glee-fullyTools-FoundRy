@@ -48,9 +48,10 @@ UNRELATED_CHANGE_PATHS = (
     ".github/workflows/foundry-app.yml",
 )
 CONDITIONAL_MANIFEST_STEPS = (
+    "Check approved manifest validator lock target",
     "Set up Python",
     "Check manifest validator requirements contract",
-    "Install manifest validation dependencies",
+    "Install manifest validation dependencies with approved hashes",
     "Check manifest validation requirements",
     "Check declared and locked dependency agreement",
     "Validate manifest schema",
@@ -574,11 +575,36 @@ class ManifestValidatorTests(unittest.TestCase):
                 f"{dependency} lock pin must match requirements.txt",
             )
 
+    def test_manifest_validator_lock_target_matches_workflow(self) -> None:
+        lock = REQUIREMENTS_LOCK.read_text(encoding="utf-8")
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "# Approved CI target: GitHub Actions ubuntu-latest (Linux X64), "
+            "CPython 3.11.",
+            lock,
+        )
+        self.assertEqual(2, workflow.count("runs-on: ubuntu-latest"))
+        self.assertEqual(2, workflow.count("python-version: '3.11'"))
+        self.assertIn(
+            "expected = (\"Linux\", \"X86_64\", \"CPython\", (3, 11))",
+            workflow,
+        )
+
     def test_manifest_workflow_installs_hashed_lock(self) -> None:
         workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn(
             "python -m pip install --require-hashes -r requirements-lock.txt",
+            workflow,
+        )
+
+    def test_manifest_workflow_reports_missing_selected_artifact_hashes(self) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("title=Missing approved dependency hash", workflow)
+        self.assertIn(
+            "Add an approved sha256 hash for every selected artifact",
             workflow,
         )
 

@@ -1,5 +1,8 @@
 # Reviewed Python 3.11 dependency lock for the manifest validators.
-# Hashes approve the artifacts selected on the Ubuntu CPython 3.11 CI runner.
+# Approved CI target: GitHub Actions ubuntu-latest (Linux X64), CPython 3.11.
+# The hashes below approve the artifacts selected for that target only.
+# Adding another runner or architecture requires an approved hash for every
+# artifact it selects; do not weaken --require-hashes to make that runner pass.
 # Keep this set synchronized with requirements.txt. CI installs it with:
 # python -m pip install --require-hashes -r requirements-lock.txt
 attrs==26.1.0 --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309

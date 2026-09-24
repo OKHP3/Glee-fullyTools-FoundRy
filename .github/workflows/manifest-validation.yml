@@ -39,11 +39,50 @@ jobs:
         if: steps.changes.outputs.manifest == 'true'
         with:
           python-version: '3.11'
+      # requirements-lock.txt approves the ubuntu-latest/Linux X64/CPython 3.11
+      # target below. A new runner must update the lock with its selected hashes
+      # before it is added here.
+      - name: Check approved manifest validator lock target
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import platform
+          import sys
+
+          expected = ("Linux", "X86_64", "CPython", (3, 11))
+          actual = (
+              platform.system(),
+              platform.machine().upper(),
+              platform.python_implementation(),
+              sys.version_info[:2],
+          )
+          if actual != expected:
+              raise SystemExit(
+                  "ERROR: requirements-lock.txt has no approved hash target for "
+                  f"runner={actual[0]}/{actual[1]}, "
+                  f"python={actual[2]} {actual[3][0]}.{actual[3][1]}; "
+                  "add approved sha256 hashes for every selected artifact before "
+                  "enabling this runner"
+              )
+          PY
+        if: steps.changes.outputs.manifest == 'true'
       - name: Check manifest validator requirements contract
         run: python scripts/check-requirements-contract.py
         if: steps.changes.outputs.manifest == 'true'
-      - name: Install manifest validation dependencies
-        run: python -m pip install --require-hashes -r requirements-lock.txt
+      - name: Install manifest validation dependencies with approved hashes
+        shell: bash
+        run: |
+          set +e
+          output="$(python -m pip install --require-hashes -r requirements-lock.txt 2>&1)"
+          status=$?
+          printf '%s\n' "$output"
+          if [[ "$status" -ne 0 ]]; then
+            if grep -Eiq 'hashes are required in --require-hashes mode|do not match the hashes' <<< "$output"; then
+              echo "::error title=Missing approved dependency hash::requirements-lock.txt does not cover an artifact selected by this runner. Add an approved sha256 hash for every selected artifact before enabling this runner."
+            fi
+            exit "$status"
+          fi
         if: steps.changes.outputs.manifest == 'true'
       - name: Check manifest validation requirements
         run: python -m unittest discover -s scripts/tests -p 'test_manifest_validators.py' -v

@@ -39,6 +39,9 @@ jobs:
         if: steps.changes.outputs.manifest == 'true'
         with:
           python-version: '3.11'
+      - name: Check manifest validator requirements contract
+        run: python scripts/check-requirements-contract.py
+        if: steps.changes.outputs.manifest == 'true'
       - name: Install manifest validation dependencies
         run: python -m pip install --require-hashes -r requirements-lock.txt
         if: steps.changes.outputs.manifest == 'true'

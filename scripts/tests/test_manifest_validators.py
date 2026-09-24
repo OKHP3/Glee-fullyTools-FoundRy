@@ -28,6 +28,7 @@ AUDIT = ROOT / "scripts" / "manifest-audit.py"
 LOCK_CHECK = ROOT / "scripts" / "check-validator-lock.py"
 REQUIREMENTS = ROOT / "requirements.txt"
 REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
+REQUIREMENTS_CONTRACT = ROOT / "scripts" / "check-requirements-contract.py"
 MANIFEST_WORKFLOW = ROOT / ".github" / "workflows" / "manifest-validation.yml"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
 MANIFEST_VALIDATOR_SCRIPTS = (
@@ -50,6 +51,7 @@ UNRELATED_CHANGE_PATHS = (
 )
 CONDITIONAL_MANIFEST_STEPS = (
     "Set up Python",
+    "Check manifest validator requirements contract",
     "Install manifest validation dependencies",
     "Check manifest validation requirements",
     "Check declared and locked dependency agreement",
@@ -66,9 +68,6 @@ LOCKED_MANIFEST_VALIDATOR_DEPENDENCIES = {
     "rpds-py",
     "typing-extensions",
 }
-REQUIREMENT_LINE = re.compile(
-    r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[^\]]+\])?(?P<specifier>.*)$"
-)
 
 
 def load_lock_checker():
@@ -81,6 +80,30 @@ def load_lock_checker():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def load_requirements_contract():
+    """Load the standard-library-only requirements contract checker."""
+
+    spec = importlib.util.spec_from_file_location(
+        "check_requirements_contract",
+        REQUIREMENTS_CONTRACT,
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"unable to load {REQUIREMENTS_CONTRACT}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+REQUIREMENTS_CONTRACT_MODULE = load_requirements_contract()
+canonical_requirement_name = REQUIREMENTS_CONTRACT_MODULE.canonical_requirement_name
+parse_requirement_entries = REQUIREMENTS_CONTRACT_MODULE.parse_requirement_entries
+requirements_contract_errors = REQUIREMENTS_CONTRACT_MODULE.requirements_contract_errors
+EXACT_PIN = REQUIREMENTS_CONTRACT_MODULE.EXACT_PIN
+HASH_OPTION = re.compile(r"^--hash=sha256:[0-9a-fA-F]{64}$")
+HASH_OPTIONS = REQUIREMENTS_CONTRACT_MODULE.HASH_OPTIONS
 
 
 def manifest_change_pattern(workflow: str) -> re.Pattern[str]:
@@ -103,17 +126,6 @@ def workflow_step(workflow: str, name: str) -> str:
     if end == -1:
         end = len(workflow)
     return workflow[start:end]
-
-
-EXACT_PIN = re.compile(r"^==\s*(?![=<>!~])[^;\s]+(?:\s*;\s*.+)?$")
-HASH_OPTION = re.compile(r"^--hash=sha256:[0-9a-fA-F]{64}$")
-HASH_OPTIONS = re.compile(r"\s+--hash=\S+")
-
-
-def canonical_requirement_name(name: str) -> str:
-    """Return the normalized name used for requirement duplicate checks."""
-
-    return re.sub(r"[-_.]+", "-", name).lower()
 
 
 def validator_imports(path: Path) -> set[str]:
@@ -151,66 +163,6 @@ def validator_import_contract_errors(
                     f"'{imported_module}'; add '{dependency}==<version>' "
                     "to requirements.txt"
                 )
-    return errors
-
-
-def parse_requirement_entries(
-    path: Path,
-) -> tuple[list[tuple[int, str, str]], list[str]]:
-    """Parse package entries and report malformed requirement lines."""
-
-    entries: list[tuple[int, str, str]] = []
-    errors: list[str] = []
-    for line_number, raw_line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
-        line = raw_line.split("#", 1)[0].strip()
-        if not line:
-            continue
-
-        match = REQUIREMENT_LINE.fullmatch(HASH_OPTIONS.sub("", line).strip())
-        if match is None:
-            errors.append(
-                f"line {line_number} is not a supported package requirement: {line}; "
-                "use a package name with an exact == version pin"
-            )
-            continue
-
-        entries.append(
-            (
-                line_number,
-                canonical_requirement_name(match.group("name")),
-                match.group("specifier").strip(),
-            )
-        )
-
-    return entries, errors
-
-
-def requirements_contract_errors(path: Path) -> list[str]:
-    """Report requirement entries that break the manifest validator contract."""
-
-    entries, errors = parse_requirement_entries(path)
-    names = [name for _, name, _ in entries]
-    for name in sorted(set(names)):
-        if names.count(name) > 1:
-            errors.append(f"duplicate requirement name: {name}")
-
-    for dependency in sorted(MANIFEST_VALIDATOR_DEPENDENCIES):
-        matching_entries = [
-            (line_number, specifier)
-            for line_number, name, specifier in entries
-            if name == dependency
-        ]
-        if not matching_entries:
-            errors.append(f"missing manifest validator dependency: {dependency}")
-            continue
-        for line_number, specifier in matching_entries:
-            if not EXACT_PIN.fullmatch(specifier):
-                errors.append(
-                    f"{dependency} on line {line_number} must use an exact == pin"
-                )
-
     return errors
 
 
@@ -306,6 +258,23 @@ class ManifestValidatorTests(unittest.TestCase):
             check=False,
         )
 
+    def run_requirements_contract(
+        self,
+        requirements_path: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(REQUIREMENTS_CONTRACT),
+                "--requirements",
+                str(requirements_path),
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def write_requirements_variant(self, directory: Path, contents: str) -> Path:
         path = directory / "requirements.txt"
         path.write_text(contents, encoding="utf-8")
@@ -328,6 +297,39 @@ class ManifestValidatorTests(unittest.TestCase):
 
     def test_manifest_validator_requirements_are_unique_and_exactly_pinned(self) -> None:
         self.assertEqual([], requirements_contract_errors(REQUIREMENTS))
+
+    def test_requirements_contract_preflight_passes_without_validator_imports(self) -> None:
+        result = self.run_requirements_contract(REQUIREMENTS)
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("OK manifest validator requirements contract", result.stdout)
+        imports = validator_imports(REQUIREMENTS_CONTRACT)
+        self.assertNotIn("yaml", imports)
+        self.assertNotIn("jsonschema", imports)
+
+    def test_requirements_contract_preflight_reports_actionable_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML==6.0.3\n"
+                "pyyaml==6.0.3\n"
+                "jsonschema>=4.26,<5\n"
+                "-r constraints.txt\n",
+            )
+
+            result = self.run_requirements_contract(path)
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("duplicate requirement name: pyyaml", result.stdout)
+        self.assertIn(
+            "jsonschema on line 3 must use an exact == pin",
+            result.stdout,
+        )
+        self.assertIn(
+            "line 4 is not a supported package requirement: -r constraints.txt; "
+            "use a package name with an exact == version pin",
+            result.stdout,
+        )
 
     def test_validator_lock_check_passes_current_graph(self) -> None:
         result = self.run_lock_check(REQUIREMENTS, REQUIREMENTS_LOCK)
@@ -450,6 +452,14 @@ class ManifestValidatorTests(unittest.TestCase):
             "python -m pip install --require-hashes -r requirements-lock.txt",
             workflow,
         )
+
+    def test_manifest_workflow_checks_requirements_before_installing(self) -> None:
+        workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")
+        preflight = "python scripts/check-requirements-contract.py"
+        install = "python -m pip install --require-hashes -r requirements-lock.txt"
+
+        self.assertIn(preflight, workflow)
+        self.assertLess(workflow.index(preflight), workflow.index(install))
 
     def test_manifest_workflow_triggers_for_every_pull_request(self) -> None:
         workflow = MANIFEST_WORKFLOW.read_text(encoding="utf-8")

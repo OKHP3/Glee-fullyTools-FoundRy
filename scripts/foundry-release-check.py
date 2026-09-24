@@ -37,6 +37,10 @@ def main() -> int:
                 "--check",
             ],
         ),
+        (
+            "Pilot handoff links",
+            [sys.executable, "scripts/check-markdown-links.py", ".", "--pilots"],
+        ),
         ("Whitespace", ["git", "diff", "--check"]),
     ]
     passed = all(run(label, command) for label, command in checks)

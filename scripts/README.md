@@ -32,7 +32,7 @@ as a canonical source.
 | [`sync-report.py`](sync-report.py) | Generates a sync posture report for the parent foundry relay relationship | Before governance sync or reporting |
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
-| [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
+| [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository, governed folder indexes, and opt-in pilot handoff notes | Before merging documentation, prompt, or governed-content changes |
 | [`gen-skills-readme.py`](../.agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py) | Checks the generated Agent Skills catalog markers and relative links without writing the catalog | Before opening a pull request that changes `.agents/skills/` |
 | [`foundry-authoring-qa.mjs`](foundry-authoring-qa.mjs) | Runs the isolated browser journey for authoring, package inspection, recovery, themes and overflow | When a Playwright-compatible driver is installed |
 | [`foundry-release-check.py`](foundry-release-check.py) | Runs the owner-local application release gate without publishing or deploying | Before treating application changes as locally releasable |
@@ -133,7 +133,17 @@ lineage, and `snapshots/README.md` contains read-only historical records. Those
 documents are intentionally excluded from this affordable default scan. The
 generated `.agents/skills/README.md` catalog is maintained by its own catalog
 tooling. The `docs/**` and `scripts/tests/**` workflow filters include every
-maintained nested index listed above.
+maintained nested index listed above. Use the opt-in pilot-package check when
+reviewing a package handoff:
+
+```bash
+python3 scripts/check-markdown-links.py . --pilots
+```
+
+The pilot mode checks direct package directories with `project.json` and skips
+hidden, archived, historical, snapshot, and generated documentation. The local
+release gate runs this pilot check before a package is treated as ready for
+handoff; the default maintained-index scan remains unchanged.
 
 External URLs, anchor-only links, and explicit placeholder tokens
 (`{{...}}`, `${...}`, `placeholder`, `TODO`, `TBD`, `your-file`, `your-path`,
@@ -198,6 +208,9 @@ python3 .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py \
 
 # 7. Maintained Markdown links
 python3 scripts/check-markdown-links.py .
+
+# 8. Pilot handoff links (also included in the release gate)
+python3 scripts/check-markdown-links.py . --pilots
 ```
 
 ---

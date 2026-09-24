@@ -31,6 +31,10 @@ DEFAULT_DOCUMENTS = (
     "web-templates/README.md",
     "scripts/tests/README.md",
 )
+PILOT_DOCUMENT_ROOT = pathlib.Path("docs/application/pilots")
+PILOT_EXCLUDED_DIRECTORIES = frozenset(
+    {"archive", "archives", "generated", "historical", "snapshots"}
+)
 WORKFLOW_PATH = pathlib.Path(".github/workflows/foundry-app.yml")
 WORKFLOW_EVENTS = ("pull_request", "push")
 
@@ -243,6 +247,27 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
             continue
         scan_file(path, root, result)
     return result
+
+
+def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
+    """Return direct pilot-package README paths, excluding non-package surfaces."""
+    pilot_root = root / PILOT_DOCUMENT_ROOT
+    if not pilot_root.is_dir():
+        return ()
+
+    documents: list[str] = []
+    for package_dir in sorted(pilot_root.iterdir()):
+        if (
+            not package_dir.is_dir()
+            or package_dir.name.startswith(".")
+            or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
+            or not (package_dir / "project.json").is_file()
+        ):
+            continue
+        documents.append(
+            (PILOT_DOCUMENT_ROOT / package_dir.name / "README.md").as_posix()
+        )
+    return tuple(documents)
 
 
 def _workflow_value_without_comment(value: str, line_number: int) -> str:
@@ -460,14 +485,24 @@ def main(argv: list[str] | None = None) -> int:
         help="document relative to root; repeat to override the defaults",
     )
     parser.add_argument(
+        "--pilots",
+        action="store_true",
+        help="check direct pilot-package READMEs under docs/application/pilots",
+    )
+    parser.add_argument(
         "--check-workflow-coverage",
         action="store_true",
         help="check workflow path filters cover every maintained document",
     )
     args = parser.parse_args(argv)
 
-    if args.check_workflow_coverage and args.documents:
-        parser.error("--check-workflow-coverage cannot be combined with --document")
+    if args.pilots and args.documents:
+        parser.error("--pilots cannot be combined with --document")
+    if args.check_workflow_coverage and (args.documents or args.pilots):
+        parser.error(
+            "--check-workflow-coverage cannot be combined with "
+            "--document or --pilots"
+        )
 
     root = pathlib.Path(args.root)
     if args.check_workflow_coverage:
@@ -483,7 +518,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
+    if args.pilots:
+        documents = discover_pilot_documents(root)
+    else:
+        documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
     result = scan(root, documents)
     if result.issues:
         print("FAIL broken Markdown links:")

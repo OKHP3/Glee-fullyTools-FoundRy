@@ -174,12 +174,21 @@ A conflicting catalog entry that must not be imported.
 
         with self.assertRaisesRegex(
             scaffold.DuplicateInventoryIDError,
-            r"duplicate inventory entity ID '#00'.*Example Toolbox.*Conflicting Toolbox",
-        ):
+            r"duplicate inventory entity ID '#00'.*"
+            r"Example Toolbox \(line 1\).*Conflicting Toolbox \(line 12\)",
+        ) as raised:
             scaffold.parse_inventory(
                 directory / CHECKER.CATALOG_PATH,
                 target_id="00",
             )
+
+        self.assertEqual(
+            [
+                ("Example Toolbox", 1),
+                ("Conflicting Toolbox", 12),
+            ],
+            raised.exception.entries,
+        )
 
         result = subprocess.run(
             [
@@ -200,8 +209,9 @@ A conflicting catalog entry that must not be imported.
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("duplicate inventory entity ID '#00'", result.stderr)
-        self.assertIn("Example Toolbox", result.stderr)
-        self.assertIn("Conflicting Toolbox", result.stderr)
+        self.assertIn(str(raised.exception), result.stderr)
+        self.assertIn("Example Toolbox (line 1)", result.stderr)
+        self.assertIn("Conflicting Toolbox (line 12)", result.stderr)
 
     def test_scaffold_preserves_bom_catalog_metadata_in_generated_files(self):
         directory = self._make_repository()

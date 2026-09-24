@@ -1761,16 +1761,17 @@ def main():
             )
         )
 
-    if not args.quiet and not args.as_json:
-        if inv:
-            print(f"Inventory match: #{inv.entity_id} — {inv.name}")
-            print(f"  Pre-filling: description, overview, functions, instructions")
-            if inv.chatgpt_url and not args.chatgpt_url:
-                args.chatgpt_url = inv.chatgpt_url
-            if inv.parent_name and not args.parent:
-                args.parent = inv.parent_name
-            if inv.parent_url and not args.parent_url:
-                args.parent_url = inv.parent_url
+    if inv:
+        if inv.chatgpt_url and not args.chatgpt_url:
+            args.chatgpt_url = inv.chatgpt_url
+        if inv.parent_name and not args.parent:
+            args.parent = inv.parent_name
+        if inv.parent_url and not args.parent_url:
+            args.parent_url = inv.parent_url
+
+    if not args.quiet and not args.as_json and inv:
+        print(f"Inventory match: #{inv.entity_id} — {inv.name}")
+        print("  Pre-filling: description, overview, functions, instructions")
     catalog_health = None
     if args.catalog_health:
         catalog_health = {

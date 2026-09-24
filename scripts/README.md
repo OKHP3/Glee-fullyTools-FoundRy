@@ -33,6 +33,7 @@ as a canonical source.
 | [`validate-manifest.py`](validate-manifest.py) | Extended manifest validation — checks field values, not just presence | Full manifest compliance check |
 | [`audit-technology-versions.py`](audit-technology-versions.py) | Checks live Python and Mermaid release metadata against the static template | Monthly via GitHub Actions, or on demand |
 | [`check-markdown-links.py`](check-markdown-links.py) | Validates relative links in the maintained repository and governed folder indexes | Before merging documentation, prompt, or governed-content changes |
+| [`gen-skills-readme.py`](../.agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py) | Checks the generated Agent Skills catalog markers and relative links without writing the catalog | Before opening a pull request that changes `.agents/skills/` |
 | [`foundry-authoring-qa.mjs`](foundry-authoring-qa.mjs) | Runs the isolated browser journey for authoring, package inspection, recovery, themes and overflow | When a Playwright-compatible driver is installed |
 | [`foundry-release-check.py`](foundry-release-check.py) | Runs the owner-local application release gate without publishing or deploying | Before treating application changes as locally releasable |
 | [`verify-foundry-backup.py`](verify-foundry-backup.py) | Rehearses the workspace backup shape and revision-history preservation | After changing backup or restore behavior |
@@ -148,6 +149,27 @@ Markdown files relative to the repository root.
 
 ---
 
+### Generated Agent Skills catalog check
+
+The cataloger owns the generated `.agents/skills/README.md` section. Run its
+read-only check before opening a pull request that changes the local skill
+catalog:
+
+```bash
+python3 .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py \
+  --skills-dir .agents/skills --check
+```
+
+This validates the catalog markers and every relative link in the generated
+section. It does not regenerate the README, write `.catalog-meta.json`, or
+modify any other file. The same check runs as part of the local release gate:
+
+```bash
+python3 scripts/foundry-release-check.py
+```
+
+---
+
 ## Running a Full Compliance Check
 
 To verify the repo is in clean compliance across all dimensions:
@@ -170,7 +192,11 @@ python3 scripts/foundry-sync.py
 # 5. Sync report
 python3 scripts/sync-report.py
 
-# 6. Maintained Markdown links
+# 6. Generated Agent Skills catalog links
+python3 .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py \
+  --skills-dir .agents/skills --check
+
+# 7. Maintained Markdown links
 python3 scripts/check-markdown-links.py .
 ```
 

@@ -27,6 +27,16 @@ def main() -> int:
         ("Python syntax", [sys.executable, "-m", "py_compile", "app/server.py"]),
         ("Browser JavaScript syntax", ["node", "--check", "app/static/app.js"]),
         ("Browser acceptance runner syntax", ["node", "--check", "scripts/foundry-authoring-qa.mjs"]),
+        (
+            "Generated skill catalog links",
+            [
+                sys.executable,
+                ".agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py",
+                "--skills-dir",
+                ".agents/skills",
+                "--check",
+            ],
+        ),
         ("Whitespace", ["git", "diff", "--check"]),
     ]
     passed = all(run(label, command) for label, command in checks)

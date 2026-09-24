@@ -10,6 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REQUIREMENTS = ROOT / "requirements.txt"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
+# Import names do not always match their distribution names. Keep these
+# exceptions next to the requirement-name normalization used by all checks.
+IMPORT_TO_DISTRIBUTION_ALIASES = {"yaml": "pyyaml"}
 REQUIREMENT_LINE = re.compile(
     r"^(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
     r"(?=(?:\[|\s|[<>=!~]|$))"
@@ -25,6 +28,13 @@ def canonical_requirement_name(name: str) -> str:
     """Return the normalized name used for requirement duplicate checks."""
 
     return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def requirement_name_for_import(import_name: str) -> str:
+    """Return the canonical requirement name for an import's distribution."""
+
+    distribution_name = IMPORT_TO_DISTRIBUTION_ALIASES.get(import_name, import_name)
+    return canonical_requirement_name(distribution_name)
 
 
 def parse_requirement_entries(

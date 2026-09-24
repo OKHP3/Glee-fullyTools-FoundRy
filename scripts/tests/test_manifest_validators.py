@@ -12,6 +12,7 @@ import importlib.util
 import re
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import unittest
 from pathlib import Path
@@ -96,6 +97,12 @@ def load_requirements_contract():
 
 REQUIREMENTS_CONTRACT_MODULE = load_requirements_contract()
 canonical_requirement_name = REQUIREMENTS_CONTRACT_MODULE.canonical_requirement_name
+IMPORT_TO_DISTRIBUTION_ALIASES = (
+    REQUIREMENTS_CONTRACT_MODULE.IMPORT_TO_DISTRIBUTION_ALIASES
+)
+requirement_name_for_import = (
+    REQUIREMENTS_CONTRACT_MODULE.requirement_name_for_import
+)
 parse_requirement_entries = REQUIREMENTS_CONTRACT_MODULE.parse_requirement_entries
 requirements_contract_errors = REQUIREMENTS_CONTRACT_MODULE.requirements_contract_errors
 EXACT_PIN = REQUIREMENTS_CONTRACT_MODULE.EXACT_PIN
@@ -153,6 +160,42 @@ def validator_imports(path: Path) -> set[str]:
     return imports
 
 
+def standard_library_modules() -> set[str]:
+    """Return top-level standard-library modules across supported interpreters.
+
+    ``sys.stdlib_module_names`` was added after some supported Python versions.
+    When it is unavailable, inspect the interpreter's stdlib directory rather
+    than treating every import as third-party.
+    """
+
+    registry = getattr(sys, "stdlib_module_names", None)
+    if registry is not None:
+        return set(registry)
+
+    modules = set(sys.builtin_module_names)
+    stdlib_path = sysconfig.get_path("stdlib")
+    if not stdlib_path:
+        return modules
+
+    try:
+        entries = Path(stdlib_path).iterdir()
+    except OSError:
+        return modules
+
+    for entry in entries:
+        if entry.name == "__pycache__":
+            continue
+        if entry.is_dir():
+            module_name = entry.name
+        elif entry.suffix in {".py", ".pyc", ".so"}:
+            module_name = entry.stem.split(".", 1)[0]
+        else:
+            continue
+        if module_name.isidentifier():
+            modules.add(module_name)
+    return modules
+
+
 def validator_import_contract_errors(
     scripts: tuple[Path, ...],
     declared_dependencies: set[str],
@@ -160,15 +203,12 @@ def validator_import_contract_errors(
     """Report third-party validator imports absent from declared dependencies."""
 
     errors: list[str] = []
-    standard_library = set(getattr(sys, "stdlib_module_names", ()))
+    standard_library = standard_library_modules()
     for script in scripts:
         for imported_module in sorted(validator_imports(script)):
             if imported_module == "__future__" or imported_module in standard_library:
                 continue
-            dependency = IMPORT_TO_REQUIREMENT.get(
-                imported_module,
-                canonical_requirement_name(imported_module),
-            )
+            dependency = requirement_name_for_import(imported_module)
             if dependency not in declared_dependencies:
                 errors.append(
                     f"{script.name} imports undeclared third-party package "
@@ -414,6 +454,53 @@ class ManifestValidatorTests(unittest.TestCase):
                 MANIFEST_VALIDATOR_SCRIPTS,
                 declared_dependencies,
             ),
+        )
+
+    def test_import_to_distribution_aliases_are_centralized(self) -> None:
+        self.assertEqual({"yaml": "pyyaml"}, IMPORT_TO_DISTRIBUTION_ALIASES)
+        self.assertEqual("pyyaml", requirement_name_for_import("yaml"))
+        self.assertEqual("jsonschema", requirement_name_for_import("jsonschema"))
+
+        with tempfile.TemporaryDirectory() as directory:
+            script = Path(directory) / "yaml-validator.py"
+            script.write_text("import yaml\n", encoding="utf-8")
+
+            errors = validator_import_contract_errors(
+                (script,),
+                {"pyyaml"},
+            )
+
+        self.assertEqual([], errors)
+
+    def test_standard_library_fallback_works_without_module_registry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stdlib = Path(directory)
+            (stdlib / "legacy_module.py").write_text("", encoding="utf-8")
+            (stdlib / "legacy_package").mkdir()
+            script = stdlib / "legacy-validator.py"
+            script.write_text(
+                "import legacy_module\n"
+                "import legacy_package\n"
+                "import requests\n",
+                encoding="utf-8",
+            )
+
+            with patch.object(sys, "stdlib_module_names", None), patch.object(
+                sysconfig,
+                "get_path",
+                return_value=str(stdlib),
+            ):
+                errors = validator_import_contract_errors(
+                    (script,),
+                    MANIFEST_VALIDATOR_DEPENDENCIES,
+                )
+
+        self.assertEqual(
+            [
+                "legacy-validator.py imports undeclared third-party package "
+                "'requests'; add 'requests==<version>' to requirements.txt"
+            ],
+            errors,
         )
 
     def test_manifest_validator_discovery_catches_new_validators_only(self) -> None:

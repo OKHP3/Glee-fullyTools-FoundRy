@@ -46,6 +46,11 @@ must be classified before a target is approved. In particular:
 has no rename planned; the candidate target is shown only when a future,
 owner-approved migration may still be useful.
 
+Each mapping row must use a unique `ID`. Reusing an ID makes the mapping
+ambiguous even when the rows have different paths or dispositions; the
+inventory catalog contract check reports the repeated ID and all affected
+ledger lines.
+
 | ID | Legacy path | Signals | Classification | Candidate target | Disposition |
 |---|---|---|---|---|---|
 | C-01 | `canon/README.md` | uppercase | required name | `canon/README.md` | **Retain** — ecosystem exception |

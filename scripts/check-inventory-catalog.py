@@ -128,6 +128,7 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
 
     issues: list[str] = []
     mapping_table_active = False
+    mapping_row_lines: dict[str, list[int]] = {}
     for line_number, line in enumerate(ledger_text.splitlines(), start=1):
         if not line.lstrip().startswith("|"):
             mapping_table_active = False
@@ -146,6 +147,8 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             continue
 
         row_id = cells[0] or f"line {line_number}"
+        if cells[0]:
+            mapping_row_lines.setdefault(cells[0], []).append(line_number)
         if len(cells) != len(LEDGER_FIELDS):
             if len(cells) < len(LEDGER_FIELDS):
                 missing_fields = ", ".join(LEDGER_FIELDS[len(cells):])
@@ -225,6 +228,15 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
                 f"{MIGRATION_LEDGER_PATH} row {row_id} still has the legacy "
                 f"path after execution: {legacy_path}"
             )
+
+    for row_id, line_numbers in mapping_row_lines.items():
+        if len(line_numbers) < 2:
+            continue
+        affected_lines = ", ".join(f"line {line_number}" for line_number in line_numbers)
+        issues.append(
+            f"{MIGRATION_LEDGER_PATH} has duplicate mapping row ID {row_id!r}; "
+            f"affected rows are on {affected_lines}"
+        )
 
     return issues
 

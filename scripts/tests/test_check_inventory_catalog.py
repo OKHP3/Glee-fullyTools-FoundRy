@@ -786,6 +786,51 @@ A second entry with the same display name.
             issues,
         )
 
+    def test_duplicate_mapping_row_id_reports_all_affected_lines(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-04 | `legacy/first.md` | underscore | ordinary documentation | "
+                "`docs/first.md` | **Retain** |\n"
+                "| X-04 | `legacy/second.md` | underscore | ordinary documentation | "
+                "`docs/second.md` | **Not executed** — awaiting approval |\n"
+            ),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "duplicate mapping row ID 'X-04'" in issue
+                and "line 3" in issue
+                and "line 4" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
+    def test_unique_mapping_ids_and_approval_tables_are_ignored(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-05 | `legacy/first.md` | underscore | ordinary documentation | "
+                "`docs/first.md` | **Retain** |\n"
+                "| X-06 | `legacy/second.md` | underscore | ordinary documentation | "
+                "`docs/second.md` | **Retain** |\n"
+                "\n"
+                "| ID | Batch | Approval owner | Decision | Evidence | Notes |\n"
+                "|---|---|---|---|---|---|\n"
+                "| X-05 | B0 | Owner | Confirm | Review | Duplicate approval ID |\n"
+                "| X-05 | B1 | Owner | Confirm | Review | Duplicate approval ID |\n"
+            ),
+        )
+
+        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+
     def test_executed_move_rejects_paths_outside_repository(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

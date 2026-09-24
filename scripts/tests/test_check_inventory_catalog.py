@@ -820,6 +820,7 @@ A second entry with the same display name.
                 self.assertTrue(
                     any(
                         field_name in issue
+                        and "line 3" in issue
                         and (
                             "absolute paths are not allowed" in issue
                             if reason == "absolute"

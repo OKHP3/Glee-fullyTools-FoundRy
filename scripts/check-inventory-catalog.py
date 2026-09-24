@@ -93,13 +93,15 @@ def _resolve_repository_path(
     raw_path: str,
     *,
     row_id: str,
+    line_number: int,
     field_name: str,
 ) -> tuple[Path | None, str | None]:
     """Resolve a ledger path only when it stays repository-relative."""
     path = Path(raw_path)
     if PurePosixPath(raw_path).is_absolute() or PureWindowsPath(raw_path).anchor:
         return None, (
-            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"{MIGRATION_LEDGER_PATH} row {row_id} (line {line_number}) "
+            f"{field_name} path "
             f"must be repository-relative; absolute paths are not allowed: "
             f"{raw_path}"
         )
@@ -110,7 +112,8 @@ def _resolve_repository_path(
         resolved_path.relative_to(resolved_root)
     except ValueError:
         return None, (
-            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"{MIGRATION_LEDGER_PATH} row {row_id} (line {line_number}) "
+            f"{field_name} path "
             f"resolves outside the repository root: {raw_path}"
         )
     return resolved_path, None
@@ -190,12 +193,14 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             root,
             candidate_path,
             row_id=row_id,
+            line_number=line_number,
             field_name="candidate",
         )
         legacy, legacy_issue = _resolve_repository_path(
             root,
             legacy_path,
             row_id=row_id,
+            line_number=line_number,
             field_name="legacy",
         )
         path_issues = [issue for issue in (candidate_issue, legacy_issue) if issue]

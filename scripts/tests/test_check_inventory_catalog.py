@@ -831,6 +831,63 @@ A second entry with the same display name.
                     issues,
                 )
 
+    def test_executed_move_rejects_symlinked_paths_outside_repository(self):
+        cases = (
+            ("legacy", "legacy", "legacy/example.md", "docs/example.md"),
+            ("candidate", "candidate", "legacy/example.md", "candidate/example.md"),
+        )
+        for field_name, link_name, legacy_path, candidate_path in cases:
+            with self.subTest(field_name=field_name):
+                directory = self._make_repository()
+                self.addCleanup(shutil.rmtree, directory)
+                outside = Path(tempfile.mkdtemp())
+                self.addCleanup(shutil.rmtree, outside)
+
+                try:
+                    (directory / link_name).symlink_to(
+                        outside,
+                        target_is_directory=True,
+                    )
+                except (NotImplementedError, OSError) as error:
+                    self.skipTest(f"symlinks are unavailable: {error}")
+
+                if field_name == "legacy":
+                    candidate = directory / candidate_path
+                    candidate.parent.mkdir(parents=True, exist_ok=True)
+                    candidate.write_text("moved\n", encoding="utf-8")
+
+                self._set_ledger(
+                    directory,
+                    self._mapping_ledger(
+                        f"| X-01 | `{legacy_path}` | underscore | "
+                        f"ordinary documentation | `{candidate_path}` | "
+                        "**Executed 2026-09-09** |\n"
+                    ),
+                )
+
+                issues = CHECKER.check_filename_migration_ledger(directory)
+
+                self.assertTrue(
+                    any(
+                        field_name in issue
+                        and "line 3" in issue
+                        and "resolves outside the repository root" in issue
+                        for issue in issues
+                    ),
+                    issues,
+                )
+                self.assertFalse(
+                    any(
+                        (
+                            "candidate path to exist" in issue
+                            if field_name == "candidate"
+                            else "still has the legacy path" in issue
+                        )
+                        for issue in issues
+                    ),
+                    issues,
+                )
+
     def test_executed_move_reports_legacy_path_that_remains(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

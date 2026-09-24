@@ -17,6 +17,14 @@ SPEC.loader.exec_module(CATALOGER)
 
 
 class CatalogLinkValidationTests(unittest.TestCase):
+    def _create_symlink_or_skip(
+        self, link: Path, target: Path, *, target_is_directory: bool = False
+    ) -> None:
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symlink creation unavailable: {exc}")
+
     def test_existing_relative_catalog_link_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -121,6 +129,56 @@ class CatalogLinkValidationTests(unittest.TestCase):
             errors = CATALOGER.validate_family_links(root / "README.md", content)
 
             self.assertEqual(1, len(errors))
+            self.assertIn("escapes index directory", errors[0])
+
+    def test_family_directory_symlink_cannot_escape_index_directory(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            root = Path(directory)
+            outside_family = Path(outside) / "family"
+            outside_family.mkdir()
+            (outside_family / "FAMILY.md").write_text("# Family\n", encoding="utf-8")
+            self._create_symlink_or_skip(
+                root / "escaped-family",
+                outside_family,
+                target_is_directory=True,
+            )
+            content = (
+                "# Families\n"
+                f"{CATALOGER.FAMILIES_TABLE_START}\n"
+                "[outside family](escaped-family/FAMILY.md)\n"
+                f"{CATALOGER.FAMILIES_TABLE_END}\n"
+            )
+
+            errors = CATALOGER.validate_family_links(root / "README.md", content)
+
+            self.assertEqual(1, len(errors))
+            self.assertIn("README.md:3", errors[0])
+            self.assertIn("escaped-family/FAMILY.md", errors[0])
+            self.assertIn("escapes index directory", errors[0])
+
+    def test_symlinked_family_file_cannot_escape_index_directory(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            root = Path(directory)
+            family_dir = root / "family"
+            family_dir.mkdir()
+            outside_family_file = Path(outside) / "FAMILY.md"
+            outside_family_file.write_text("# Family\n", encoding="utf-8")
+            self._create_symlink_or_skip(
+                family_dir / "FAMILY.md",
+                outside_family_file,
+            )
+            content = (
+                "# Families\n"
+                f"{CATALOGER.FAMILIES_TABLE_START}\n"
+                "[outside family](family/FAMILY.md)\n"
+                f"{CATALOGER.FAMILIES_TABLE_END}\n"
+            )
+
+            errors = CATALOGER.validate_family_links(root / "README.md", content)
+
+            self.assertEqual(1, len(errors))
+            self.assertIn("README.md:3", errors[0])
+            self.assertIn("family/FAMILY.md", errors[0])
             self.assertIn("escapes index directory", errors[0])
 
     def test_full_check_reports_missing_family_link(self):

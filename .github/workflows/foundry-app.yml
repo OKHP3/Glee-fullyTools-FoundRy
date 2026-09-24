@@ -53,6 +53,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - name: Install application validation dependencies
+        run: python -m pip install --require-hashes -r requirements-lock.txt
       - name: Check generated Agent Skills catalog links
         run: python .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py --skills-dir .agents/skills --check
       - name: Check maintained Markdown links

@@ -49,6 +49,74 @@ class CheckMarkdownLinksTests(unittest.TestCase):
 
         self.assertEqual([], CHECKER.check_workflow_document_coverage(root))
 
+    def test_workflow_filters_support_quotes_and_inline_comments(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - "**/*.md" # Covers every maintained index.
+      - scripts/** # Unquoted path filter.
+  push:
+    paths:
+      - "**/*.md" # Covers every maintained index.
+      - scripts/**
+"""
+
+        self.assertEqual(
+            ("**/*.md", "scripts/**"),
+            CHECKER.workflow_path_filters(workflow, "pull_request"),
+        )
+        self.assertEqual(
+            [],
+            CHECKER.check_workflow_document_coverage(
+                Path("/repository"),
+                workflow_text=workflow,
+            ),
+        )
+
+    def test_workflow_filter_comments_inside_quotes_are_not_stripped(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - "docs/#guide" # Comment follows the quoted value.
+  push:
+    paths:
+      - "docs/#guide"
+"""
+
+        self.assertEqual(
+            ("docs/#guide",),
+            CHECKER.workflow_path_filters(workflow, "pull_request"),
+        )
+
+    def test_malformed_workflow_path_structure_is_reported(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+       - "README.md"
+  push:
+    paths:
+      - "**/*.md"
+"""
+
+        issues = CHECKER.check_workflow_document_coverage(
+            Path("/repository"),
+            workflow_text=workflow,
+        )
+
+        self.assertTrue(
+            any(
+                "pull_request paths are malformed" in issue
+                and "line 5" in issue
+                and "six-space list item" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
     def test_workflow_single_star_does_not_cover_nested_documents(self):
         root = Path(__file__).parents[2]
         workflow = (root / CHECKER.WORKFLOW_PATH).read_text(encoding="utf-8")

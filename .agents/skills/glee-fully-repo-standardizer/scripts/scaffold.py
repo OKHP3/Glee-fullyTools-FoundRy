@@ -188,6 +188,22 @@ class DuplicateInventoryIDError(ValueError):
         )
 
 
+class DuplicateInventoryNameError(ValueError):
+    """Raised when name-based lookup matches more than one inventory section."""
+
+    def __init__(self, name: str, entries: list[tuple[str, int]]):
+        self.name = name
+        self.entries = entries
+        listed_entries = ", ".join(
+            f"#{entity_id} (line {line_number})"
+            for entity_id, line_number in entries
+        )
+        super().__init__(
+            f"duplicate inventory display name '{name}' found in "
+            f"{len(entries)} sections: {listed_entries}"
+        )
+
+
 def _strip_links(text: str) -> str:
     """Replace markdown links with their display text."""
     return re.sub(r"\[([^\]]+)\]\([^\)]*\)", r"\1", text).strip()
@@ -241,15 +257,36 @@ def parse_inventory(
             )
 
     match_idx: int | None = None
-    for i, m in enumerate(sections):
-        raw_id = m.group(1).lstrip("#")
-        raw_name = _strip_links(m.group(2))
-        if target_id and raw_id.lower() == target_id.lower():
-            match_idx = i
-            break
-        if target_name and raw_name.lower() == target_name.lower():
-            match_idx = i
-            break
+    if target_id:
+        # An exact ID is authoritative. In particular, do not let a duplicate
+        # display name make an otherwise unambiguous ID import fail.
+        for i, m in enumerate(sections):
+            raw_id = m.group(1).lstrip("#")
+            if raw_id.casefold() == target_id.casefold():
+                match_idx = i
+                break
+
+    if match_idx is None and target_name:
+        name_matches: dict[str, list[tuple[int, str, int]]] = {}
+        for i, section in enumerate(sections):
+            raw_id = section.group(1).lstrip("#")
+            raw_name = _strip_links(section.group(2))
+            line_number = text.count("\n", 0, section.start()) + 1
+            name_matches.setdefault(raw_name.casefold(), []).append(
+                (i, raw_id, line_number)
+            )
+
+        matching_sections = name_matches.get(target_name.casefold(), [])
+        if len(matching_sections) > 1:
+            raise DuplicateInventoryNameError(
+                _strip_links(sections[matching_sections[0][0]].group(2)),
+                [
+                    (raw_id, line_number)
+                    for _, raw_id, line_number in matching_sections
+                ],
+            )
+        if matching_sections:
+            match_idx = matching_sections[0][0]
 
     if match_idx is None:
         return None
@@ -1679,7 +1716,7 @@ def main():
                 target_id=getattr(args, "id", "") or "",
                 target_name=args.name or "",
             )
-        except DuplicateInventoryIDError as exc:
+        except (DuplicateInventoryIDError, DuplicateInventoryNameError) as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
         except (OSError, UnicodeError) as exc:

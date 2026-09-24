@@ -213,6 +213,70 @@ A conflicting catalog entry that must not be imported.
         self.assertIn("Example Toolbox (line 1)", result.stderr)
         self.assertIn("Conflicting Toolbox (line 12)", result.stderr)
 
+    def test_duplicate_inventory_name_fails_case_insensitively_before_name_import(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        duplicate_catalog = CATALOG_TEXT.replace(
+            "Example Toolbox",
+            "example toolbox",
+            1,
+        ) + """\
+
+# TOOLBOX 🧰 (Trunk🌳) \#99 – EXAMPLE TOOLBOX
+
+### Full Description:
+A second entry with the same display name.
+"""
+        (directory / CHECKER.CATALOG_PATH).write_text(
+            duplicate_catalog,
+            encoding="utf-8",
+        )
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+
+        with self.assertRaisesRegex(
+            scaffold.DuplicateInventoryNameError,
+            r"duplicate inventory display name 'example toolbox'.*"
+            r"#00 \(line 1\).*#99 \(line 12\)",
+        ) as raised:
+            scaffold.parse_inventory(
+                directory / CHECKER.CATALOG_PATH,
+                target_name="Example Toolbox",
+            )
+
+        self.assertEqual(
+            [("00", 1), ("99", 12)],
+            raised.exception.entries,
+        )
+
+        result = self._run_scaffold(
+            directory,
+            "--name",
+            "Example Toolbox",
+            "--id",
+            "missing-id",
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("duplicate inventory display name", result.stderr)
+        self.assertIn("#00 (line 1)", result.stderr)
+        self.assertIn("#99 (line 12)", result.stderr)
+
+    def test_id_import_remains_valid_when_display_names_are_unique(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+
+        scaffold = CHECKER._load_scaffold(directory / CHECKER.SCAFFOLD_PATH)
+        entry = scaffold.parse_inventory(
+            directory / CHECKER.CATALOG_PATH,
+            target_id="00",
+            target_name="A different name",
+        )
+
+        self.assertIsNotNone(entry)
+        assert entry is not None
+        self.assertEqual("00", entry.entity_id)
+        self.assertEqual("Example Toolbox", entry.name)
+
     def test_scaffold_preserves_bom_catalog_metadata_in_generated_files(self):
         directory = self._make_repository()
         self.addCleanup(shutil.rmtree, directory)

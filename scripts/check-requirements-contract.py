@@ -11,7 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REQUIREMENTS = ROOT / "requirements.txt"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
 REQUIREMENT_LINE = re.compile(
-    r"^(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\[[^\]]+\])?(?P<specifier>.*)$"
+    r"^(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
+    r"(?=(?:\[|\s|[<>=!~]|$))"
+    r"(?:\[(?P<extras>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?"
+    r"(?:\s*,\s*[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)*)\]|(?!\[))"
+    r"(?P<specifier>.*)$"
 )
 EXACT_PIN = re.compile(r"^==\s*(?![=<>!~])[^;\s]+(?:\s*;\s*.+)?$")
 HASH_OPTIONS = re.compile(r"\s+--hash=\S+")

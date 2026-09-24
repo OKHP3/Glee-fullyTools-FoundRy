@@ -603,6 +603,69 @@ class ManifestValidatorTests(unittest.TestCase):
             errors,
         )
 
+    def test_invalid_package_names_report_line_and_pin_correction(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML-==6.0.3\n"
+                "jsonschema==4.26.0\n",
+            )
+
+            errors = requirements_contract_errors(path)
+
+        self.assertIn(
+            "line 1 is not a supported package requirement: PyYAML-==6.0.3; "
+            "use a package name with an exact == version pin",
+            errors,
+        )
+
+    def test_malformed_extras_report_line_and_pin_correction(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML[not valid]==6.0.3\n"
+                "jsonschema==4.26.0\n",
+            )
+
+            errors = requirements_contract_errors(path)
+
+        self.assertIn(
+            "line 1 is not a supported package requirement: "
+            "PyYAML[not valid]==6.0.3; "
+            "use a package name with an exact == version pin",
+            errors,
+        )
+
+    def test_unsupported_version_separator_is_not_reported_as_missing_dependency(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML>=6.0.3\n"
+                "jsonschema==4.26.0\n",
+            )
+
+            errors = requirements_contract_errors(path)
+
+        self.assertIn("pyyaml on line 1 must use an exact == pin", errors)
+        self.assertNotIn(
+            "missing manifest validator dependency: pyyaml",
+            errors,
+        )
+
+    def test_comments_after_exact_pins_are_valid(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_requirements_variant(
+                Path(directory),
+                "PyYAML==6.0.3  # YAML parser\n"
+                "jsonschema==4.26.0 # schema validator\n",
+            )
+
+            errors = requirements_contract_errors(path)
+
+        self.assertEqual([], errors)
+
     def test_current_manifest_passes_strict_validator_and_legacy_audit(self) -> None:
         validator_result = self.run_validator(MANIFEST)
         self.assertEqual(0, validator_result.returncode, validator_result.stdout)

@@ -858,6 +858,7 @@ behavioral validation.
             return self.error_json(404,"not found")
         except RuntimeError: return self.error_json(409, "revision conflict")
         except ValidationError as err: return self.error_json(400,str(err))
+        except sqlite3.Error: return self.error_json(500, "database write failed")
     def do_PUT(self):
         if not self.valid_request(): return self.error_json(403,"foreign Host or Origin")
         match=re.fullmatch(r"/api/projects/([0-9a-f-]{36})",urlparse(self.path).path)
@@ -874,6 +875,7 @@ behavioral validation.
             return self.json(200,project)
         except RuntimeError: return self.error_json(409,"revision conflict")
         except ValidationError as err:return self.error_json(400,str(err))
+        except sqlite3.Error: return self.error_json(500, "database write failed")
     def do_DELETE(self):
         if not self.valid_request(): return self.error_json(403, "foreign Host or Origin")
         match = re.fullmatch(r"/api/projects/([0-9a-f-]{36})", urlparse(self.path).path)

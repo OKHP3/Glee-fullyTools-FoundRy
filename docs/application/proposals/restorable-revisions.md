@@ -258,7 +258,13 @@ claims that the current application passes them.
    lifecycle control and confirm a new draft revision exists without deleting
    the archived snapshot.
 
-6. **Stale restore conflicts.** Two clients read r4. Client A advances to r5.
+6. **Revision writes roll back on a database failure.** Inject a temporary SQLite
+   failure at each current-row, activity-row, and snapshot-row write boundary
+   for create, update, duplicate, archive, and version restore. Each operation
+   returns an error, leaves the prior current project, history, and snapshot
+   records unchanged, and remains unchanged after reopening the database.
+
+7. **Stale restore conflicts.** Two clients read r4. Client A advances to r5.
    Client B requests restore with `currentRevision: 4`; the server returns 409,
    leaves r5 current, and adds no snapshot or history row.
 

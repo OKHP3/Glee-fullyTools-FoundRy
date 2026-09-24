@@ -98,6 +98,14 @@ class CheckInventoryCatalogTests(unittest.TestCase):
             / ".agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py",
             scaffold,
         )
+        self._set_ledger(
+            directory,
+            f"{CHECKER.CATALOG_PATH.as_posix()}\n\n"
+            + self._mapping_ledger(
+                "| X-00 | `legacy/example.md` | underscore | "
+                "ordinary documentation | `docs/example.md` | **Retain** |\n"
+            ),
+        )
         return directory
 
     def _set_ledger(self, directory: Path, text: str = EXECUTED_LEDGER) -> None:
@@ -760,7 +768,66 @@ A second entry with the same display name.
             "| B0 | X-01 | First | Confirm |\n",
         )
 
-        self.assertEqual([], CHECKER.check_filename_migration_ledger(directory))
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "missing a recognizable migration mapping-table header" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+        self.assertFalse(
+            any("malformed table row" in issue for issue in issues),
+            issues,
+        )
+
+    def test_missing_mapping_table_reports_expected_fields(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(directory, "The mapping table was removed.\n")
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertEqual(1, len(issues), issues)
+        self.assertIn(
+            "missing a recognizable migration mapping-table header",
+            issues[0],
+        )
+        for field in CHECKER.LEDGER_FIELDS:
+            self.assertIn(field, issues[0])
+
+    def test_renamed_mapping_table_header_reports_contract_failure(self):
+        directory = self._make_repository()
+        self.addCleanup(shutil.rmtree, directory)
+        self._set_ledger(
+            directory,
+            self._mapping_ledger(
+                "| X-03 | `legacy/example.md` | underscore | "
+                "ordinary documentation | `docs/example.md` | **Retain** |\n"
+            ).replace("| ID | Legacy path |", "| ID | Legacy file |"),
+        )
+
+        issues = CHECKER.check_filename_migration_ledger(directory)
+
+        self.assertTrue(
+            any(
+                "missing a recognizable migration mapping-table header" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+        self.assertFalse(
+            any("row X-03" in issue for issue in issues),
+            issues,
+        )
+        header_issue = next(
+            issue
+            for issue in issues
+            if "missing a recognizable migration mapping-table header" in issue
+        )
+        for field in CHECKER.LEDGER_FIELDS:
+            self.assertIn(field, header_issue)
 
     def test_ambiguous_execution_disposition_is_reported(self):
         directory = self._make_repository()

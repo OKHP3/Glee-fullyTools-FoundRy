@@ -128,6 +128,7 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
 
     issues: list[str] = []
     mapping_table_active = False
+    mapping_table_found = False
     mapping_row_lines: dict[str, list[int]] = {}
     for line_number, line in enumerate(ledger_text.splitlines(), start=1):
         if not line.lstrip().startswith("|"):
@@ -140,6 +141,7 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
 
         if cells[0].lower() == "id":
             mapping_table_active = tuple(cells) == LEDGER_FIELDS
+            mapping_table_found = mapping_table_found or mapping_table_active
             continue
         if not mapping_table_active:
             continue
@@ -236,6 +238,15 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
         issues.append(
             f"{MIGRATION_LEDGER_PATH} has duplicate mapping row ID {row_id!r}; "
             f"affected rows are on {affected_lines}"
+        )
+
+    if not mapping_table_found:
+        expected_fields = ", ".join(LEDGER_FIELDS)
+        issues.insert(
+            0,
+            f"{MIGRATION_LEDGER_PATH} is missing a recognizable migration "
+            "mapping-table header; expected fields: "
+            f"{expected_fields}",
         )
 
     return issues

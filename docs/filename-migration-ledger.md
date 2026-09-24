@@ -51,6 +51,14 @@ ambiguous even when the rows have different paths or dispositions; the
 inventory catalog contract check reports the repeated ID and all affected
 ledger lines.
 
+The mapping table header is part of the contract and must retain these six
+fields, in this order: `ID`, `Legacy path`, `Signals`, `Classification`,
+`Candidate target`, and `Disposition`. Other Markdown tables in this document,
+including the approval table below, are not migration mappings and are excluded
+from migration-row checks. If the mapping table or its recognizable header is
+removed, the inventory catalog contract check fails instead of treating the
+ledger as healthy.
+
 | ID | Legacy path | Signals | Classification | Candidate target | Disposition |
 |---|---|---|---|---|---|
 | C-01 | `canon/README.md` | uppercase | required name | `canon/README.md` | **Retain** — ecosystem exception |

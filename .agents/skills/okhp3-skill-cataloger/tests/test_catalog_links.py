@@ -1,6 +1,7 @@
 """Tests for generated Agent Skills catalog link validation."""
 
 import importlib.util
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,7 @@ from pathlib import Path
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "gen-skills-readme.py"
+WORKFLOW = Path(__file__).parents[4] / ".github" / "workflows" / "foundry-app.yml"
 SPEC = importlib.util.spec_from_file_location("gen_skills_readme", SCRIPT)
 CATALOGER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CATALOGER)
@@ -146,3 +148,59 @@ class CatalogLinkValidationTests(unittest.TestCase):
             self.assertIn("README.md:5", result.stderr)
             self.assertIn("generated family link", result.stderr)
             self.assertIn("missing/FAMILY.md", result.stderr)
+
+    def test_catalog_check_reports_missing_link_for_ci(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            skills_dir = root / ".agents" / "skills"
+            skills_dir.mkdir(parents=True)
+            script_copy = (
+                skills_dir
+                / "okhp3-skill-cataloger"
+                / "scripts"
+                / "gen-skills-readme.py"
+            )
+            script_copy.parent.mkdir(parents=True)
+            shutil.copy2(SCRIPT, script_copy)
+            (skills_dir / "README.md").write_text(
+                "# Skills\n"
+                f"{CATALOGER.START_MARKER}\n"
+                "[missing skill](missing/SKILL.md)\n"
+                f"{CATALOGER.END_MARKER}\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    ".agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py",
+                    "--skills-dir",
+                    ".agents/skills",
+                    "--check",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn(".agents/skills/README.md:3", result.stderr)
+            self.assertIn("generated catalog link", result.stderr)
+            self.assertIn("missing/SKILL.md", result.stderr)
+
+    def test_workflow_keeps_catalog_check_separate_from_markdown_scan(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        catalog_step = (
+            "      - name: Check generated Agent Skills catalog links\n"
+            "        run: python .agents/skills/okhp3-skill-cataloger/scripts/"
+            "gen-skills-readme.py --skills-dir .agents/skills --check"
+        )
+        markdown_step = (
+            "      - name: Check maintained Markdown links\n"
+            "        run: python scripts/check-markdown-links.py ."
+        )
+
+        self.assertIn(catalog_step, workflow)
+        self.assertIn(markdown_step, workflow)
+        self.assertLess(workflow.index(catalog_step), workflow.index(markdown_step))

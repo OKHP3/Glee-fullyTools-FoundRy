@@ -31,9 +31,28 @@ append-only snapshot operation described below.
 
 This proposal designs the smallest viable extension. The snapshot migration,
 restore endpoint, and local history controls now implement the contract below.
-Workspace backup format remains unchanged; restoring a workspace recreates a
-current-state migration baseline rather than claiming that historical snapshot
-content survived that backup.
+Workspace backup version 1 now includes an optional `snapshots` map for
+immutable snapshot records. New backups include every stored snapshot; older
+backups may omit that map and restore only a current-state migration baseline
+rather than claiming that historical snapshot content survived that backup.
+
+Each `snapshots[projectId]` entry contains:
+
+```json
+{
+  "revision": 3,
+  "capturedAt": "2026-09-07T12:00:00Z",
+  "action": "updated",
+  "schemaVersion": 1,
+  "data": "{\"...\":\"canonical project JSON bytes...\"}",
+  "sha256": "..."
+}
+```
+
+Restore validates the snapshot's project identity and revision, supported
+schema, canonical JSON bytes, and SHA-256 digest before replacing any local
+records. A backup can therefore preserve unavailable historical rows without
+inventing bodies for revisions that predate snapshot capture.
 
 ## Decisions
 
@@ -284,7 +303,9 @@ claims that the current application passes them.
 ## Implementation note
 
 The local application now creates and validates immutable snapshots for new
-revisions, exposes verified availability in history, and restores a selected
-snapshot as a new draft revision. Existing databases receive only a labelled
-current-state migration baseline. Focused tests cover the append-only restore,
-evidence reset, conflicts, corrupt sources, and pre-feature migration behavior.
+revisions, exposes verified availability in history, restores a selected
+snapshot as a new draft revision, and carries snapshot records through workspace
+backup and restore. Existing databases receive only a labelled current-state
+migration baseline. Focused tests cover the append-only restore, evidence reset,
+conflicts, corrupt sources, pre-feature migration behavior, and snapshot
+backup/restore validation.

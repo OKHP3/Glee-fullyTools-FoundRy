@@ -112,6 +112,11 @@ class LifecycleContractTests(ServiceTests):
         backup = raw
         self.assertEqual(backup["format"], "glee-fully-foundry-workspace")
         self.assertEqual(len(backup["history"][revised["id"]]), 2)
+        self.assertEqual([item["revision"] for item in backup["snapshots"][revised["id"]]], [1, 2])
+        self.assertEqual(
+            set(backup["snapshots"][revised["id"]][0]),
+            {"revision", "capturedAt", "action", "schemaVersion", "data", "sha256"},
+        )
 
         newer = self.create(name="Newer edit that must survive rejection")
         before = self.request("GET", "/api/projects")[2]["projects"]
@@ -138,6 +143,86 @@ class LifecycleContractTests(ServiceTests):
         self.assertEqual(restored, revised)
         self.assertEqual([item["revision"] for item in self.server.store.history(revised["id"])], [1, 2])
         self.assertIsNone(self.server.store.get(newer["id"]))
+        self.assertTrue(all(item["restorable"] for item in self.server.store.history(revised["id"])))
+
+    def test_workspace_backup_round_trip_preserves_snapshot_bodies(self):
+        original = self.create(name="First revision")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Second revision"),
+        )
+        self.assertEqual(status, 200)
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        expected_snapshots = backup["snapshots"][original["id"]]
+
+        self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=revised["revision"], name="Third revision"),
+        )
+        status, _, result = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result["restored"], 1)
+        with self.server.store.lock:
+            actual_snapshots = [
+                dict(row) for row in self.server.store.conn.execute(
+                    """SELECT revision, captured_at AS capturedAt, action,
+                              schema_version AS schemaVersion, data, sha256
+                       FROM project_revisions WHERE project_id=? ORDER BY revision""",
+                    (original["id"],),
+                )
+            ]
+        self.assertEqual(actual_snapshots, expected_snapshots)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertEqual([item["revision"] for item in history], [1, 2])
+        self.assertTrue(all(item["restorable"] for item in history))
+
+    def test_workspace_restore_rejects_invalid_snapshot_without_replacement(self):
+        original = self.create(name="Keep this project")
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        backup["snapshots"][original["id"]][0]["sha256"] = "0" * 64
+        newer = self.create(name="Must survive rejection")
+        before = self.request("GET", "/api/projects")[2]["projects"]
+
+        status, _, error = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("digest", error["error"])
+        self.assertEqual(self.request("GET", "/api/projects")[2]["projects"], before)
+        self.assertIsNotNone(self.server.store.get(newer["id"]))
+
+    def test_legacy_workspace_backup_does_not_invent_historical_snapshots(self):
+        original = self.create(name="Legacy backup revision one")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Legacy backup current state"),
+        )
+        self.assertEqual(status, 200)
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        legacy_backup = {key: value for key, value in backup.items() if key != "snapshots"}
+
+        self.create(name="Discarded newer project")
+        status, _, result = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": legacy_backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result["restored"], 1)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertFalse(history[0]["restorable"])
+        self.assertTrue(history[1]["restorable"])
+        self.assertTrue(history[1]["baseline"])
+        self.assertEqual(self.server.store.get(original["id"]), revised)
 
     def test_revision_snapshots_restore_append_only_and_reset_evidence(self):
         original = self.create(

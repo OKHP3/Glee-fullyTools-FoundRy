@@ -31,10 +31,7 @@ REQUIREMENTS_LOCK = ROOT / "requirements-lock.txt"
 REQUIREMENTS_CONTRACT = ROOT / "scripts" / "check-requirements-contract.py"
 MANIFEST_WORKFLOW = ROOT / ".github" / "workflows" / "manifest-validation.yml"
 MANIFEST_VALIDATOR_DEPENDENCIES = {"pyyaml", "jsonschema"}
-MANIFEST_VALIDATOR_SCRIPTS = (
-    ROOT / "scripts" / "validate-manifest.py",
-    ROOT / "scripts" / "manifest-audit.py",
-)
+MANIFEST_VALIDATOR_FILENAME = "*manifest*.py"
 MANIFEST_CHANGE_PATHS = (
     "manifest.yaml",
     "schemas/example.json",
@@ -126,6 +123,21 @@ def workflow_step(workflow: str, name: str) -> str:
     if end == -1:
         end = len(workflow)
     return workflow[start:end]
+
+
+def discover_manifest_validator_scripts(scripts_dir: Path) -> tuple[Path, ...]:
+    """Discover the manifest validators covered by the import contract.
+
+    Manifest validation scripts use ``manifest`` in their filename and live
+    directly in the scripts directory.  Restricting discovery to that
+    convention keeps unrelated maintenance tooling outside this contract while
+    ensuring a newly added manifest validator is reviewed automatically.
+    """
+
+    return tuple(sorted(scripts_dir.glob(MANIFEST_VALIDATOR_FILENAME)))
+
+
+MANIFEST_VALIDATOR_SCRIPTS = discover_manifest_validator_scripts(ROOT / "scripts")
 
 
 def validator_imports(path: Path) -> set[str]:
@@ -402,6 +414,36 @@ class ManifestValidatorTests(unittest.TestCase):
                 MANIFEST_VALIDATOR_SCRIPTS,
                 declared_dependencies,
             ),
+        )
+
+    def test_manifest_validator_discovery_catches_new_validators_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            scripts_dir = Path(directory)
+            (scripts_dir / "manifest-policy.py").write_text(
+                "import requests\n",
+                encoding="utf-8",
+            )
+            (scripts_dir / "backup-maintenance.py").write_text(
+                "import requests\n",
+                encoding="utf-8",
+            )
+
+            discovered = discover_manifest_validator_scripts(scripts_dir)
+            errors = validator_import_contract_errors(
+                discovered,
+                MANIFEST_VALIDATOR_DEPENDENCIES,
+            )
+
+        self.assertEqual(
+            (scripts_dir / "manifest-policy.py",),
+            discovered,
+        )
+        self.assertEqual(
+            [
+                "manifest-policy.py imports undeclared third-party package "
+                "'requests'; add 'requests==<version>' to requirements.txt"
+            ],
+            errors,
         )
 
     def test_undeclared_third_party_import_identifies_source_and_correction(self) -> None:

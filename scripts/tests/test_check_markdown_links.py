@@ -1,7 +1,9 @@
+import io
 import importlib.util
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 
@@ -41,6 +43,123 @@ class CheckMarkdownLinksTests(unittest.TestCase):
             "docs/delegation/2026-09-07-coop-pertition/README.md",
             CHECKER.DEFAULT_DOCUMENTS,
         )
+
+    def test_workflow_filters_cover_every_default_document(self):
+        root = Path(__file__).parents[2]
+
+        self.assertEqual([], CHECKER.check_workflow_document_coverage(root))
+
+    def test_workflow_single_star_does_not_cover_nested_documents(self):
+        root = Path(__file__).parents[2]
+        workflow = (root / CHECKER.WORKFLOW_PATH).read_text(encoding="utf-8")
+        workflow = workflow.replace("'docs/**'", "'docs/*'")
+
+        issues = CHECKER.check_workflow_document_coverage(root, workflow)
+
+        self.assertEqual(4, len(issues), issues)
+        self.assertTrue(
+            all(
+                "docs/application/README.md" in item
+                or "docs/adr/README.md" in item
+                for item in issues
+            )
+        )
+
+    def test_workflow_globs_match_github_documented_examples(self):
+        cases = [
+            ("docs/README.md", "docs/*", True),
+            ("docs/application/README.md", "docs/*", False),
+            ("docs/application/README.md", "docs/**", True),
+            ("README.md", "**/README.md", True),
+            ("docs/application/README.md", "**/README.md", True),
+            ("docs/README.md", "*.md", False),
+            ("docs/README.md", "**.md", True),
+            ("page.js", "*.jsx?", True),
+            ("page.jsx", "*.jsx?", True),
+            ("page.jsxx", "*.jsx?", False),
+            ("v1.10.1", "v[12].[0-9]+.[0-9]+", True),
+        ]
+        for document, pattern, expected in cases:
+            with self.subTest(document=document, pattern=pattern):
+                self.assertEqual(
+                    expected,
+                    CHECKER.workflow_path_matches(document, pattern),
+                )
+
+    def test_workflow_exclusions_and_reinclusions_are_ordered(self):
+        path = "docs/application/README.md"
+
+        self.assertFalse(
+            CHECKER.workflow_covers_path(
+                path, ("docs/**", "!docs/application/**")
+            )
+        )
+        self.assertTrue(
+            CHECKER.workflow_covers_path(
+                path, ("docs/**", "!docs/application/**", path)
+            )
+        )
+
+    def test_workflow_filter_drift_names_document_and_missing_filter(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+  push:
+    paths:
+      - 'README.md'
+"""
+
+        issues = CHECKER.check_workflow_document_coverage(
+            Path("/repository"),
+            workflow_text=workflow,
+        )
+
+        self.assertTrue(
+            any(
+                "pull_request" in issue
+                and "docs/README.md" in issue
+                and "matching filter" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+        self.assertTrue(
+            any(
+                "push" in issue
+                and "docs/README.md" in issue
+                and "matching filter" in issue
+                for issue in issues
+            ),
+            issues,
+        )
+
+    def test_workflow_coverage_cli_reports_drift(self):
+        workflow = """\
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+  push:
+    paths:
+      - 'README.md'
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workflow_path = root / CHECKER.WORKFLOW_PATH
+            workflow_path.parent.mkdir(parents=True)
+            workflow_path.write_text(workflow, encoding="utf-8")
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                status = CHECKER.main([str(root), "--check-workflow-coverage"])
+
+        self.assertEqual(1, status)
+        self.assertIn("FAIL workflow/document coverage drift", output.getvalue())
+        self.assertIn("pull_request", output.getvalue())
+        self.assertIn("docs/README.md", output.getvalue())
+        self.assertIn("add a matching filter", output.getvalue())
 
     def test_supported_non_repository_links_are_skipped(self):
         with tempfile.TemporaryDirectory() as directory:

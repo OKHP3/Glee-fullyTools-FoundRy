@@ -31,6 +31,8 @@ DEFAULT_DOCUMENTS = (
     "web-templates/README.md",
     "scripts/tests/README.md",
 )
+WORKFLOW_PATH = pathlib.Path(".github/workflows/foundry-app.yml")
+WORKFLOW_EVENTS = ("pull_request", "push")
 
 # This intentionally handles inline Markdown links, which are the link form used
 # by the maintained indexes. Links inside fenced code blocks are not prose links.
@@ -243,6 +245,117 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
     return result
 
 
+def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
+    """Extract path filters for one workflow event without a YAML dependency."""
+    filters: list[str] = []
+    in_event = False
+    in_paths = False
+
+    for line in workflow_text.splitlines():
+        if re.fullmatch(rf"  {re.escape(event)}:\s*", line):
+            in_event = True
+            in_paths = False
+            continue
+        if in_event and re.match(r"^  \S", line):
+            break
+        if not in_event:
+            continue
+        if line == "    paths:":
+            in_paths = True
+            continue
+        if not in_paths:
+            continue
+
+        match = re.match(r"^      -\s+(.+?)\s*(?:#.*)?$", line)
+        if match:
+            value = match.group(1).strip().strip("'\"")
+            filters.append(value)
+            continue
+        if line.strip():
+            in_paths = False
+
+    return tuple(filters)
+
+
+def workflow_path_matches(document: str, pattern: str) -> bool:
+    """Match a repository path using GitHub Actions filter syntax."""
+    tokens: list[str] = []
+    index = 0
+    while index < len(pattern):
+        char = pattern[index]
+        if pattern.startswith("**/", index):
+            tokens.append("(?:.*/)?")
+            index += 3
+        elif pattern.startswith("**", index):
+            tokens.append(".*")
+            index += 2
+        elif char == "*":
+            tokens.append("[^/]*")
+            index += 1
+        elif char in "?+" and tokens:
+            tokens[-1] = "(?:" + tokens[-1] + ")" + char
+            index += 1
+        elif char == "[":
+            end = pattern.find("]", index + 1)
+            content = pattern[index + 1:end]
+            if end < 0 or not re.fullmatch(
+                r"(?:[a-zA-Z0-9](?:-[a-zA-Z0-9])?)+", content
+            ):
+                raise ValueError(
+                    f"unsupported character class in path filter {pattern!r}"
+                )
+            tokens.append("[" + content + "]")
+            index = end + 1
+        elif char == "\\" and index + 1 < len(pattern):
+            tokens.append(re.escape(pattern[index + 1]))
+            index += 2
+        else:
+            tokens.append(re.escape(char))
+            index += 1
+    return re.fullmatch("".join(tokens), document) is not None
+
+
+def workflow_covers_path(document: str, filters: tuple[str, ...]) -> bool:
+    """Apply ordered exclusions and re-inclusions to a repository path."""
+    covered = False
+    for path_filter in filters:
+        excluded = path_filter.startswith("!")
+        pattern = path_filter[1:] if excluded else path_filter
+        if workflow_path_matches(document, pattern):
+            covered = not excluded
+    return covered
+
+
+def check_workflow_document_coverage(
+    root: pathlib.Path,
+    workflow_text: str | None = None,
+) -> list[str]:
+    """Return drift issues between maintained documents and workflow filters."""
+    workflow_path = root / WORKFLOW_PATH
+    if workflow_text is None:
+        try:
+            workflow_text = workflow_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return [f"{WORKFLOW_PATH} is missing or unreadable"]
+
+    issues: list[str] = []
+    for event in WORKFLOW_EVENTS:
+        filters = workflow_path_filters(workflow_text, event)
+        if not filters:
+            issues.append(
+                f"{WORKFLOW_PATH} {event} paths are missing; "
+                "cannot cover maintained documents"
+            )
+            continue
+        for document in DEFAULT_DOCUMENTS:
+            if not workflow_covers_path(document, filters):
+                issues.append(
+                    f"{WORKFLOW_PATH} {event} paths do not cover maintained "
+                    f"document {document}; add a matching filter"
+                )
+    return issues
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Validate relative Markdown links in maintained repository indexes."
@@ -260,10 +373,32 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="document relative to root; repeat to override the defaults",
     )
+    parser.add_argument(
+        "--check-workflow-coverage",
+        action="store_true",
+        help="check workflow path filters cover every maintained document",
+    )
     args = parser.parse_args(argv)
 
+    if args.check_workflow_coverage and args.documents:
+        parser.error("--check-workflow-coverage cannot be combined with --document")
+
+    root = pathlib.Path(args.root)
+    if args.check_workflow_coverage:
+        issues = check_workflow_document_coverage(root)
+        if issues:
+            print("FAIL workflow/document coverage drift:")
+            for issue in issues:
+                print(f"  - {issue}")
+            return 1
+        print(
+            "OK workflow path filters cover all maintained documents for "
+            "pull_request and push"
+        )
+        return 0
+
     documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
-    result = scan(pathlib.Path(args.root), documents)
+    result = scan(root, documents)
     if result.issues:
         print("FAIL broken Markdown links:")
         for issue in result.issues:

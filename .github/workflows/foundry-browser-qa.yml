@@ -40,7 +40,7 @@ jobs:
           echo "### FoundRy browser journey" >> "$GITHUB_STEP_SUMMARY"
           if [[ "$DRIVER_OUTCOME" != success || "$CHROMIUM_OUTCOME" != success ]]; then
             echo "NOT RUN: Playwright driver or Chromium prerequisites unavailable." | tee "$evidence/result.txt"
-            echo "NOT RUN â€” browser prerequisites unavailable. See installation steps." >> "$GITHUB_STEP_SUMMARY"
+            echo "NOT RUN — browser prerequisites unavailable. See installation steps." >> "$GITHUB_STEP_SUMMARY"
             echo "Evidence: result.txt in the foundry-browser-evidence artifact." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -57,7 +57,7 @@ jobs:
             outcome=FAIL
           fi
           echo "$outcome (exit $status)" | tee "$evidence/result.txt"
-          echo "$outcome â€” evidence in the foundry-browser-evidence artifact (journey.log and browser outputs, if produced)." >> "$GITHUB_STEP_SUMMARY"
+          echo "$outcome — evidence in the foundry-browser-evidence artifact (journey.log and browser outputs, if produced)." >> "$GITHUB_STEP_SUMMARY"
           if [[ "$status" -eq 1 ]]; then
             exit 1
           elif [[ "$status" -ne 0 && "$status" -ne 2 ]]; then

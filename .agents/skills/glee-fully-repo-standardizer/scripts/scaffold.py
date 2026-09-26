@@ -29,6 +29,7 @@ Options:
     --overwrite     Overwrite existing files (default: skip existing)
     --quiet         Suppress output except errors and final summary
     --json          Output machine-readable JSON summary to stdout
+    --catalog-health  With --json, include catalog availability and match status
 """
 
 from __future__ import annotations
@@ -100,11 +101,55 @@ def inventory_unavailable_warning(
             "catalog."
         )
     else:
-        label = f"canonical inventory catalog '{inventory_path.as_posix()}'"
+        label = f"canonical inventory catalog '{inventory_path}'"
         action = "Restore the canonical catalog or pass --inventory PATH."
     return (
         f"WARNING: {label} is unavailable ({reason}); catalog enrichment skipped. "
         f"{action}"
+    )
+
+
+def inventory_no_match_warning(
+    inventory_path: Path,
+    *,
+    target_id: str,
+    target_name: str,
+    explicit: bool,
+    supplied_path: str = "",
+) -> str:
+    """Describe a readable catalog that lacks the requested entity."""
+    label = (
+        f"inventory override '{supplied_path}'"
+        if explicit
+        else f"canonical inventory catalog '{inventory_path}'"
+    )
+    requested_identifiers = []
+    if target_id:
+        requested_identifiers.append(f"id='{target_id}'")
+    if target_name:
+        requested_identifiers.append(f"name='{target_name}'")
+    request = " or ".join(requested_identifiers)
+    action = (
+        "Check the supplied catalog or the requested ID/name."
+        if explicit
+        else "Check the requested ID/name or pass --inventory PATH."
+    )
+    return (
+        f"WARNING: {label} is available but has no matching entity for {request}; "
+        f"catalog enrichment skipped — using stubs. {action}"
+    )
+
+
+def inventory_name_mismatch_warning(
+    *,
+    target_id: str,
+    target_name: str,
+    catalog_name: str,
+) -> str:
+    """Describe a name that disagrees with the entry selected by its ID."""
+    return (
+        f"WARNING: supplied name '{target_name}' does not match catalog entry "
+        f"#{target_id} named '{catalog_name}'; using catalog metadata selected by ID."
     )
 
 
@@ -129,13 +174,33 @@ class InventoryEntry:
 class DuplicateInventoryIDError(ValueError):
     """Raised when the inventory contains more than one section for an ID."""
 
-    def __init__(self, entity_id: str, names: list[str]):
+    def __init__(self, entity_id: str, entries: list[tuple[str, int]]):
         self.entity_id = entity_id
-        self.names = names
-        listed_names = ", ".join(names)
+        self.entries = entries
+        self.names = [name for name, _ in entries]
+        listed_entries = ", ".join(
+            f"{name} (line {line_number})"
+            for name, line_number in entries
+        )
         super().__init__(
             f"duplicate inventory entity ID '#{entity_id}' found in "
-            f"{len(names)} sections: {listed_names}"
+            f"{len(entries)} sections: {listed_entries}"
+        )
+
+
+class DuplicateInventoryNameError(ValueError):
+    """Raised when name-based lookup matches more than one inventory section."""
+
+    def __init__(self, name: str, entries: list[tuple[str, int]]):
+        self.name = name
+        self.entries = entries
+        listed_entries = ", ".join(
+            f"#{entity_id} (line {line_number})"
+            for entity_id, line_number in entries
+        )
+        super().__init__(
+            f"duplicate inventory display name '{name}' found in "
+            f"{len(entries)} sections: {listed_entries}"
         )
 
 
@@ -171,30 +236,57 @@ def parse_inventory(
     if not sections:
         return None
 
-    ids: dict[str, list[tuple[str, str]]] = {}
+    ids: dict[str, list[tuple[str, int, str]]] = {}
     for section in sections:
         section_id = section.group(1).lstrip("#")
         section_name = _strip_links(section.group(2))
-        ids.setdefault(section_id.casefold(), []).append((section_id, section_name))
+        line_number = text.count("\n", 0, section.start()) + 1
+        ids.setdefault(section_id.casefold(), []).append(
+            (section_id, line_number, section_name)
+        )
 
     for matches in ids.values():
         if len(matches) > 1:
             first_id = matches[0][0]
             raise DuplicateInventoryIDError(
                 first_id,
-                [section_name for _, section_name in matches],
+                [
+                    (section_name, line_number)
+                    for _, line_number, section_name in matches
+                ],
             )
 
     match_idx: int | None = None
-    for i, m in enumerate(sections):
-        raw_id = m.group(1).lstrip("#")
-        raw_name = _strip_links(m.group(2))
-        if target_id and raw_id.lower() == target_id.lower():
-            match_idx = i
-            break
-        if target_name and raw_name.lower() == target_name.lower():
-            match_idx = i
-            break
+    if target_id:
+        # An exact ID is authoritative. In particular, do not let a duplicate
+        # display name make an otherwise unambiguous ID import fail.
+        for i, m in enumerate(sections):
+            raw_id = m.group(1).lstrip("#")
+            if raw_id.casefold() == target_id.casefold():
+                match_idx = i
+                break
+
+    if match_idx is None and target_name:
+        name_matches: dict[str, list[tuple[int, str, int]]] = {}
+        for i, section in enumerate(sections):
+            raw_id = section.group(1).lstrip("#")
+            raw_name = _strip_links(section.group(2))
+            line_number = text.count("\n", 0, section.start()) + 1
+            name_matches.setdefault(raw_name.casefold(), []).append(
+                (i, raw_id, line_number)
+            )
+
+        matching_sections = name_matches.get(target_name.casefold(), [])
+        if len(matching_sections) > 1:
+            raise DuplicateInventoryNameError(
+                _strip_links(sections[matching_sections[0][0]].group(2)),
+                [
+                    (raw_id, line_number)
+                    for _, raw_id, line_number in matching_sections
+                ],
+            )
+        if matching_sections:
+            match_idx = matching_sections[0][0]
 
     if match_idx is None:
         return None
@@ -1434,6 +1526,7 @@ def run_scaffold(
     quiet: bool,
     as_json: bool,
     inv: InventoryEntry | None = None,
+    catalog_health: dict | None = None,
 ) -> None:
     created_dirs = []
     written_files = []
@@ -1487,6 +1580,8 @@ def run_scaffold(
             "overwritten_files": overwritten_files,
             "todo_files": todo_files,
         }
+        if catalog_health is not None:
+            result["catalog_health"] = catalog_health
         print(json.dumps(result, indent=2))
         return
 
@@ -1562,6 +1657,11 @@ def main():
     parser.add_argument("--quiet", action="store_true", help="Minimal output")
     parser.add_argument("--json", action="store_true", dest="as_json", help="JSON output")
     parser.add_argument(
+        "--catalog-health",
+        action="store_true",
+        help="Include catalog health in JSON output (requires --json)",
+    )
+    parser.add_argument(
         "--inventory",
         dest="inventory_path",
         default="",
@@ -1574,6 +1674,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if args.catalog_health and not args.as_json:
+        parser.error("--catalog-health requires --json")
     root = Path.cwd()
 
     if args.audit:
@@ -1590,6 +1692,7 @@ def main():
         if not args.quiet and not args.as_json:
             print(f"Tier auto-detected: {args.tier}")
 
+    name_was_supplied = bool(args.name)
     if not args.name:
         args.name = existing.get("name") or root.name.replace("-", " ").title()
 
@@ -1613,7 +1716,7 @@ def main():
                 target_id=getattr(args, "id", "") or "",
                 target_name=args.name or "",
             )
-        except DuplicateInventoryIDError as exc:
+        except (DuplicateInventoryIDError, DuplicateInventoryNameError) as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 1
         except (OSError, UnicodeError) as exc:
@@ -1632,6 +1735,31 @@ def main():
                 supplied_path=args.inventory_path,
             )
         )
+    elif inv is None and not args.quiet and not args.as_json:
+        print(
+            inventory_no_match_warning(
+                inv_path,
+                target_id=args.id or "",
+                target_name=args.name or "",
+                explicit=bool(args.inventory_path),
+                supplied_path=args.inventory_path,
+            )
+        )
+    elif (
+        inv
+        and args.id
+        and name_was_supplied
+        and inv.name.casefold() != args.name.casefold()
+        and not args.quiet
+        and not args.as_json
+    ):
+        print(
+            inventory_name_mismatch_warning(
+                target_id=args.id,
+                target_name=args.name,
+                catalog_name=inv.name,
+            )
+        )
 
     if inv:
         if inv.chatgpt_url and not args.chatgpt_url:
@@ -1641,15 +1769,20 @@ def main():
         if inv.parent_url and not args.parent_url:
             args.parent_url = inv.parent_url
 
-    if not args.quiet and not args.as_json:
-        if inv:
-            print(f"Inventory match: #{inv.entity_id} — {inv.name}")
-            print(f"  Pre-filling: description, overview, functions, instructions")
-        elif args.inventory_path:
-            print(f"Inventory: no match for '{args.name}' (id='{getattr(args, 'id', '')}') — using stubs")
-
+    if not args.quiet and not args.as_json and inv:
+        print(f"Inventory match: #{inv.entity_id} — {inv.name}")
+        print("  Pre-filling: description, overview, functions, instructions")
+    catalog_health = None
+    if args.catalog_health:
+        catalog_health = {
+            "available": inventory_reason is None,
+            "source_kind": "override" if args.inventory_path else "canonical",
+            "path": str(inv_path),
+            "reason": inventory_reason or ("no matching entity" if inv is None else None),
+        }
     run_scaffold(root, args, dry_run=args.dry_run, overwrite=args.overwrite,
-                 quiet=args.quiet, as_json=args.as_json, inv=inv)
+                 quiet=args.quiet, as_json=args.as_json, inv=inv,
+                 catalog_health=catalog_health)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,106 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import unittest
 
 from app.tests.test_server import ServiceTests
 
 
 class LifecycleContractTests(ServiceTests):
+    def revision_state(self, project_id=None):
+        with self.server.store.lock:
+            if project_id is None:
+                projects = [
+                    dict(row) for row in self.server.store.conn.execute(
+                        "SELECT id, revision, data FROM projects ORDER BY id"
+                    )
+                ]
+                history = [
+                    dict(row) for row in self.server.store.conn.execute(
+                        "SELECT project_id, revision, at, action, summary FROM history ORDER BY project_id, revision"
+                    )
+                ]
+                snapshots = [
+                    dict(row) for row in self.server.store.conn.execute(
+                        """SELECT project_id, revision, captured_at, action,
+                                  schema_version, data, sha256
+                           FROM project_revisions
+                           ORDER BY project_id, revision"""
+                    )
+                ]
+                return projects, history, snapshots
+            project = self.server.store.conn.execute(
+                "SELECT id, revision, data FROM projects WHERE id=?", (project_id,)
+            ).fetchone()
+            history = [
+                dict(row) for row in self.server.store.conn.execute(
+                    "SELECT project_id, revision, at, action, summary FROM history WHERE project_id=? ORDER BY revision",
+                    (project_id,),
+                )
+            ]
+            snapshots = [
+                dict(row) for row in self.server.store.conn.execute(
+                    """SELECT project_id, revision, captured_at, action,
+                              schema_version, data, sha256
+                       FROM project_revisions
+                       WHERE project_id=? ORDER BY revision""",
+                    (project_id,),
+                )
+            ]
+            return (dict(project) if project else None), history, snapshots
+
+    def fail_sqlite_write_at(self, write_number):
+        writes = 0
+
+        def authorizer(action, *_):
+            nonlocal writes
+            if action in (sqlite3.SQLITE_INSERT, sqlite3.SQLITE_UPDATE, sqlite3.SQLITE_DELETE):
+                writes += 1
+                if writes == write_number:
+                    return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        self.server.store.conn.set_authorizer(authorizer)
+
+    def assert_revision_write_rolls_back(self, request, project_id=None):
+        before = self.revision_state(project_id)
+        before_all = self.revision_state()
+        self.fail_sqlite_write_at(request["fail_at"])
+        try:
+            status, _, error = self.request(request["method"], request["path"], request["body"])
+        finally:
+            self.server.store.conn.set_authorizer(None)
+        self.assertEqual(status, 500)
+        self.assertEqual(error, {"error": "database write failed"})
+        self.assertEqual(self.revision_state(project_id), before)
+        self.assertEqual(self.revision_state(), before_all)
+
+        reopened = type(self.server.store)(self.server.data_dir)
+        try:
+            with reopened.lock:
+                current = [
+                    dict(row) for row in reopened.conn.execute(
+                        "SELECT id, revision, data FROM projects ORDER BY id"
+                    )
+                ]
+                history = [
+                    dict(row) for row in reopened.conn.execute(
+                        "SELECT project_id, revision, at, action, summary FROM history ORDER BY project_id, revision"
+                    )
+                ]
+                snapshots = [
+                    dict(row) for row in reopened.conn.execute(
+                        """SELECT project_id, revision, captured_at, action,
+                                  schema_version, data, sha256
+                           FROM project_revisions
+                           ORDER BY project_id, revision"""
+                    )
+                ]
+            self.assertEqual((current, history, snapshots), before_all)
+        finally:
+            reopened.conn.close()
+
     def test_legacy_record_save_defaults_metadata_without_resetting_evidence(self):
         item = self.create(tests=[{"id": "case", "name": "Case", "expected": "Result",
                                   "actual": "Observed", "status": "pass"}])
@@ -112,6 +206,11 @@ class LifecycleContractTests(ServiceTests):
         backup = raw
         self.assertEqual(backup["format"], "glee-fully-foundry-workspace")
         self.assertEqual(len(backup["history"][revised["id"]]), 2)
+        self.assertEqual([item["revision"] for item in backup["snapshots"][revised["id"]]], [1, 2])
+        self.assertEqual(
+            set(backup["snapshots"][revised["id"]][0]),
+            {"revision", "capturedAt", "action", "schemaVersion", "data", "sha256"},
+        )
 
         newer = self.create(name="Newer edit that must survive rejection")
         before = self.request("GET", "/api/projects")[2]["projects"]
@@ -138,6 +237,86 @@ class LifecycleContractTests(ServiceTests):
         self.assertEqual(restored, revised)
         self.assertEqual([item["revision"] for item in self.server.store.history(revised["id"])], [1, 2])
         self.assertIsNone(self.server.store.get(newer["id"]))
+        self.assertTrue(all(item["restorable"] for item in self.server.store.history(revised["id"])))
+
+    def test_workspace_backup_round_trip_preserves_snapshot_bodies(self):
+        original = self.create(name="First revision")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Second revision"),
+        )
+        self.assertEqual(status, 200)
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        expected_snapshots = backup["snapshots"][original["id"]]
+
+        self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=revised["revision"], name="Third revision"),
+        )
+        status, _, result = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result["restored"], 1)
+        with self.server.store.lock:
+            actual_snapshots = [
+                dict(row) for row in self.server.store.conn.execute(
+                    """SELECT revision, captured_at AS capturedAt, action,
+                              schema_version AS schemaVersion, data, sha256
+                       FROM project_revisions WHERE project_id=? ORDER BY revision""",
+                    (original["id"],),
+                )
+            ]
+        self.assertEqual(actual_snapshots, expected_snapshots)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertEqual([item["revision"] for item in history], [1, 2])
+        self.assertTrue(all(item["restorable"] for item in history))
+
+    def test_workspace_restore_rejects_invalid_snapshot_without_replacement(self):
+        original = self.create(name="Keep this project")
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        backup["snapshots"][original["id"]][0]["sha256"] = "0" * 64
+        newer = self.create(name="Must survive rejection")
+        before = self.request("GET", "/api/projects")[2]["projects"]
+
+        status, _, error = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("digest", error["error"])
+        self.assertEqual(self.request("GET", "/api/projects")[2]["projects"], before)
+        self.assertIsNotNone(self.server.store.get(newer["id"]))
+
+    def test_legacy_workspace_backup_does_not_invent_historical_snapshots(self):
+        original = self.create(name="Legacy backup revision one")
+        status, _, revised = self.request(
+            "PUT",
+            f"/api/projects/{original['id']}",
+            self.project(revision=original["revision"], name="Legacy backup current state"),
+        )
+        self.assertEqual(status, 200)
+        backup = self.request("GET", "/api/workspace/backup")[2]
+        legacy_backup = {key: value for key, value in backup.items() if key != "snapshots"}
+
+        self.create(name="Discarded newer project")
+        status, _, result = self.request(
+            "POST",
+            "/api/workspace/restore",
+            {"backup": legacy_backup, "confirm": True, "mode": "replace"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result["restored"], 1)
+        history = self.request("GET", f"/api/projects/{original['id']}/history")[2]["history"]
+        self.assertFalse(history[0]["restorable"])
+        self.assertTrue(history[1]["restorable"])
+        self.assertTrue(history[1]["baseline"])
+        self.assertEqual(self.server.store.get(original["id"]), revised)
 
     def test_revision_snapshots_restore_append_only_and_reset_evidence(self):
         original = self.create(
@@ -192,6 +371,77 @@ class LifecycleContractTests(ServiceTests):
         self.assertEqual(history[-1]["action"], "restored")
         self.assertTrue(history[-1]["restorable"])
         self.assertIn("evidence reset", history[-1]["summary"])
+
+    def test_revision_writes_roll_back_when_sqlite_fails_at_each_write_boundary(self):
+        operations = []
+
+        for write_number in range(1, 4):
+            with self.subTest(operation="create", write_number=write_number):
+                protected = self.create(owner="Protected owner")
+                operations.append({
+                    "fail_at": write_number,
+                    "method": "POST",
+                    "path": "/api/projects",
+                    "body": self.project(name="Failed create", owner="Other owner"),
+                })
+                self.assert_revision_write_rolls_back(operations.pop(), protected["id"])
+
+        for write_number in range(1, 4):
+            with self.subTest(operation="update", write_number=write_number):
+                original = self.create(owner="Protected owner")
+                self.assert_revision_write_rolls_back({
+                    "fail_at": write_number,
+                    "method": "PUT",
+                    "path": f"/api/projects/{original['id']}",
+                    "body": self.project(
+                        revision=original["revision"],
+                        name="Failed update",
+                        owner="Other owner",
+                    ),
+                }, original["id"])
+
+        for write_number in range(1, 4):
+            with self.subTest(operation="duplicate", write_number=write_number):
+                original = self.create(owner="Protected owner")
+                self.assert_revision_write_rolls_back({
+                    "fail_at": write_number,
+                    "method": "POST",
+                    "path": f"/api/projects/{original['id']}/duplicate",
+                    "body": {"revision": original["revision"]},
+                }, original["id"])
+
+        for write_number in range(1, 4):
+            with self.subTest(operation="archive", write_number=write_number):
+                original = self.create(owner="Protected owner")
+                self.assert_revision_write_rolls_back({
+                    "fail_at": write_number,
+                    "method": "PUT",
+                    "path": f"/api/projects/{original['id']}",
+                    "body": self.project(
+                        revision=original["revision"],
+                        status="archived",
+                        owner="Other owner",
+                    ),
+                }, original["id"])
+
+        for write_number in range(1, 4):
+            with self.subTest(operation="version restore", write_number=write_number):
+                original = self.create(owner="Protected owner", name="Original")
+                status, _, revised = self.request(
+                    "PUT",
+                    f"/api/projects/{original['id']}",
+                    self.project(revision=original["revision"], name="Revised"),
+                )
+                self.assertEqual(status, 200)
+                self.assert_revision_write_rolls_back({
+                    "fail_at": write_number,
+                    "method": "POST",
+                    "path": f"/api/projects/{original['id']}/restore",
+                    "body": {
+                        "sourceRevision": original["revision"],
+                        "currentRevision": revised["revision"],
+                    },
+                }, original["id"])
 
     def test_restore_rejects_stale_or_corrupt_source_without_writing(self):
         original = self.create(name="Original")

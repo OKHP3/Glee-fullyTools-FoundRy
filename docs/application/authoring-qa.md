@@ -33,6 +33,26 @@ CHROME_BIN="/repl/tools/bin/chromium" \
 Evidence screenshots and the exported synthetic JSON remain in a temporary
 directory printed as `EVIDENCE` for the duration of local review.
 
+## Opt-in GitHub Actions run
+
+In the repository's Actions tab, start **FoundRy browser journey (opt-in)** via
+**Run workflow**. This job is separate from the application API and structural
+checks; it does not run on pushes or pull requests. On a GitHub-hosted Ubuntu
+runner, it installs an isolated, pinned Playwright driver (`1.55.0`) and its
+matching Chromium with system libraries. The runner uses a temporary SQLite
+directory, which it deletes afterward. No browser dependency is added to the
+application.
+
+The job summary reports `PASS`, `NOT RUN`, or `FAIL`. Download the
+`foundry-browser-evidence` artifact from the workflow run for `result.txt`,
+`journey.log` and, when the browser started, a `foundry-f09-evidence-*`
+directory containing screenshots, exported synthetic JSON, and `result.json`
+on success. The log prints the temporary `EVIDENCE` path, and `result.json`
+includes the checked-out source SHA. If the driver or Chromium cannot be
+installed or the script exits 2, the job reports `NOT RUN` without claiming
+browser proof. If prerequisites are available but a browser assertion fails,
+the job reports `FAIL` and fails the opt-in workflow only.
+
 ## Journey and assertions
 
 The actual browser flow is:
@@ -52,9 +72,8 @@ DOM simulation or direct API-only claim.
 If `playwright-core` or its browser binary is not installed, the runner reports
 `NOT RUN`, exits with status 2, and does not claim browser evidence. It does not
 install dependencies.
-The browser driver and binary are environment-provided prerequisites, not
-application dependencies. Their installation location is intentionally not
-encoded in this public repository.
+The browser driver and binary are environment-provided prerequisites for local
+runs, not application dependencies. The CI job installs its own isolated pair.
 
 This is a local acceptance smoke journey, not proof of external deployment,
 multi-browser compatibility, publication readiness, or PME certification.

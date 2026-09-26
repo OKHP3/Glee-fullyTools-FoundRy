@@ -1,6 +1,7 @@
 """Tests for generated Agent Skills catalog link validation."""
 
 import importlib.util
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -9,12 +10,21 @@ from pathlib import Path
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "gen-skills-readme.py"
+WORKFLOW = Path(__file__).parents[4] / ".github" / "workflows" / "foundry-app.yml"
 SPEC = importlib.util.spec_from_file_location("gen_skills_readme", SCRIPT)
 CATALOGER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CATALOGER)
 
 
 class CatalogLinkValidationTests(unittest.TestCase):
+    def _create_symlink_or_skip(
+        self, link: Path, target: Path, *, target_is_directory: bool = False
+    ) -> None:
+        try:
+            link.symlink_to(target, target_is_directory=target_is_directory)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symlink creation unavailable: {exc}")
+
     def test_existing_relative_catalog_link_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -121,6 +131,56 @@ class CatalogLinkValidationTests(unittest.TestCase):
             self.assertEqual(1, len(errors))
             self.assertIn("escapes index directory", errors[0])
 
+    def test_family_directory_symlink_cannot_escape_index_directory(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            root = Path(directory)
+            outside_family = Path(outside) / "family"
+            outside_family.mkdir()
+            (outside_family / "FAMILY.md").write_text("# Family\n", encoding="utf-8")
+            self._create_symlink_or_skip(
+                root / "escaped-family",
+                outside_family,
+                target_is_directory=True,
+            )
+            content = (
+                "# Families\n"
+                f"{CATALOGER.FAMILIES_TABLE_START}\n"
+                "[outside family](escaped-family/FAMILY.md)\n"
+                f"{CATALOGER.FAMILIES_TABLE_END}\n"
+            )
+
+            errors = CATALOGER.validate_family_links(root / "README.md", content)
+
+            self.assertEqual(1, len(errors))
+            self.assertIn("README.md:3", errors[0])
+            self.assertIn("escaped-family/FAMILY.md", errors[0])
+            self.assertIn("escapes index directory", errors[0])
+
+    def test_symlinked_family_file_cannot_escape_index_directory(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as outside:
+            root = Path(directory)
+            family_dir = root / "family"
+            family_dir.mkdir()
+            outside_family_file = Path(outside) / "FAMILY.md"
+            outside_family_file.write_text("# Family\n", encoding="utf-8")
+            self._create_symlink_or_skip(
+                family_dir / "FAMILY.md",
+                outside_family_file,
+            )
+            content = (
+                "# Families\n"
+                f"{CATALOGER.FAMILIES_TABLE_START}\n"
+                "[outside family](family/FAMILY.md)\n"
+                f"{CATALOGER.FAMILIES_TABLE_END}\n"
+            )
+
+            errors = CATALOGER.validate_family_links(root / "README.md", content)
+
+            self.assertEqual(1, len(errors))
+            self.assertIn("README.md:3", errors[0])
+            self.assertIn("family/FAMILY.md", errors[0])
+            self.assertIn("escapes index directory", errors[0])
+
     def test_full_check_reports_missing_family_link(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -146,3 +206,138 @@ class CatalogLinkValidationTests(unittest.TestCase):
             self.assertIn("README.md:5", result.stderr)
             self.assertIn("generated family link", result.stderr)
             self.assertIn("missing/FAMILY.md", result.stderr)
+
+    def test_full_check_warns_when_family_markers_are_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "family" / "skill" / "SKILL.md").parent.mkdir(parents=True)
+            (root / "family" / "skill" / "SKILL.md").write_text(
+                "---\n"
+                "name: skill\n"
+                "description: A test skill\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (root / "README.md").write_text("# Distribution\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--full", "--check"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertIn("Warnings:", result.stdout)
+            self.assertIn("root README README.md", result.stdout)
+            self.assertIn(CATALOGER.FAMILIES_TABLE_START, result.stdout)
+            self.assertIn(CATALOGER.FAMILIES_TABLE_END, result.stdout)
+            self.assertIn("generated family links", result.stdout)
+
+    def test_full_check_keeps_empty_distribution_root_quiet(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--full", "--check"],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertIn("Check passed.", result.stdout)
+            self.assertNotIn(CATALOGER.FAMILIES_TABLE_START, result.stdout)
+            self.assertNotIn(CATALOGER.FAMILIES_TABLE_END, result.stdout)
+
+    def test_catalog_check_does_not_warn_about_family_markers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            skills_dir = root / ".agents" / "skills"
+            skill_dir = skills_dir / "skill"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\n"
+                "name: skill\n"
+                "description: A test skill\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (skills_dir / "README.md").write_text(
+                f"{CATALOGER.START_MARKER}\n"
+                f"{CATALOGER.END_MARKER}\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--skills-dir",
+                    str(skills_dir),
+                    "--check",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode)
+            self.assertNotIn("Families table markers", result.stdout)
+
+    def test_catalog_check_reports_missing_link_for_ci(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            skills_dir = root / ".agents" / "skills"
+            skills_dir.mkdir(parents=True)
+            script_copy = (
+                skills_dir
+                / "okhp3-skill-cataloger"
+                / "scripts"
+                / "gen-skills-readme.py"
+            )
+            script_copy.parent.mkdir(parents=True)
+            shutil.copy2(SCRIPT, script_copy)
+            (skills_dir / "README.md").write_text(
+                "# Skills\n"
+                f"{CATALOGER.START_MARKER}\n"
+                "[missing skill](missing/SKILL.md)\n"
+                f"{CATALOGER.END_MARKER}\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    ".agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py",
+                    "--skills-dir",
+                    ".agents/skills",
+                    "--check",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn(".agents/skills/README.md:3", result.stderr)
+            self.assertIn("generated catalog link", result.stderr)
+            self.assertIn("missing/SKILL.md", result.stderr)
+
+    def test_workflow_keeps_catalog_check_separate_from_markdown_scan(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        catalog_step = (
+            "      - name: Check generated Agent Skills catalog links\n"
+            "        run: python .agents/skills/okhp3-skill-cataloger/scripts/"
+            "gen-skills-readme.py --skills-dir .agents/skills --check"
+        )
+        markdown_step = (
+            "      - name: Check maintained Markdown links\n"
+            "        run: python scripts/check-markdown-links.py ."
+        )
+
+        self.assertIn(catalog_step, workflow)
+        self.assertIn(markdown_step, workflow)
+        self.assertLess(workflow.index(catalog_step), workflow.index(markdown_step))

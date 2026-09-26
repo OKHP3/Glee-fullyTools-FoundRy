@@ -46,6 +46,19 @@ must be classified before a target is approved. In particular:
 has no rename planned; the candidate target is shown only when a future,
 owner-approved migration may still be useful.
 
+Each mapping row must use a unique `ID`. Reusing an ID makes the mapping
+ambiguous even when the rows have different paths or dispositions; the
+inventory catalog contract check reports the repeated ID and all affected
+ledger lines.
+
+The mapping table header is part of the contract and must retain these six
+fields, in this order: `ID`, `Legacy path`, `Signals`, `Classification`,
+`Candidate target`, and `Disposition`. Other Markdown tables in this document,
+including the approval table below, are not migration mappings and are excluded
+from migration-row checks. If the mapping table or its recognizable header is
+removed, the inventory catalog contract check fails instead of treating the
+ledger as healthy.
+
 | ID | Legacy path | Signals | Classification | Candidate target | Disposition |
 |---|---|---|---|---|---|
 | C-01 | `canon/README.md` | uppercase | required name | `canon/README.md` | **Retain** — ecosystem exception |
@@ -276,6 +289,4 @@ record: every row marked **Executed** must have an existing candidate target and
 an absent legacy path. A row may keep its legacy path only when its disposition
 explicitly documents intentional retention. Non-executed `Retain by default`
 source-material rows and the historical legacy-path column are not treated as
-completed moves. Rows with missing table fields, missing Markdown code spans in
-the path fields, or ambiguous execution wording are reported as malformed
-instead of being treated as completed moves.
+completed moves.

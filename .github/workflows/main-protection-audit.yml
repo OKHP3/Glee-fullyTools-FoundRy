@@ -1,0 +1,36 @@
+name: Main protection audit
+
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/check-main-protection.py
+      - scripts/tests/test_main_protection.py
+      - .github/workflows/main-protection-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Check main protection
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check live GitHub settings
+        env:
+          REPO_SETTINGS_READ_TOKEN: ${{ secrets.REPO_SETTINGS_READ_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/check-main-protection.py
+
+  test-checker:
+    name: Test protection checker
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_main_protection.py' -v

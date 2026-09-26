@@ -20,7 +20,7 @@ on:
       - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**' # Includes the maintained test-suite README.
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
-      - '.agents/skills/README.md'
+      - '.agents/skills/**'
       - '.agents/skills/okhp3-skill-cataloger/**'
       - '.agents/skills/okhp3-replit-repl-janitor/**'
       - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
@@ -44,7 +44,7 @@ on:
       - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**' # Includes the maintained test-suite README.
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
-      - '.agents/skills/README.md'
+      - '.agents/skills/**'
       - '.agents/skills/okhp3-skill-cataloger/**'
       - '.agents/skills/okhp3-replit-repl-janitor/**'
       - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
@@ -86,12 +86,15 @@ jobs:
         run: python scripts/check-markdown-links.py .
       - name: Check generated Agent Skills catalog
         run: python .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py --check
+      - name: Check workflow coverage for maintained Markdown documents
+        run: python scripts/check-markdown-links.py . --check-workflow-coverage
       - name: Check inventory catalog integration
         run: python scripts/check-inventory-catalog.py .
       - name: Test maintenance scripts
         if: matrix.python == '3.11'
         run: python -m unittest discover -s scripts/tests -v
       - name: Test reviewed maintenance packages
+        if: matrix.python == '3.11'
         run: |
           python -m unittest discover -s .agents/skills/okhp3-replit-repl-janitor/tests -v
           python -m unittest discover -s .agents/skills/okhp3-replit-free-mode-autonomy/benchmarks -p test_native_telemetry.py -v

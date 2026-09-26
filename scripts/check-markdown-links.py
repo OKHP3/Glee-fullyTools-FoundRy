@@ -250,7 +250,7 @@ def scan(root: pathlib.Path, documents: tuple[str, ...]) -> ScanResult:
 
 
 def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
-    """Return direct pilot-package README paths, excluding non-package surfaces."""
+    """Return complete direct pilot-package README paths."""
     pilot_root = root / PILOT_DOCUMENT_ROOT
     if not pilot_root.is_dir():
         return ()
@@ -262,6 +262,7 @@ def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
             or package_dir.name.startswith(".")
             or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
             or not (package_dir / "project.json").is_file()
+            or not (package_dir / "README.md").is_file()
         ):
             continue
         documents.append(
@@ -270,14 +271,113 @@ def discover_pilot_documents(root: pathlib.Path) -> tuple[str, ...]:
     return tuple(documents)
 
 
+def discover_pilot_package_issues(root: pathlib.Path) -> tuple[LinkIssue, ...]:
+    """Report direct pilot packages with exactly one required handoff file."""
+    pilot_root = root / PILOT_DOCUMENT_ROOT
+    if not pilot_root.is_dir():
+        return ()
+
+    issues: list[LinkIssue] = []
+    for package_dir in sorted(pilot_root.iterdir()):
+        if (
+            not package_dir.is_dir()
+            or package_dir.name.startswith(".")
+            or package_dir.name.lower() in PILOT_EXCLUDED_DIRECTORIES
+        ):
+            continue
+
+        has_manifest = (package_dir / "project.json").is_file()
+        has_readme = (package_dir / "README.md").is_file()
+        if has_manifest == has_readme:
+            continue
+
+        missing_file = "README.md" if has_manifest else "project.json"
+        issues.append(
+            LinkIssue(
+                source=package_dir.relative_to(root),
+                line=0,
+                destination=missing_file,
+                reason="pilot package missing handoff file",
+            )
+        )
+    return tuple(issues)
+
+
+def _workflow_value_without_comment(value: str, line_number: int) -> str:
+    """Remove an unquoted YAML comment while preserving quoted ``#`` values."""
+    stripped = value.lstrip()
+    quote: str | None = stripped[0] if stripped[:1] in {"'", '"'} else None
+    escaped = False
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif quote == "'":
+            if char == quote:
+                if index + 1 < len(value) and value[index + 1] == quote:
+                    index += 1
+                else:
+                    quote = None
+        elif char == "#" and (index == 0 or value[index - 1].isspace()):
+            return value[:index].rstrip()
+        index += 1
+
+    if quote is not None:
+        raise ValueError(
+            f"line {line_number}: unterminated {quote}-quoted path filter"
+        )
+    return value.strip()
+
+
+def _workflow_path_value(value: str, line_number: int) -> str:
+    """Parse one supported scalar path filter from a workflow list item."""
+    value = _workflow_value_without_comment(value, line_number)
+    if not value:
+        raise ValueError(f"line {line_number}: path filter value is missing")
+
+    if value[0] not in {"'", '"'}:
+        return value
+
+    quote = value[0]
+    if quote == "'":
+        if len(value) < 2 or value[-1] != quote:
+            raise ValueError(
+                f"line {line_number}: unterminated single-quoted path filter"
+            )
+        return value[1:-1].replace("''", "'")
+
+    escaped = False
+    closing_index: int | None = None
+    for index in range(1, len(value)):
+        char = value[index]
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            closing_index = index
+            break
+    if closing_index is None or value[closing_index + 1 :].strip():
+        raise ValueError(
+            f"line {line_number}: malformed double-quoted path filter"
+        )
+    return value[1:closing_index]
+
+
 def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
     """Extract path filters for one workflow event without a YAML dependency."""
     filters: list[str] = []
     in_event = False
     in_paths = False
 
-    for line in workflow_text.splitlines():
-        if re.fullmatch(rf"  {re.escape(event)}:\s*", line):
+    for line_number, line in enumerate(workflow_text.splitlines(), start=1):
+        if re.fullmatch(rf"  {re.escape(event)}:\s*(?:#.*)?", line):
             in_event = True
             in_paths = False
             continue
@@ -285,29 +385,40 @@ def workflow_path_filters(workflow_text: str, event: str) -> tuple[str, ...]:
             break
         if not in_event:
             continue
-        if line == "    paths:":
+        if re.fullmatch(r"    paths:\s*(?:#.*)?", line):
             in_paths = True
             continue
         if not in_paths:
             continue
 
-        match = re.match(r"^      -\s+(.+?)\s*(?:#.*)?$", line)
-        if match:
-            value = match.group(1).strip().strip("'\"")
-            filters.append(value)
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
-        if line.strip():
+
+        list_item = re.fullmatch(r"^( {6})-\s+(.+)$", line)
+        if list_item:
+            filters.append(_workflow_path_value(list_item.group(2), line_number))
+            continue
+
+        indentation = len(line) - len(line.lstrip(" "))
+        if indentation <= 4:
+            if indentation == 4 and line.lstrip().startswith("-"):
+                raise ValueError(
+                    f"line {line_number}: path list item must be indented "
+                    "six spaces under paths"
+                )
             in_paths = False
+            continue
+
+        raise ValueError(
+            f"line {line_number}: unsupported structure under paths; "
+            "expected a six-space list item"
+        )
 
     return tuple(filters)
 
 
 def workflow_path_matches(document: str, pattern: str) -> bool:
-    """Match a full repository path using GitHub Actions filter syntax.
-
-    Single stars stay in one directory; double stars cross directories.
-    See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet
-    """
+    """Match a repository path using GitHub Actions filter syntax."""
     tokens: list[str] = []
     index = 0
     while index < len(pattern):
@@ -327,8 +438,12 @@ def workflow_path_matches(document: str, pattern: str) -> bool:
         elif char == "[":
             end = pattern.find("]", index + 1)
             content = pattern[index + 1:end]
-            if end < 0 or not re.fullmatch(r"(?:[a-zA-Z0-9](?:-[a-zA-Z0-9])?)+", content):
-                raise ValueError(f"unsupported character class in path filter {pattern!r}")
+            if end < 0 or not re.fullmatch(
+                r"(?:[a-zA-Z0-9](?:-[a-zA-Z0-9])?)+", content
+            ):
+                raise ValueError(
+                    f"unsupported character class in path filter {pattern!r}"
+                )
             tokens.append("[" + content + "]")
             index = end + 1
         elif char == "\\" and index + 1 < len(pattern):
@@ -355,7 +470,7 @@ def check_workflow_document_coverage(
     root: pathlib.Path,
     workflow_text: str | None = None,
 ) -> list[str]:
-    """Return drift issues between default documents and workflow path filters."""
+    """Return drift issues between maintained documents and workflow filters."""
     workflow_path = root / WORKFLOW_PATH
     if workflow_text is None:
         try:
@@ -365,7 +480,11 @@ def check_workflow_document_coverage(
 
     issues: list[str] = []
     for event in WORKFLOW_EVENTS:
-        filters = workflow_path_filters(workflow_text, event)
+        try:
+            filters = workflow_path_filters(workflow_text, event)
+        except ValueError as error:
+            issues.append(f"{WORKFLOW_PATH} {event} paths are malformed: {error}")
+            continue
         if not filters:
             issues.append(
                 f"{WORKFLOW_PATH} {event} paths are missing; "
@@ -403,19 +522,50 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="check direct pilot-package READMEs under docs/application/pilots",
     )
+    parser.add_argument(
+        "--check-workflow-coverage",
+        action="store_true",
+        help="check workflow path filters cover every maintained document",
+    )
     args = parser.parse_args(argv)
 
     if args.pilots and args.documents:
         parser.error("--pilots cannot be combined with --document")
+    if args.check_workflow_coverage and (args.documents or args.pilots):
+        parser.error(
+            "--check-workflow-coverage cannot be combined with "
+            "--document or --pilots"
+        )
 
     root = pathlib.Path(args.root)
+    if args.check_workflow_coverage:
+        issues = check_workflow_document_coverage(root)
+        if issues:
+            print("FAIL workflow/document coverage drift:")
+            for issue in issues:
+                print(f"  - {issue}")
+            return 1
+        print(
+            "OK workflow path filters cover all maintained documents for "
+            "pull_request and push"
+        )
+        return 0
+
     if args.pilots:
         documents = discover_pilot_documents(root)
+        discovery_issues = discover_pilot_package_issues(root)
     else:
         documents = tuple(args.documents) if args.documents else DEFAULT_DOCUMENTS
+        discovery_issues = ()
     result = scan(root, documents)
+    result.issues = [*discovery_issues, *result.issues]
     if result.issues:
-        print("FAIL broken Markdown links:")
+        heading = (
+            "FAIL pilot package validation:"
+            if args.pilots
+            else "FAIL broken Markdown links:"
+        )
+        print(heading)
         for issue in result.issues:
             location = f"{issue.source}:{issue.line}" if issue.line else str(issue.source)
             print(f"  - {location}: {issue.destination!r} ({issue.reason})")

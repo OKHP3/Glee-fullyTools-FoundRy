@@ -7,4 +7,5 @@
 - [GitHub sync authentication](github-sync-auth.md) — keep origin credential-free and use a temporary secret-backed helper when connection binding is unavailable
 - [Python package installation](python-package-installation.md) — local system Python is PEP 668 managed; use package-management tooling instead of direct pip installs
 - [Post-merge hook configuration](post-merge-hook.md) — track the idempotent script while keeping the ignored Replit configuration platform-managed
+- [Fail-closed CLI status](fail-closed-cli-status.md) — validators must propagate returned failures to the process exit code
 - [Agent collaboration](../../docs/agent-collaboration.md) — task ownership, token economy, Git reconciliation and compact handoffs across ChatGPT/Codex, Replit, Claude and Copilot.

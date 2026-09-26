@@ -1,0 +1,73 @@
+name: FoundRy browser journey (opt-in)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-journey:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install isolated Playwright driver
+        id: driver
+        continue-on-error: true
+        run: npm install --prefix "$RUNNER_TEMP/foundry-playwright" --no-save --no-package-lock playwright@1.55.0
+      - name: Install matching Chromium and system libraries
+        id: chromium
+        if: steps.driver.outcome == 'success'
+        continue-on-error: true
+        run: '"$RUNNER_TEMP/foundry-playwright/node_modules/.bin/playwright" install --with-deps chromium'
+      - name: Run browser authoring journey
+        id: journey
+        shell: bash
+        env:
+          DRIVER_OUTCOME: ${{ steps.driver.outcome }}
+          CHROMIUM_OUTCOME: ${{ steps.chromium.outcome }}
+          FOUNDRY_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -uo pipefail
+          evidence="$RUNNER_TEMP/foundry-browser-evidence"
+          mkdir -p "$evidence"
+          echo "### FoundRy browser journey" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$DRIVER_OUTCOME" != success || "$CHROMIUM_OUTCOME" != success ]]; then
+            echo "NOT RUN: Playwright driver or Chromium prerequisites unavailable." | tee "$evidence/result.txt"
+            echo "NOT RUN — browser prerequisites unavailable. See installation steps." >> "$GITHUB_STEP_SUMMARY"
+            echo "Evidence: result.txt in the foundry-browser-evidence artifact." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          export PLAYWRIGHT_CORE_PATH="$RUNNER_TEMP/foundry-playwright/node_modules/playwright-core"
+          export FOUNDRY_EVIDENCE_ROOT="$evidence"
+          export FOUNDRY_PYTHON=python
+          node scripts/foundry-authoring-qa.mjs 2>&1 | tee "$evidence/journey.log"
+          status=${PIPESTATUS[0]}
+          if [[ "$status" -eq 0 ]]; then
+            outcome=PASS
+          elif [[ "$status" -eq 2 ]]; then
+            outcome="NOT RUN"
+          else
+            outcome=FAIL
+          fi
+          echo "$outcome (exit $status)" | tee "$evidence/result.txt"
+          echo "$outcome — evidence in the foundry-browser-evidence artifact (journey.log and browser outputs, if produced)." >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$status" -eq 1 ]]; then
+            exit 1
+          elif [[ "$status" -ne 0 && "$status" -ne 2 ]]; then
+            exit "$status"
+          fi
+      - name: Publish browser result and evidence
+        if: always() && steps.journey.outcome != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: foundry-browser-evidence
+          path: ${{ runner.temp }}/foundry-browser-evidence/
+          if-no-files-found: error
+          retention-days: 7

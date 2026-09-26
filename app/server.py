@@ -32,6 +32,7 @@ EDITABLE = {"name", "kind", "owner", "version", "purpose", "description",
 TEXT_FIELDS = EDITABLE - {"components", "tests", "skillIds", "kind", "status"}
 SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 UUID_ID = re.compile(r"^[0-9a-f-]{36}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 SOURCES = {
     "promptchain": ("Builder-Ready PromptChain", "prompts/glee-fully-builder-ready-promptchain-v2-0.md"),
@@ -165,25 +166,40 @@ def editable_defaults(payload: dict) -> dict:
     return {key: payload.get(key, "" if key in TEXT_FIELDS else []) for key in EDITABLE}
 
 
-def validate_workspace_backup(payload: object) -> tuple[list[dict], dict[str, list[dict]]]:
+def canonical_project(project: dict) -> str:
+    return json.dumps(project, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+
+
+def project_digest(serialized: str) -> str:
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def validate_workspace_backup(payload: object) -> tuple[list[dict], dict[str, list[dict]], dict[str, list[dict]] | None]:
     if not isinstance(payload, dict):
         raise ValidationError("backup must be an object")
-    if set(payload) != {"format", "version", "projects", "history"}:
-        raise ValidationError("backup must contain format, version, projects, history only")
+    required = {"format", "version", "projects", "history"}
+    if set(payload) not in (required, required | {"snapshots"}):
+        raise ValidationError("backup must contain format, version, projects, history and optional snapshots only")
     if payload["format"] != "glee-fully-foundry-workspace" or payload["version"] != 1:
         raise ValidationError("unsupported workspace backup version")
     projects = payload["projects"]
     histories = payload["history"]
+    snapshots = payload.get("snapshots")
     if not isinstance(projects, list) or len(projects) > MAX_BACKUP_PROJECTS:
         raise ValidationError("backup projects must be a list with at most 1000 entries")
     if not isinstance(histories, dict):
         raise ValidationError("backup history must be an object")
     if len(histories) != len(projects):
         raise ValidationError("backup history must contain one entry per project")
+    if snapshots is not None and not isinstance(snapshots, dict):
+        raise ValidationError("backup snapshots must be an object")
+    if snapshots is not None and len(snapshots) != len(projects):
+        raise ValidationError("backup snapshots must contain one entry per project")
 
     validated = []
     seen = set()
     history_by_project = {}
+    snapshot_by_project = {}
     for source in projects:
         if not isinstance(source, dict):
             raise ValidationError("backup project must be an object")
@@ -211,12 +227,72 @@ def validate_workspace_backup(payload: object) -> tuple[list[dict], dict[str, li
             if entry["revision"] != index or not isinstance(entry["at"], str) or not isinstance(entry["action"], str) or not isinstance(entry["summary"], str):
                 raise ValidationError(f"backup history is not contiguous for project {project_id}")
             checked_entries.append(dict(entry))
+        if snapshots is not None:
+            snapshot_entries = snapshots.get(project_id)
+            if not isinstance(snapshot_entries, list):
+                raise ValidationError(f"backup snapshots are missing for project {project_id}")
+            checked_snapshots = []
+            snapshot_revisions = set()
+            history_revisions = {entry["revision"] for entry in checked_entries}
+            for snapshot in snapshot_entries:
+                if not isinstance(snapshot, dict) or set(snapshot) != {
+                    "revision", "capturedAt", "action", "schemaVersion", "data", "sha256"
+                }:
+                    raise ValidationError("backup snapshot entries have an invalid shape")
+                snapshot_revision = snapshot["revision"]
+                if (type(snapshot_revision) is not int or snapshot_revision < 1 or
+                        snapshot_revision not in history_revisions or snapshot_revision in snapshot_revisions):
+                    raise ValidationError(f"backup snapshot revision is invalid for project {project_id}")
+                if not isinstance(snapshot["capturedAt"], str) or not isinstance(snapshot["action"], str):
+                    raise ValidationError(f"backup snapshot metadata is invalid for project {project_id}")
+                if type(snapshot["schemaVersion"]) is not int or snapshot["schemaVersion"] != 1:
+                    raise ValidationError(f"backup snapshot schemaVersion must be 1 for project {project_id}")
+                if not isinstance(snapshot["data"], str):
+                    raise ValidationError(f"backup snapshot data must be canonical JSON text for project {project_id}")
+                if not isinstance(snapshot["sha256"], str) or not SHA256.fullmatch(snapshot["sha256"]):
+                    raise ValidationError(f"backup snapshot digest is invalid for project {project_id}")
+                if project_digest(snapshot["data"]) != snapshot["sha256"]:
+                    raise ValidationError(f"backup snapshot digest does not match for project {project_id}")
+                try:
+                    snapshot_project = json.loads(snapshot["data"])
+                    normalized_snapshot = validate_project(snapshot_project, importing=True)
+                except (TypeError, ValueError, json.JSONDecodeError, RecursionError, ValidationError) as error:
+                    raise ValidationError(f"backup snapshot data is invalid for project {project_id}: {error}") from error
+                if (snapshot_project != {**normalized_snapshot,
+                                         "id": project_id,
+                                         "schemaVersion": 1,
+                                         "revision": snapshot_revision,
+                                         "createdAt": snapshot_project.get("createdAt"),
+                                         "updatedAt": snapshot_project.get("updatedAt")} or
+                        snapshot_project.get("id") != project_id or
+                        snapshot_project.get("schemaVersion") != 1 or
+                        snapshot_project.get("revision") != snapshot_revision or
+                        not isinstance(snapshot_project.get("createdAt"), str) or
+                        not isinstance(snapshot_project.get("updatedAt"), str) or
+                        canonical_project(snapshot_project) != snapshot["data"]):
+                    raise ValidationError(f"backup snapshot identity or canonical bytes are invalid for project {project_id}")
+                checked_snapshots.append(dict(snapshot))
+                snapshot_revisions.add(snapshot_revision)
+            snapshot_by_project[project_id] = checked_snapshots
         seen.add(project_id)
         validated.append(project)
         history_by_project[project_id] = checked_entries
     if set(histories) != seen:
         raise ValidationError("backup history contains an unknown project")
-    return validated, history_by_project
+    if snapshots is not None and set(snapshots) != seen:
+        raise ValidationError("backup snapshots contain an unknown project")
+    if snapshots is not None:
+        for project in validated:
+            current_snapshot = next(
+                (item for item in snapshot_by_project[project["id"]]
+                 if item["revision"] == project["revision"]),
+                None,
+            )
+            if current_snapshot is not None and current_snapshot["data"] != canonical_project(project):
+                raise ValidationError(
+                    f"backup current project does not match snapshot revision {project['revision']}"
+                )
+    return validated, history_by_project, snapshot_by_project if snapshots is not None else None
 
 
 class Store:
@@ -246,10 +322,10 @@ class Store:
             self._migrate_current_baselines_locked()
     @staticmethod
     def _serialize(project):
-        return json.dumps(project, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+        return canonical_project(project)
     @classmethod
     def _digest(cls, serialized):
-        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        return project_digest(serialized)
     def _migrate_current_baselines_locked(self):
         """Capture only current state for databases created before snapshots."""
         rows = self.conn.execute("SELECT id, revision, data FROM projects ORDER BY id").fetchall()
@@ -353,6 +429,7 @@ class Store:
         with self.lock:
             projects = [json.loads(row["data"]) for row in self.conn.execute("SELECT data FROM projects ORDER BY id")]
             history = {}
+            snapshots = {}
             for project in projects:
                 history[project["id"]] = [
                     dict(row) for row in self.conn.execute(
@@ -360,9 +437,18 @@ class Store:
                         (project["id"],)
                     )
                 ]
+                snapshots[project["id"]] = [
+                    dict(row) for row in self.conn.execute(
+                        """SELECT revision, captured_at AS capturedAt, action,
+                                  schema_version AS schemaVersion, data, sha256
+                           FROM project_revisions
+                           WHERE project_id=? ORDER BY revision""",
+                        (project["id"],)
+                    )
+                ]
         return {"format": "glee-fully-foundry-workspace", "version": 1,
-                "projects": projects, "history": history}
-    def restore(self, projects, histories):
+                "projects": projects, "history": history, "snapshots": snapshots}
+    def restore(self, projects, histories, snapshots=None):
         with self.lock, self.conn:
             self.conn.execute("DELETE FROM history")
             self.conn.execute("DELETE FROM project_revisions")
@@ -375,14 +461,24 @@ class Store:
                         "INSERT INTO history(project_id,revision,at,action,summary) VALUES(?,?,?,?,?)",
                         (project["id"], entry["revision"], entry["at"], entry["action"], entry["summary"])
                     )
-                serialized = self._serialize(project)
-                self.conn.execute(
-                    """INSERT INTO project_revisions
-                       (project_id, revision, captured_at, action, schema_version, data, sha256)
-                       VALUES(?,?,?,?,?,?,?)""",
-                    (project["id"], project["revision"], project["updatedAt"], "migration-baseline",
-                     project["schemaVersion"], serialized, self._digest(serialized)),
-                )
+                if snapshots is None:
+                    serialized = self._serialize(project)
+                    self.conn.execute(
+                        """INSERT INTO project_revisions
+                           (project_id, revision, captured_at, action, schema_version, data, sha256)
+                           VALUES(?,?,?,?,?,?,?)""",
+                        (project["id"], project["revision"], project["updatedAt"], "migration-baseline",
+                         project["schemaVersion"], serialized, self._digest(serialized)),
+                    )
+                else:
+                    for snapshot in snapshots[project["id"]]:
+                        self.conn.execute(
+                            """INSERT INTO project_revisions
+                               (project_id, revision, captured_at, action, schema_version, data, sha256)
+                               VALUES(?,?,?,?,?,?,?)""",
+                            (project["id"], snapshot["revision"], snapshot["capturedAt"], snapshot["action"],
+                             snapshot["schemaVersion"], snapshot["data"], snapshot["sha256"]),
+                        )
         return len(projects)
     def history(self, project_id):
         with self.lock:
@@ -756,12 +852,13 @@ behavioral validation.
                 raw_backup = json.dumps(payload["backup"], separators=(",", ":")).encode()
                 if len(raw_backup) > MAX_BACKUP_BYTES:
                     raise ValidationError("workspace backup exceeds 10 MB")
-                projects, histories = validate_workspace_backup(payload["backup"])
-                restored = self.app.store.restore(projects, histories)
+                projects, histories, snapshots = validate_workspace_backup(payload["backup"])
+                restored = self.app.store.restore(projects, histories, snapshots)
                 return self.json(200, {"restored": restored, "mode": "replace"})
             return self.error_json(404,"not found")
         except RuntimeError: return self.error_json(409, "revision conflict")
         except ValidationError as err: return self.error_json(400,str(err))
+        except sqlite3.Error: return self.error_json(500, "database write failed")
     def do_PUT(self):
         if not self.valid_request(): return self.error_json(403,"foreign Host or Origin")
         match=re.fullmatch(r"/api/projects/([0-9a-f-]{36})",urlparse(self.path).path)
@@ -778,6 +875,7 @@ behavioral validation.
             return self.json(200,project)
         except RuntimeError: return self.error_json(409,"revision conflict")
         except ValidationError as err:return self.error_json(400,str(err))
+        except sqlite3.Error: return self.error_json(500, "database write failed")
     def do_DELETE(self):
         if not self.valid_request(): return self.error_json(403, "foreign Host or Origin")
         match = re.fullmatch(r"/api/projects/([0-9a-f-]{36})", urlparse(self.path).path)

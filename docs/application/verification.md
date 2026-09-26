@@ -37,6 +37,13 @@ records `PASS`, the tested source SHA, and the individual browser checks. The
 directory contains three desktop screenshots at 1280 × 900, the exported
 project JSON, the workspace backup JSON, and the result record.
 
+That September 10 run predates mobile screenshot capture. Current runs of
+`scripts/foundry-authoring-qa.mjs` also retain `mobile-390x844.png` in the
+evidence directory, captured at 390 × 844 after the narrow overflow assertion
+and before the keyboard check. The `mobileScreenshot` entry in `result.json`
+records its filename and viewport width and height. This adds reviewable
+narrow-layout evidence without expanding the journey's checks.
+
 This is browser acceptance evidence, separate from the API and structural
 checks below. The journey completed authoring, package inspection, backup and
 restore, duplicate, archive and restore, confirmed delete, theme switching,

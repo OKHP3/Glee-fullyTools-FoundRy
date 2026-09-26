@@ -2,7 +2,7 @@
 """
 gen-skills-readme.py — okhp3-skill-cataloger v1.6.1
 OverKill Hill P³ · https://overkillhill.com · https://github.com/OKHP3
-=======================================================
+-------------------------------------------------------
 Bundled with the okhp3-skill-cataloger Agent Skill.
 Canonical source: scripts/gen-skills-readme.py at project root.
 Keep both copies in sync when updating.
@@ -738,6 +738,22 @@ def validate_family_links(readme: Path, content: str) -> list[str]:
     return errors
 
 
+def validate_full_index_markers(readme: Path, content: str,
+                                has_families: bool) -> list[str]:
+    """Return a warning when family directories lack their README markers."""
+    if not has_families:
+        return []
+
+    if FAMILIES_TABLE_START in content and FAMILIES_TABLE_END in content:
+        return []
+
+    return [
+        f"  ⚠ Full index root README {readme} is missing the expected "
+        f"Families table markers: {FAMILIES_TABLE_START} and "
+        f"{FAMILIES_TABLE_END}. Add both markers to enable generated family links."
+    ]
+
+
 def validate(skills: list[dict]) -> tuple[list[str], list[str]]:
     """Returns (fatal_errors, warnings). Fatals block generation; warnings do not."""
     errors:   list[str] = []
@@ -1009,6 +1025,17 @@ def main() -> int:
 
     # ── Validate ─────────────────────────────────────────────────────────────
     errors, warnings = validate(skills)
+    if args.check and args.full:
+        readme_content = (
+            output.read_text(encoding="utf-8") if output.exists() else ""
+        )
+        warnings.extend(
+            validate_full_index_markers(
+                output,
+                readme_content,
+                bool(discover_all_families(scan_root, skills)),
+            )
+        )
     if warnings and not args.quiet:
         print("\nWarnings:")
         for w in warnings:

@@ -93,13 +93,15 @@ def _resolve_repository_path(
     raw_path: str,
     *,
     row_id: str,
+    line_number: int,
     field_name: str,
 ) -> tuple[Path | None, str | None]:
     """Resolve a ledger path only when it stays repository-relative."""
     path = Path(raw_path)
     if PurePosixPath(raw_path).is_absolute() or PureWindowsPath(raw_path).anchor:
         return None, (
-            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"{MIGRATION_LEDGER_PATH} row {row_id} (line {line_number}) "
+            f"{field_name} path "
             f"must be repository-relative; absolute paths are not allowed: "
             f"{raw_path}"
         )
@@ -110,7 +112,8 @@ def _resolve_repository_path(
         resolved_path.relative_to(resolved_root)
     except ValueError:
         return None, (
-            f"{MIGRATION_LEDGER_PATH} row {row_id} {field_name} path "
+            f"{MIGRATION_LEDGER_PATH} row {row_id} (line {line_number}) "
+            f"{field_name} path "
             f"resolves outside the repository root: {raw_path}"
         )
     return resolved_path, None
@@ -125,6 +128,8 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
 
     issues: list[str] = []
     mapping_table_active = False
+    mapping_table_found = False
+    mapping_row_lines: dict[str, list[int]] = {}
     for line_number, line in enumerate(ledger_text.splitlines(), start=1):
         if not line.lstrip().startswith("|"):
             mapping_table_active = False
@@ -136,6 +141,7 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
 
         if cells[0].lower() == "id":
             mapping_table_active = tuple(cells) == LEDGER_FIELDS
+            mapping_table_found = mapping_table_found or mapping_table_active
             continue
         if not mapping_table_active:
             continue
@@ -143,6 +149,8 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             continue
 
         row_id = cells[0] or f"line {line_number}"
+        if cells[0]:
+            mapping_row_lines.setdefault(cells[0], []).append(line_number)
         if len(cells) != len(LEDGER_FIELDS):
             if len(cells) < len(LEDGER_FIELDS):
                 missing_fields = ", ".join(LEDGER_FIELDS[len(cells):])
@@ -190,12 +198,14 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
             root,
             candidate_path,
             row_id=row_id,
+            line_number=line_number,
             field_name="candidate",
         )
         legacy, legacy_issue = _resolve_repository_path(
             root,
             legacy_path,
             row_id=row_id,
+            line_number=line_number,
             field_name="legacy",
         )
         path_issues = [issue for issue in (candidate_issue, legacy_issue) if issue]
@@ -220,6 +230,24 @@ def check_filename_migration_ledger(root: Path) -> list[str]:
                 f"{MIGRATION_LEDGER_PATH} row {row_id} still has the legacy "
                 f"path after execution: {legacy_path}"
             )
+
+    for row_id, line_numbers in mapping_row_lines.items():
+        if len(line_numbers) < 2:
+            continue
+        affected_lines = ", ".join(f"line {line_number}" for line_number in line_numbers)
+        issues.append(
+            f"{MIGRATION_LEDGER_PATH} has duplicate mapping row ID {row_id!r}; "
+            f"affected rows are on {affected_lines}"
+        )
+
+    if not mapping_table_found:
+        expected_fields = ", ".join(LEDGER_FIELDS)
+        issues.insert(
+            0,
+            f"{MIGRATION_LEDGER_PATH} is missing a recognizable migration "
+            "mapping-table header; expected fields: "
+            f"{expected_fields}",
+        )
 
     return issues
 

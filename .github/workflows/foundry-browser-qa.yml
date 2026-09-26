@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - uses: actions/setup-python@v7
@@ -40,7 +40,7 @@ jobs:
           echo "### FoundRy browser journey" >> "$GITHUB_STEP_SUMMARY"
           if [[ "$DRIVER_OUTCOME" != success || "$CHROMIUM_OUTCOME" != success ]]; then
             echo "NOT RUN: Playwright driver or Chromium prerequisites unavailable." | tee "$evidence/result.txt"
-            echo "NOT RUN — browser prerequisites unavailable. See installation steps." >> "$GITHUB_STEP_SUMMARY"
+            echo "NOT RUN â€” browser prerequisites unavailable. See installation steps." >> "$GITHUB_STEP_SUMMARY"
             echo "Evidence: result.txt in the foundry-browser-evidence artifact." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -57,7 +57,7 @@ jobs:
             outcome=FAIL
           fi
           echo "$outcome (exit $status)" | tee "$evidence/result.txt"
-          echo "$outcome — evidence in the foundry-browser-evidence artifact (journey.log and browser outputs, if produced)." >> "$GITHUB_STEP_SUMMARY"
+          echo "$outcome â€” evidence in the foundry-browser-evidence artifact (journey.log and browser outputs, if produced)." >> "$GITHUB_STEP_SUMMARY"
           if [[ "$status" -eq 1 ]]; then
             exit 1
           elif [[ "$status" -ne 0 && "$status" -ne 2 ]]; then
@@ -65,7 +65,7 @@ jobs:
           fi
       - name: Publish browser result and evidence
         if: always() && steps.journey.outcome != 'skipped'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: foundry-browser-evidence
           path: ${{ runner.temp }}/foundry-browser-evidence/

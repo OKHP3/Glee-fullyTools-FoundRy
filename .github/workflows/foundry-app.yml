@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'app/**'
+      - 'requirements*.txt'
       - '.github/workflows/foundry-app.yml'
       - 'README.md'
       - 'canon/**'
@@ -18,12 +19,16 @@ on:
       - 'scripts/check-markdown-links.py'
       - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**' # Includes the maintained test-suite README.
-      - '.agents/skills/**'
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
+      - '.agents/skills/**'
+      - '.agents/skills/okhp3-skill-cataloger/**'
+      - '.agents/skills/okhp3-replit-repl-janitor/**'
+      - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
   push:
     branches: [main]
     paths:
       - 'app/**'
+      - 'requirements*.txt'
       - '.github/workflows/foundry-app.yml'
       - 'README.md'
       - 'canon/**'
@@ -38,9 +43,14 @@ on:
       - 'scripts/check-markdown-links.py'
       - 'scripts/check-inventory-catalog.py'
       - 'scripts/tests/**' # Includes the maintained test-suite README.
-      - '.agents/skills/**'
       - '.agents/skills/glee-fully-repo-standardizer/scripts/scaffold.py'
+      - '.agents/skills/**'
+      - '.agents/skills/okhp3-skill-cataloger/**'
+      - '.agents/skills/okhp3-replit-repl-janitor/**'
+      - '.agents/skills/okhp3-replit-free-mode-autonomy/**'
   workflow_dispatch:
+  schedule:
+    - cron: '47 9 * * 1'
 
 permissions:
   contents: read
@@ -48,23 +58,46 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.x']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
-      - name: Install application validation dependencies
+          python-version: ${{ matrix.python }}
+          check-latest: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+          check-latest: true
+      - name: Record runtime versions
+        run: |
+          python -c "import sys, sqlite3; print(sys.version); print('SQLite', sqlite3.sqlite_version)"
+          node --version
+      - name: Check declared and locked dependency agreement
+        run: python scripts/check-validator-lock.py
+      - name: Install maintenance test dependencies
+        if: matrix.python == '3.11'
         run: python -m pip install --require-hashes -r requirements-lock.txt
-      - name: Check generated Agent Skills catalog links
-        run: python .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py --skills-dir .agents/skills --check
       - name: Check maintained Markdown links
         run: python scripts/check-markdown-links.py .
+      - name: Check generated Agent Skills catalog
+        run: python .agents/skills/okhp3-skill-cataloger/scripts/gen-skills-readme.py --check
       - name: Check workflow coverage for maintained Markdown documents
         run: python scripts/check-markdown-links.py . --check-workflow-coverage
       - name: Check inventory catalog integration
         run: python scripts/check-inventory-catalog.py .
-      - name: Test Markdown link checker
+      - name: Test maintenance scripts
+        if: matrix.python == '3.11'
         run: python -m unittest discover -s scripts/tests -v
+      - name: Test reviewed maintenance packages
+        if: matrix.python == '3.11'
+        run: |
+          python -m unittest discover -s .agents/skills/okhp3-replit-repl-janitor/tests -v
+          python -m unittest discover -s .agents/skills/okhp3-replit-free-mode-autonomy/benchmarks -p test_native_telemetry.py -v
       - name: Exercise the application and exported packages
         run: python -m unittest discover -s app/tests -v
       - name: Check source syntax and whitespace
